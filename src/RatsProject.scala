@@ -17,43 +17,31 @@ trait RatsProject extends DefaultProject
      * rats library
      */
     val ratslib = "rats" % "rats" % "1.14.4" from "http://cs.nyu.edu/rgrimm/xtc/rats.jar"
+
+    /**
+    * The path of the file in which the main parser module is stored.
+    */
+    val mainRatsModule : Path
     
     /**
-     * Depend on the rats library.
+     * The directory in which the main module is stored.
      */
-    override def libraryDependencies = Set (ratslib)
-
+    lazy val dir = Path.fromFile (mainRatsModule.asFile.getParent)
+    
     /**
-    * The path in which the main parser module is stored.
-    */
-    val mainRatsModuleDir : Path
-
-    /**
-    * The name of the main parser module (without .rats extension).
-    */
-    val mainRatsModule : String
-
-    /**
-    * A task to run Rats! on the main parser module.
-    */
-    lazy val rats = ratsTask (mainRatsModuleDir, mainRatsModule)
-
-    /**
-     * Run the rats task before compilation.
+     * The basename of the main module.
      */
-    override def compileAction = super.compileAction dependsOn (rats)
+    lazy val base = mainRatsModule.base
 
     /**
-     * Create a task for running the Rats! parser generator.  dir should be
-     * the path in which the main Rats! module resides.  The generated parser
-     * will be written there.  base should be the name of the file containing
-     * the main Rats! module (minus the .rats extension).  The parser will
-     * be written to dir/base.java.  This task depends on all .rats files
+     * A task to run Rats! on the main parser module.  The generated parser
+     * will be written to a file with the same name as the mainRatsModule,
+     * but with a .java extension.  This task depends on all .rats files
      * in the project source directories, whether they are actually used by
      * the main module or not.
-     */
-    def ratsTask (dir : Path, base : String) : Task = {
-        val main = dir / (base + ".rats")
+    */
+    lazy val rats = {
+        val main = mainRatsModule
         val srcs = descendents (mainSourceRoots, "*.rats")
         val prod = dir / (base + ".java")
         val fmt = "java -cp %s xtc.parser.Rats -out %s %s"
@@ -66,22 +54,19 @@ trait RatsProject extends DefaultProject
                 Some ("Rats! failed")
         } describedAs ("Generate Rats! parser")
     }
+    
+    /**
+     * Run the rats task before compilation.
+     */
+    override def compileAction = super.compileAction dependsOn (rats)
 
     /**
      * A task to delete the generated Rats! parser.
      */
-    lazy val cleanRats = cleanRatsTask (mainRatsModuleDir, mainRatsModule)
+    lazy val cleanRats = cleanTask (dir / (base + ".java"))
 
     /**
      * Make the rats clean task run on project clean.
      */
     override def cleanAction = super.cleanAction dependsOn (cleanRats)
-
-    /**
-     * Delete a Rats!-generated parser.  The parameters should be the same
-     * as for the corresponding ratsTask.
-     */
-    def cleanRatsTask (dir : Path, base : String) : Task =
-        cleanTask (dir / (base + ".java"))
-
 }
