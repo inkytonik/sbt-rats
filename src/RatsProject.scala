@@ -52,25 +52,23 @@ trait RatsProject extends DefaultProject
      * will be written to a file with the same name as the mainRatsModule,
      * but with a .java extension.  This task depends on all .rats files
      * in the project source directories, whether they are actually used by
-     * the main module or not.
-    */
+     * the main module or not.  If ratsUseScala is true, the file is post-
+     * processed to make it easier to use with Scala.
+     */
     lazy val rats = {
         val main = mainRatsModule
         val srcs = descendents (mainSourceRoots, "*.rats")
         val fmt = "java -cp %s xtc.parser.Rats -out %s %s"
         val classpath = Path.makeString (compileClasspath.get)
         val cmd = fmt.format (classpath, dir, main)
-        val ratsTask = 
-            fileTask ("Generate parser from " + main, parserPath from srcs) {
-                if (cmd ! log == 0)
-                    None
-                else
-                    Some ("Rats! failed")
-            } describedAs ("Generate Rats! parser")
-        if (ratsUseScala)
-            ratsTask && postProcessTask
-        else
-            ratsTask
+        fileTask ("Generate parser from " + main, parserPath from srcs) {
+            if (cmd ! log == 0) {
+                if (ratsUseScala)
+                    postProcess
+                None
+            } else
+                Some ("Rats! failed")
+        } describedAs ("Generate Rats! parser")
     }
     
     /**
@@ -79,45 +77,93 @@ trait RatsProject extends DefaultProject
     override def compileAction = super.compileAction dependsOn (rats)
     
     /**
-     * Return a task to post-process the generated parser.  The new version
-     * is stored in the same place as the original.
-     * FIXME: maybe should use two different paths
+     * Post-process the generated parser.  The new version is stored in the
+     * same place as the original.
      */
-    private def postProcessTask =
-        task {
-            FileUtilities.readString (parserPath.asFile, log) match {
-                case Left (s) =>
-                    error (s)
-                case Right (s) =>
-                    val t = postProcess (s)
-                    FileUtilities.write (parserPath.asFile, t, log)
-            }
-            None
+    private def postProcess {
+        FileUtilities.readString (parserPath.asFile, log) match {
+            case Left (s) =>
+                error (s)
+            case Right (s) =>
+                val t = postProcessContents (s)
+                FileUtilities.write (parserPath.asFile, t, log)
         }
+    }
 
     /**
-     * Actually perform the transformations to post process the parser.
+     * Actually perform the transformations to post process the contents of 
+     * the parser file.
      */
-    def postProcess (contents : String) : String = {
-        val map =
-            Map (
+    def postProcessContents (contents : String) : String = {
+        val replacements =
+            List (
                  // Replace xtc pair lists with Scala lists
                  "import xtc.util.Pair;" ->
                      """import scala.collection.immutable.List;
                        |import scala.collection.immutable.$colon$colon;""".stripMargin,
                  "Pair.empty()" -> "List.empty()",
                  "new Pair<([^>]+)>".r -> """new \$colon\$colon<$1>""",
-                 "Pair<([^>]+)>".r -> "List<$1>"
+                 "Pair<([^>]+)>".r -> "List<$1>",
+                 
+                 // Use scala Positional instead of xtc Locatable for positions
+                 "import xtc.tree.Locatable;" ->
+                     """import scala.util.parsing.input.Positional;
+                       |import scala.util.parsing.input.Position;""".stripMargin,
+                 "Locatable" -> "Positional",
+                 "public final class Parser extends ParserBase {" ->
+                     """
+                     |public final class Parser extends ParserBase {
+                     |
+                     |  /** Set position of a Positional */
+                     |  void setLocation(final Positional positional, final int index) {
+                     |    if (null != positional) {
+                     |      Column c = column(index);
+                     |      positional.setPos(new LineColPosition(c.line, c.column));
+                     |    }
+                     |  }
+                     |""".stripMargin
             )
 
         var s = contents
-        for ((from,to) <- map) {
+        for ((from,to) <- replacements) {
             from match {
                 case t : String => s = s.replace (t, to)
                 case r : Regex  => s = r.replaceAllIn (s, to)
             }
         }
-        s
+        
+        val addendum =
+            """
+            |class LineColPosition implements Position {
+            |  public int _line;
+            |  public int _column;
+            |  public LineColPosition (int l, int c) {
+            |    _line = l;
+            |    _column = c;
+            |  }
+            |  public int line () {
+            |    return _line;
+            |  }
+            |  public int column () {
+            |    return _column;
+            |  }
+            |  public boolean $less (Position that) {
+            |     return line () < that.line () || 
+            |        line () == that.line () && column () < that.column ();
+            |  }
+            |  public String lineContents () {
+            |    throw new RuntimeException ("LineColPosition.lineContents not implemented");
+            |  }
+            |  public String longString () {
+            |    throw new RuntimeException ("LineColPosition.longString not implemented");
+            |  }
+            |  public String toString () {
+            |    return "" + line () + "." + column ();
+            |  }
+            |}
+            |""".stripMargin
+        
+        s + addendum
     }
 
     /**
