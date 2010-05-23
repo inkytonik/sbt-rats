@@ -1,6 +1,6 @@
-sbt-rats is a project of the [Programming Languages Research
-Group](http://plrg.science.mq.edu.au/) in the [Department of
-Computing](http://www.comp.mq.edu.au/) at [Macquarie
-University](http://www.mq.edu.au/) and is led by [Tony
-Sloane](http://www.comp.mq.edu.au/~asloane) (inkytonik).
-
+sbt-rats is a plugin that enables you to use the [Rats! parser
+generator](http://cs.nyu.edu/rgrimm/xtc/rats.html) with Scala projects
+that are built using the
+[simple-buld-tool](http://code.google.com/p/simple-build-tool). For
+more information, see the project site
+[http://sbt-rats.googlecode.com](http://sbt-rats.googlecode.com).
