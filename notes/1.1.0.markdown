@@ -1,0 +1,16 @@
+This is the first public release of sbt-rats, a plugin that enables
+you to use the [Rats! parser
+generator](http://cs.nyu.edu/rgrimm/xtc/rats.html) with Scala projects
+that are built using the
+[simple-buld-tool](http://code.google.com/p/simple-build-tool).
+
+sbt-rats provides
+
+  * a `rats` sbt action for generating parsers from Rats! specifications
+
+For more information, see the project site
+[http://sbt-rats.googlecode.com](http://sbt-rats.googlecode.com).
+
+This release adds
+  
+  * support for Scala linked lists and positions, instead of Rats!-specific ones

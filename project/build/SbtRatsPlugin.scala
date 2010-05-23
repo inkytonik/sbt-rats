@@ -10,7 +10,8 @@ import sbt.Process._
 /**
  * sbt project configuration for RatsSbtPlugin
  */
-class RatsSbtPluginProject (info: ProjectInfo) extends PluginProject (info) 
+class RatsSbtPluginProject (info: ProjectInfo) extends PluginProject (info)
+    with posterous.Publish
 {
     // Configure paths
     override def mainScalaSourcePath = "src"
