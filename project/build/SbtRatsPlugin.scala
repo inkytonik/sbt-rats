@@ -25,4 +25,10 @@ class RatsSbtPluginProject (info: ProjectInfo) extends PluginProject (info)
     def extraResources = "README.txt" +++ "LICENSE"
     override def mainResources = super.mainResources +++ extraResources
 
+    // Publish to Maven style repo at scala-tools.org
+    override def managedStyle = ManagedStyle.Maven
+    val publishTo = "Scala Tools Nexus" at "http://nexus.scala-tools.org/content/repositories/releases/"
+
+    // Get credentials from here
+    Credentials (Path.userHome / ".ivy2" / ".credentials", log)
 }
