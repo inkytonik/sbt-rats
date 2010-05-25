@@ -101,9 +101,9 @@ trait RatsProject extends DefaultProject
                  "import xtc.util.Pair;" ->
                      """import scala.collection.immutable.List;
                        |import scala.collection.immutable.$colon$colon;""".stripMargin,
-                 "Pair.empty()" -> "List.empty()",
-                 "new Pair<([^>]+)>".r -> """new \$colon\$colon<$1>""",
-                 "Pair<([^>]+)>".r -> "List<$1>",
+                 "Pair.empty" -> "List.empty",
+                 "new Pair(<[^>]+>)".r -> """new \$colon\$colon$1""",
+                 "Pair(<[^>]+>)".r -> "List$1",
                  
                  // Use scala Positional instead of xtc Locatable for positions
                  "import xtc.tree.Locatable;" ->
