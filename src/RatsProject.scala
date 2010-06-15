@@ -18,7 +18,7 @@ trait RatsProject extends DefaultProject
     /**
      * rats library
      */
-    val ratslib = "rats" % "rats" % "1.14.4" from "http://cs.nyu.edu/rgrimm/xtc/rats.jar"
+    val ratslib = "rats" % "rats" % "1.15.0" from "http://cs.nyu.edu/rgrimm/xtc/rats.jar"
 
     /**
     * The path of the file in which the main parser module is stored.
