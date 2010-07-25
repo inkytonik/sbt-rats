@@ -16,7 +16,6 @@ class RatsSbtPluginProject (info: ProjectInfo) extends PluginProject (info)
     // Configure paths
     override def mainScalaSourcePath = "src"
     override def testScalaSourcePath = "src"
-    override def outputDirectoryName = "bin"
 
     // Set compiler options
     override def compileOptions = super.compileOptions ++ Seq (Unchecked)
