@@ -18,32 +18,58 @@ object SBTRatsPlugin extends Plugin {
         "rats-main-module", "The file containing the main Rats! module"
     )
 
+    /**
+     * Run the Rats! parser generator if any of the .rats files in the source have
+     * changed or the output doesn't exist.
+     */
     def runRats =
-        (sourceManaged in Compile, streams, ratsMainModule, scalaSource) map {
-            (smdir, str, main, srcdir) => {
-                val outdir = smdir / "sbt-rats"
-                val mainPath = main.absolutePath
-                IO.createDirectory (outdir)
-                str.log.info ("Running Rats! on %s".format (mainPath))
-                val rats = new RatsRunner ()
-                rats.run (Array ("-silent", "-no-exit",
-                                 "-in", srcdir.absolutePath,
-                                 "-out", outdir.absolutePath,
-                                 mainPath))
-                if (rats.getRuntime.seenError) {
-                    sys.error ("Rats failed")
-                    Nil
-                } else {
-                    val genfiles = (outdir ** "*.java").get
-                    str.log.info ("Rats! generated %s".format (genfiles.mkString))
-                    genfiles
-                }
+        (sourceManaged in Compile, streams, ratsMainModule, scalaSource, cacheDirectory) map {
+            (smdir, str, main, srcdir, cache) => {
+
+                val cachedFun =
+                    FileFunction.cached (cache / "sbt-rats", FilesInfo.lastModified,
+                                         FilesInfo.exists) {
+                        (in: Set[File]) =>
+                            runRatsImpl (smdir, str, main, srcdir)
+                    }
+
+                val inputFiles = (srcdir ** "*.rats").get.toSet
+                cachedFun (inputFiles).toSeq
+
             }
         }
 
-    // FIXME: avoid duplication of directory used for generated sources
-    // FIXME: avoid duplication of rats lib here and in build.sbt of plugin
+    /**
+     * The implementation of the invocation of Rats! Output is produced in the 
+     * sbt-rats directory under the target's sourceManaged directory, which is
+     * created if it doesn't exist.
+     */
+    def runRatsImpl (smdir : File, str : TaskStreams, main : File, srcdir : File) : Set[File] = {
+        val outdir = smdir / "sbt-rats"
+        val mainPath = main.absolutePath
+        IO.createDirectory (outdir)
+        str.log.info ("Running Rats! on %s".format (mainPath))
+        val rats = new RatsRunner ()
+        rats.run (Array ("-silent", "-no-exit",
+                         "-in", srcdir.absolutePath,
+                         "-out", outdir.absolutePath,
+                         mainPath))
+        if (rats.getRuntime.seenError) {
+            sys.error ("Rats failed")
+            Set.empty
+        } else {
+            val genfiles = (outdir ** "*.java").get.toSet
+            str.log.info ("Rats! generated %s".format (genfiles.mkString))
+            genfiles
+        }
+    }
 
+    /**
+     * Settings for the plugin:
+     *  - run Rats! as a source generator
+     *  - make sure that the generated parser (in Java) is compiled first
+     *  - add the Rats! jar to the dependent libraries
+     */
     val sbtRatsSettings = Seq (
 
         sourceGenerators in Compile <+= runRats,
