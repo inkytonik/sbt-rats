@@ -155,8 +155,6 @@ object SBTRatsPlugin extends Plugin {
 
         sourceGenerators in Compile <+= runRats,
 
-        // compileOrder in Compile := CompileOrder.JavaThenScala,
-
         libraryDependencies ++= Seq (
             "rats" % "rats" % "2.3.1" from "http://cs.nyu.edu/rgrimm/xtc/rats.jar"
         ),
