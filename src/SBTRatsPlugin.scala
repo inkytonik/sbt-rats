@@ -95,8 +95,8 @@ object SBTRatsPlugin extends Plugin {
                     sys.error ("Rats! didn't generate any files")
                     Set.empty
                 case _ =>
-                    sys.error ("Rats! didn't generated more than one file: %s".format (
-                                    genFiles.mkString))
+                    sys.error ("Rats! generated more than one file: %s".format (
+                                    genFiles.mkString (" ")))
                     Set.empty
             }
         }
