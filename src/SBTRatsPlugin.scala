@@ -148,8 +148,8 @@ object SBTRatsPlugin extends Plugin {
     /**
      * Settings for the plugin:
      *  - run Rats! as a source generator
-     *  - make sure that the generated parser (in Java) is compiled first
      *  - add the Rats! jar to the dependent libraries
+     *  - default value for rats-use-scala-lists
      */
     val sbtRatsSettings = Seq (
 
