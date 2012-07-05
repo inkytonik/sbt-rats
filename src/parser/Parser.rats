@@ -41,7 +41,6 @@ transient String CodeBlockText =
 
 Rule Rule =
       GrammarRule void:".":SSymbol
-    / CommentDef void:".":SSymbol
     / RatsSection;
 
 // Grammar rules
@@ -142,13 +141,6 @@ String MethodAnnotation =
 
 String DecDigits =    
     DecDigit+;
-
-// Comment definitions
-
-CommentDef CommentDef =
-    void:"comment":Word e:Element {
-        yyValue = new CommentDef (e);
-    };
 
 // Rats! code section
 
