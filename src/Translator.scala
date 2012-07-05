@@ -69,7 +69,6 @@ object Translator extends PrettyPrinter {
             rule match {
                 case g : GrammarRule   => toGrammarRule (g)
                 case RatsSection (c)   => string (c.mkString)
-                case CommentDef (elem) => empty // FIXME
             }
 
         def toGrammarRule (grammarRule : GrammarRule) : Doc = {

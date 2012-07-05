@@ -32,6 +32,4 @@ case class Seqn (left : Element, right : Element) extends Element
 case class StringLit (s : String) extends Element
 case class Wildcard () extends Element
 
-case class CommentDef (elem : Element) extends Rule
-
 case class RatsSection (code : String) extends Rule
