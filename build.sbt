@@ -23,28 +23,17 @@ shellPrompt <<= (name, version) { (n, v) =>
 // Dependencies
 
 libraryDependencies ++= Seq (
+    "com.googlecode.kiama" % "kiama_2.9.2" % "1.3.0-SNAPSHOT",
     "rats" % "rats" % "2.3.1" from "http://cs.nyu.edu/rgrimm/xtc/rats.jar"
 )
 
 // Source code locations
 
-// Specify how to find source and test files.  Main sources are
-//    - in src directory
-//    - all .scala files, except
-// Test sources, which are
-//    - files whose names end in Tests.scala, which are actual test sources
-//    - Scala files within the examples src
-
 scalaSource <<= baseDirectory { _ / "src" }
 
-unmanagedSources in Test <<= scalaSource map { s => {
-    val egs = s / "org" / "kiama" / "example" ** "*.scala"
-    ((s ** "*Tests.scala") +++ egs).get
-}}
+javaSource <<= baseDirectory { _ / "src" }
 
-unmanagedSources in Compile <<= (scalaSource, unmanagedSources in Test) map { (s, tests) =>
-    ((s ** "*.scala") --- tests).get
-}
+unmanagedSourceDirectories in Compile <<= Seq (javaSource).join
 
 // Resources
 

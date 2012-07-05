@@ -1,0 +1,252 @@
+module parser.Parser;
+
+header {
+    import ast.*;
+    import ast.SList.*;
+    import xtc.util.Action;
+}
+
+body {
+    static {
+        add (KEYWORDS, new String[] {
+            "comment", "end", "header", "rats"
+        });
+    }
+}
+
+option setOfString (KEYWORDS);
+
+public Grammar Grammar =
+    p:PackageDecl h:HeaderSection? rs:Rule* EOF {
+        yyValue = new Grammar (p, h, rs);
+    };
+
+// Package declarations
+
+Pair<String> PackageDecl =
+    void:"module":Word QualIdentifier void:";":SSymbol;
+
+// Header section
+
+String HeaderSection =
+    void:"header":Word CodeBlock;
+
+String CodeBlock =
+    '{' yyValue:CodeBlockText '}' Spacing;
+
+transient String CodeBlockText =
+    ('{' CodeBlockText '}' / !'}' _)*;
+
+// Rules
+
+Rule Rule =
+      GrammarRule void:".":SSymbol
+    / CommentDef void:".":SSymbol
+    / RatsSection;
+
+// Grammar rules
+
+Rule GrammarRule =
+    l:Identifier t:Type? void:"=":SSymbol as:Alternatives {
+        yyValue = new GrammarRule (new NonTerminal (l), t, as, false);
+    };
+
+// Types
+
+String Type =
+    void:":":SSymbol Identifier;
+
+// Alternatives
+
+Pair<Alternative> Alternatives =
+    h:Alternative tl:(void:"|":SSymbol Alternative)* {
+        yyValue = SList.create (h, tl);
+    };
+
+Alternative Alternative =
+    e:Element as:Annotations? {
+        yyValue = new Alternative (e, as, new DefaultAction ());
+    };
+
+// Elements
+
+Element Element =
+    seed:Element1 actions:AltTail+ {
+        yyValue = apply (actions, seed);
+    } /
+    Element1;
+
+constant Action<Element> AltTail =
+    void:"/":SSymbol right:Element {
+        yyValue = new Action<Element> () {
+            public Element run (Element left) {
+                return new Alt (left, right);
+            }
+        };
+    };
+
+Element Element1 =
+    seed:Element2 actions:SeqnTail+ {
+        yyValue = apply (actions, seed);
+    } /
+    Element2;
+
+constant Action<Element> SeqnTail =
+    right:Element2 {
+        yyValue = new Action<Element> () {
+            public Element run (Element left) {
+                return new Seqn (left, right);
+            }
+        };
+    };
+
+Element Element2 =
+    e:Primary void:"*":SSymbol {
+        yyValue = new Rep (true, e);
+    } /
+    e:Primary void:"+":SSymbol {
+        yyValue = new Rep (false, e);
+    } /
+    e:Primary void:"?":SSymbol {
+        yyValue = new Opt (e);
+    } /
+    Primary;
+
+Element Primary =
+    void:"(":SSymbol Element void:")":SSymbol /
+    void:"!":SSymbol p:Primary {
+        yyValue = new Not (p);
+    } /
+    Literal Spacing /
+    s:Identifier {
+        yyValue = new NonTerminal (s);
+    };
+
+// Annotations
+
+Pair<String> Annotations =
+    void:"{":SSymbol AnnotationList void:"}":SSymbol;
+
+Pair<String> AnnotationList =
+    h:Annotation tl:(void:",":SSymbol Annotation)* {
+        yyValue = SList.create (h, tl);
+    };
+
+String Annotation =
+    Identifier /
+    MethodAnnotation /
+    DecDigits;
+
+String MethodAnnotation =
+    DecDigits ":" [a-zA-Z.]+;
+
+String DecDigits =    
+    DecDigit+;
+
+// Comment definitions
+
+CommentDef CommentDef =
+    void:"comment":Word e:Element {
+        yyValue = new CommentDef (e);
+    };
+
+// Rats! code section
+
+RatsSection RatsSection =
+    void:"rats":Word s:CodeBlock {
+        yyValue = new RatsSection (s);
+    };
+
+// Identifiers
+
+Pair<String> QualIdentifier =
+    h:Identifier tl:(void:".":SSymbol Identifier)* {
+        yyValue = SList.create (h, tl);
+    };
+
+String Identifier =
+    yyValue:Word &{
+        ! contains (KEYWORDS, yyValue)
+    };
+
+// Literals
+
+Element Literal =
+    '_' {
+        yyValue = new Wildcard ();
+    } /
+    ["] s:StringLiteral ["] {
+        yyValue = new StringLit (s);
+    } /
+    ['] s:CharLiteral ['] {
+        yyValue = new CharLit (s);
+    } / 
+    '[' s:CharClassContents ']' {
+        yyValue = new CharClass (s);
+    };
+
+String StringLiteral =
+    (Escape / !["] _)*;
+
+String CharLiteral =
+    (Escape / !['] _)*;
+
+String CharClassContents =
+    CharClassElement*;
+
+String CharClassElement =
+    CharClassCharacter '-' CharClassCharacter /
+    CharClassCharacter;
+
+String CharClassCharacter =
+    Escape /
+    ![\-\]\\] _;
+
+String Escape =
+    '\\' [btnfr"'\[\\\]\-] /
+    '\\' 'u' HexQuad /
+    OctalEscape;
+
+String HexQuad =
+    HexDigit HexDigit HexDigit HexDigit;
+
+String HexDigit =
+    [0-9a-fA-F];
+
+String OctalEscape =
+    '\\' ([0-3] OctDigit OctDigit / OctDigit OctDigit / OctDigit);
+
+String OctDigit =
+    [0-7];
+
+String DecDigit =    
+    [0-9];
+
+// Words
+
+String Word =
+    WordCharacters Spacing;
+
+transient String WordCharacters =
+    h:_ &{
+        Character.isJavaIdentifierStart (h)
+    } (t:_ &{
+        Character.isJavaIdentifierPart (t)
+    })*;
+
+// Syntax symbols
+
+String SSymbol =
+    SSymbolCharacters Spacing;
+
+transient String SSymbolCharacters =
+    ":" / "=" / "/" / "|" / "{" / "}" / "(" / ")" / "!" / "." / "," /
+    "*" / "+" / "?" / ";";
+
+transient void Spacing   = (Space / SLComment / MLComment)*;
+transient void FSpacing  = (Space / SLComment / MLComment)+;
+transient void Space     = ' ' / '\t' / '\f' / EOL;
+transient void SLComment = "//" (![\n\r] _)* EOL;
+transient void MLComment = "/*" ('*' !'/' / !'*' _)* "*/";
+transient void EOL       = '\r' '\n' / '\r' / '\n';
+transient void EOF       = !_;    
