@@ -13,7 +13,8 @@ import xtc.parser.Rats
  * A structure to hold the flag values so we can pass them around together.
  */
 case class Flags (
-    useScalaLists : Boolean
+    useScalaLists : Boolean,
+    useDefaultLayout : Boolean
 )
 
 // FIXME: remove prettyprinter
@@ -47,16 +48,25 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
     )
 
     /**
+     * If a syntax definition is being used, generate a default specification
+     * for layout (i.e., whitespace and comment handling).
+     */
+    val ratsUseDefaultLayout = SettingKey[Boolean] (
+        "rats-use-default-layout",
+            "Use a default definition for layout (syntax mode only)"
+    )
+
+    /**
      * Run the generators if any of the .rats or .syntax files in the source
      * have changed or the output doesn't exist.
      */
     def runGenerators =
-        (ratsMainModule, ratsUseScalaLists,
+        (ratsMainModule, ratsUseScalaLists, ratsUseDefaultLayout,
          scalaSource, target, sourceManaged in Compile, streams, cacheDirectory) map {
-            (main, useScalaLists,
+            (main, useScalaLists, useDefaultLayout,
              srcDir, tgtDir, smDir, str, cache) => {
 
-                val flags = new Flags (useScalaLists)
+                val flags = new Flags (useScalaLists, useDefaultLayout)
 
                 val cachedFun =
                     FileFunction.cached (cache / "sbt-rats", FilesInfo.lastModified,
@@ -109,7 +119,7 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
             val grammar = p.value (pr).asInstanceOf[Grammar]
             val desugaredGrammar = desugar (grammar)
             str.log.info (pretty_any (desugaredGrammar))
-            val ratsCode = translate (desugaredGrammar)
+            val ratsCode = translate (flags, desugaredGrammar)
             val name = grammar.pkg.last
             val genFile = genDir / (name + ".rats")
             IO.write (genFile, ratsCode)
@@ -263,7 +273,9 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
             "rats" % "rats" % "2.3.1" from "http://cs.nyu.edu/rgrimm/xtc/rats.jar"
         ),
 
-        ratsUseScalaLists := false
+        ratsUseScalaLists := false,
+
+        ratsUseDefaultLayout := true
 
     )
 
