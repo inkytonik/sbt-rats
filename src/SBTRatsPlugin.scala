@@ -9,6 +9,13 @@ import Keys._
 import org.kiama.output.PrettyPrinter
 import xtc.parser.Rats
 
+/**
+ * A structure to hold the flag values so we can pass them around together.
+ */
+case class Flags (
+    useScalaLists : Boolean
+)
+
 // FIXME: remove prettyprinter
 
 object SBTRatsPlugin extends Plugin with PrettyPrinter {
@@ -49,12 +56,13 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
             (main, useScalaLists,
              srcDir, tgtDir, smDir, str, cache) => {
 
+                val flags = new Flags (useScalaLists)
+
                 val cachedFun =
                     FileFunction.cached (cache / "sbt-rats", FilesInfo.lastModified,
                                          FilesInfo.exists) {
                         (in: Set[File]) =>
-                            runGeneratorsImpl (main, useScalaLists,
-                                               tgtDir, smDir, str)
+                            runGeneratorsImpl (flags, main, tgtDir, smDir, str)
                     }
 
                 val inputFiles = (srcDir ** ("*.rats" | "*.syntax")).get.toSet
@@ -68,17 +76,17 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
      * Otherwise, assume it's a syntax definition, translate it and use Rats! on
      * the result.
      */
-    def runGeneratorsImpl (main : File, useScalaLists : Boolean,
+    def runGeneratorsImpl (flags : Flags, main : File,
                            tgtDir: File, smDir : File,
                            str : TaskStreams) : Set[File] = {
         val genDir = tgtDir / "sbt-rats"
         IO.createDirectory (genDir)
         if (main.ext == "rats")
-            runRatsImpl (main, useScalaLists, tgtDir, genDir, smDir, str)
+            runRatsImpl (flags, main, tgtDir, genDir, smDir, str)
         else {
-            runSyntaxImpl (main, genDir, str) match {
+            runSyntaxImpl (flags, main, genDir, str) match {
                 case Some (ratsMain) =>
-                    runRatsImpl (ratsMain, useScalaLists, tgtDir, genDir, smDir, str)
+                    runRatsImpl (flags, ratsMain, tgtDir, genDir, smDir, str)
                 case _ =>
                     Set.empty
             }
@@ -89,7 +97,8 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
      * Convert a syntax definition into Rats! file and other supporting Scala
      * sources.
      */
-    def runSyntaxImpl (main : File, genDir : File, str : TaskStreams) : Option[File] = {
+    def runSyntaxImpl (flags : Flags, main : File, genDir : File,
+                       str : TaskStreams) : Option[File] = {
         str.log.info ("Running Syntax generation on %s, output to %s".format (
                           main, genDir))
         val filename = main.absolutePath
@@ -115,7 +124,7 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
     /**
      * Run Rats! on the `main` file.
      */
-    def runRatsImpl (main : File, useScalaLists : Boolean,
+    def runRatsImpl (flags : Flags, main : File,
                      tgtDir: File, genDir : File, smDir : File,
                      str : TaskStreams) : Set[File] = {
         val outDir = smDir / "sbt-rats"
@@ -138,10 +147,10 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
                     val genFile = genFiles.head
                     str.log.info ("Rats! generated %s".format (genFile))
                     val outFile = outDir / genFile.name
-                    if (useScalaLists) {
+                    if (flags.useScalaLists) {
                         str.log.info ("Rats! transforming %s for Scala into %s".format (
                                           genFile, outFile))
-                        transformForScala (genFile, outFile, useScalaLists)
+                        transformForScala (flags, genFile, outFile)
                         val supportFile = outDir / "ParserSupport.scala"
                         writeSupportFile (supportFile)
                         Set (outFile, supportFile)
@@ -174,7 +183,7 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
      * Transform the generated file into the output file as per the flag parameters.
      *  - useScalaLists: replace xtc pairs with Scala lists
      */
-    def transformForScala (genFile : File, outFile : File, useScalaLists : Boolean) {
+    def transformForScala (flags : Flags, genFile : File, outFile : File) {
 
         def transformPairsToLists (contents : String) : String = {
             val pairsToLists =
@@ -201,7 +210,7 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
 
         val contents = IO.read (genFile)
         val contents1 = 
-            if (useScalaLists)
+            if (flags.useScalaLists)
                 transformPairsToLists (contents)
             else
                 contents
