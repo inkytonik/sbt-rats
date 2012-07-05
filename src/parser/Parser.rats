@@ -247,6 +247,6 @@ transient void Spacing   = (Space / SLComment / MLComment)*;
 transient void FSpacing  = (Space / SLComment / MLComment)+;
 transient void Space     = ' ' / '\t' / '\f' / EOL;
 transient void SLComment = "//" (![\n\r] _)* EOL;
-transient void MLComment = "/*" ('*' !'/' / !'*' _)* "*/";
+transient void MLComment = "/*" (MLComment / !"*/" _)* "*/";
 transient void EOL       = '\r' '\n' / '\r' / '\n';
 transient void EOF       = !_;    
