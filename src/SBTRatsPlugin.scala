@@ -14,6 +14,7 @@ import xtc.parser.Rats
  */
 case class Flags (
     useScalaLists : Boolean,
+    useDefaultComments : Boolean,
     useDefaultLayout : Boolean,
     useDefaultWords : Boolean
 )
@@ -50,6 +51,15 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
 
     /**
      * If a syntax definition is being used, generate a default specification
+     * for comments.
+     */
+    val ratsUseDefaultComments = SettingKey[Boolean] (
+        "rats-use-default-comments",
+            "Use a default definition for comments (syntax mode only)"
+    )
+
+    /**
+     * If a syntax definition is being used, generate a default specification
      * for layout (i.e., whitespace and comment handling).
      */
     val ratsUseDefaultLayout = SettingKey[Boolean] (
@@ -68,16 +78,20 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
     )
 
     /**
+     * Aggregation of all flag settings.
+     */
+    val ratsFlags = SettingKey[Flags] (
+        "rats-flags", "All sbt-rats flags"
+    )
+
+    /**
      * Run the generators if any of the .rats or .syntax files in the source
      * have changed or the output doesn't exist.
      */
     def runGenerators =
-        (ratsMainModule, ratsUseScalaLists, ratsUseDefaultLayout, ratsUseDefaultWords,
-         scalaSource, target, sourceManaged in Compile, streams, cacheDirectory) map {
-            (main, useScalaLists, useDefaultLayout, useDefaultWords,
-             srcDir, tgtDir, smDir, str, cache) => {
-
-                val flags = new Flags (useScalaLists, useDefaultLayout, useDefaultWords)
+        (ratsFlags, ratsMainModule, scalaSource, target, sourceManaged in Compile,
+         streams, cacheDirectory) map {
+            (flags, main, srcDir, tgtDir, smDir, str, cache) => {
 
                 val cachedFun =
                     FileFunction.cached (cache / "sbt-rats", FilesInfo.lastModified,
@@ -288,7 +302,14 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
 
         ratsUseDefaultLayout := true,
 
-        ratsUseDefaultWords := true
+        ratsUseDefaultWords := true,
+
+        ratsUseDefaultComments := true,
+
+        ratsFlags <<= (ratsUseScalaLists, ratsUseDefaultComments, ratsUseDefaultLayout,
+                       ratsUseDefaultWords) { (lists, comments, layout, words) =>
+            Flags (lists, comments, layout, words)
+        }
 
     )
 

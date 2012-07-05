@@ -216,13 +216,22 @@ object Translator extends PrettyPrinter {
                 if (flags.useDefaultLayout)
                     """
                     |// Default layout specification
-                    |transient void Spacing   = (Space / SLComment / MLComment)*;
-                    |transient void FSpacing  = (Space / SLComment / MLComment)+;
+                    |transient void Spacing   = (Space / Comment)*;
+                    |transient void FSpacing  = (Space / Comment)+;
                     |transient void Space     = ' ' / '\t' / '\f' / EOL;
-                    |transient void SLComment = "//" (![\n\r] _)* EOL;
-                    |transient void MLComment = "/*" ('*' !'/' / !'*' _)* "*/";
                     |transient void EOL       = '\r' '\n' / '\r' / '\n';
                     |transient void EOF       = !_;    
+                    |""".stripMargin
+                else
+                    ""
+
+            val commentSpec = 
+                if (flags.useDefaultComments)
+                    """
+                    |// Default comment specification
+                    |transient void Comment   = SLComment / MLComment;
+                    |transient void SLComment = "//" (![\n\r] _)* EOL;
+                    |transient void MLComment = "/*" ('*' !'/' / !'*' _)* "*/";
                     |""".stripMargin
                 else
                     ""
@@ -245,6 +254,7 @@ object Translator extends PrettyPrinter {
                     ""
 
             string (layoutSpec) <@>
+            string (commentSpec) <@>
             string (wordsSpec)
 
         }
