@@ -14,7 +14,8 @@ import xtc.parser.Rats
  */
 case class Flags (
     useScalaLists : Boolean,
-    useDefaultLayout : Boolean
+    useDefaultLayout : Boolean,
+    useDefaultWords : Boolean
 )
 
 // FIXME: remove prettyprinter
@@ -57,16 +58,26 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
     )
 
     /**
+     * If a syntax definition is being used, generate a default specification
+     * for words (i.e., letter sequences, commonly used to match identifiers
+     * and the like).
+     */
+    val ratsUseDefaultWords = SettingKey[Boolean] (
+        "rats-use-default-words",
+            "Use a default definition for words (syntax mode only)"
+    )
+
+    /**
      * Run the generators if any of the .rats or .syntax files in the source
      * have changed or the output doesn't exist.
      */
     def runGenerators =
-        (ratsMainModule, ratsUseScalaLists, ratsUseDefaultLayout,
+        (ratsMainModule, ratsUseScalaLists, ratsUseDefaultLayout, ratsUseDefaultWords,
          scalaSource, target, sourceManaged in Compile, streams, cacheDirectory) map {
-            (main, useScalaLists, useDefaultLayout,
+            (main, useScalaLists, useDefaultLayout, useDefaultWords,
              srcDir, tgtDir, smDir, str, cache) => {
 
-                val flags = new Flags (useScalaLists, useDefaultLayout)
+                val flags = new Flags (useScalaLists, useDefaultLayout, useDefaultWords)
 
                 val cachedFun =
                     FileFunction.cached (cache / "sbt-rats", FilesInfo.lastModified,
@@ -275,7 +286,9 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
 
         ratsUseScalaLists := false,
 
-        ratsUseDefaultLayout := true
+        ratsUseDefaultLayout := true,
+
+        ratsUseDefaultWords := true
 
     )
 

@@ -214,7 +214,8 @@ object Translator extends PrettyPrinter {
 
             val layoutSpec = 
                 if (flags.useDefaultLayout)
-                    """// Default layout specification
+                    """
+                    |// Default layout specification
                     |transient void Spacing   = (Space / SLComment / MLComment)*;
                     |transient void FSpacing  = (Space / SLComment / MLComment)+;
                     |transient void Space     = ' ' / '\t' / '\f' / EOL;
@@ -226,8 +227,25 @@ object Translator extends PrettyPrinter {
                 else
                     ""
 
-            line <>
-            string (layoutSpec)
+            val wordsSpec =
+                if (flags.useDefaultWords)
+                    """
+                    |// Default word specification
+                    |String Word =
+                    |    WordCharacters Spacing;
+                    |
+                    |transient String WordCharacters =
+                    |    h:_ &{
+                    |        Character.isJavaIdentifierStart (h)
+                    |    } (t:_ &{
+                    |        Character.isJavaIdentifierPart (t)
+                    |    })*;
+                    |""".stripMargin
+                else
+                    ""
+
+            string (layoutSpec) <@>
+            string (wordsSpec)
 
         }
 
