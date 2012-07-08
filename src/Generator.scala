@@ -34,21 +34,28 @@ object Generator extends PrettyPrinter {
             ) <@>
             "}"
 
-        def toImports : Doc =
-            if (flags.useKiama)
-                line <>
-                "import org.kiama.attribution.Attributable" <>
-                line
+        def includeImportWhen (importEntity : String, cond : Boolean) : Doc =
+            if (cond)
+                "import" <+> importEntity <> line
             else
                 empty
 
-        def toSuperClass : Doc =
+        def toImports : Doc =
             line <>
-            "abstract class ASTNode" <+>
-            (if (flags.useKiama)
-                 "extends Attributable"
-             else
-                 empty)
+            includeImportWhen ("scala.util.parsing.input.Positional",
+                               flags.useScalaPositions) <>
+            includeImportWhen ("org.kiama.attribution.Attributable",
+                               flags.useKiama)
+
+        def toSuperClass : Doc = {
+            val superTraits = List (
+                if (flags.useScalaPositions) List ("Positional") else Nil,
+                if (flags.useKiama) List ("Attributable") else Nil
+            ).flatten
+
+            line <>
+            "abstract class ASTNode extends" <+> hsep (superTraits map text, " with")
+        }
 
         def toRuleClasses (rule : Rule) : Doc =
             rule match {
