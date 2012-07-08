@@ -65,6 +65,7 @@ object Analyser extends Environments {
      */
     def defenv : Environment =
         rootenv ("Comment" -> NonTerm ("String"),
+                 "Spacing" -> NonTerm ("void"),
                  "String" -> Type (),
                  "Word" -> NonTerm ("String"))
 
