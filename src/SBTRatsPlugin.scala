@@ -18,7 +18,8 @@ case class Flags (
     useDefaultComments : Boolean,
     useDefaultLayout : Boolean,
     useDefaultWords : Boolean,
-    defineASTClasses : Boolean
+    defineASTClasses : Boolean,
+    useKiama : Boolean
 )
 
 // FIXME: remove prettyprinter
@@ -101,6 +102,15 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
     val ratsDefineASTClasses = SettingKey[Boolean] (
         "rats-define-ast-classes",
             "Define Scala classes to represent abstract syntax trees (syntax mode only)"
+    )
+
+    /**
+     * Include support in generated components to make it easy to use them
+     * with Kiama.
+     */
+    val ratsUseKiama = SettingKey[Boolean] (
+        "rats-use-kiama",
+            "Add support for using Kiama with generated components"
     )
 
     /**
@@ -393,10 +403,13 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
 
         ratsDefineASTClasses := true,
 
+        ratsUseKiama := false,
+
         ratsFlags <<= (ratsUseScalaLists, ratsUseScalaPositions, ratsUseDefaultComments,
-                       ratsUseDefaultLayout, ratsUseDefaultWords, ratsDefineASTClasses) {
-            (lists, posns, comments, layout, words, ast) =>
-                Flags (lists, posns, comments, layout, words, ast)
+                       ratsUseDefaultLayout, ratsUseDefaultWords, ratsDefineASTClasses,
+                       ratsUseKiama) {
+            (lists, posns, comments, layout, words, ast, kiama) =>
+                Flags (lists, posns, comments, layout, words, ast, kiama)
         }
 
     )
