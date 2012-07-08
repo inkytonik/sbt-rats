@@ -3,18 +3,31 @@ module parser.Parser;
 header {
     import ast.*;
     import ast.SList.*;
+    import scala.collection.immutable.List;
+    import scala.collection.immutable.Nil$;
+    import scala.collection.immutable.$colon$colon;
+    import scala.util.parsing.input.Positional;
+    import scala.util.parsing.input.Position;
     import xtc.util.Action;
 }
 
 body {
     static {
         add (KEYWORDS, new String[] {
-            "comment", "end", "header", "rats"
+            "comment", "end", "header", "left", "rats", "right", "String"
         });
+    }
+
+    /** Set position of a Positional */
+    void setLocation(final Positional positional, final int index) {
+        if (null != positional) {
+            Column c = column(index);
+            positional.setPos(new LineColPosition(c.line, c.column));
+        }
     }
 }
 
-option setOfString (KEYWORDS);
+option setOfString (KEYWORDS), withLocation;
 
 public Grammar Grammar =
     p:PackageDecl h:HeaderSection? rs:Rule* EOF {
@@ -24,7 +37,7 @@ public Grammar Grammar =
 // Package declarations
 
 Pair<String> PackageDecl =
-    void:"module":Word QualIdentifier void:";":SSymbol;
+    void:"module":Word QualIdentifier void:";":Symbol;
 
 // Header section
 
@@ -40,30 +53,41 @@ transient String CodeBlockText =
 // Rules
 
 Rule Rule =
-      GrammarRule void:".":SSymbol
+      GrammarRule void:".":Symbol
     / RatsSection;
 
 // Grammar rules
 
 Rule GrammarRule =
-    l:Identifier t:Type? void:"=":SSymbol as:Alternatives {
-        yyValue = new GrammarRule (new NonTerminal (l), t, as, false);
+    i:IdnDef StringType void:"=":Symbol as:StringAlternatives {
+        yyValue = new StringRule (i, as);
+    } /
+    i:IdnDef t:Type? void:"=":Symbol as:ASTAlternatives {
+        yyValue = new ASTRule (i, t, as, false);
     };
 
 // Types
 
-String Type =
-    void:":":SSymbol Identifier;
+transient void StringType =
+    void:":":Symbol void:"String":Word;
+
+IdnUse Type =
+    void:":":Symbol IdnUse;
 
 // Alternatives
 
-Pair<Alternative> Alternatives =
-    h:Alternative tl:(void:"|":SSymbol Alternative)* {
+Pair<Element> StringAlternatives =
+    h:Element tl:(void:"|":Symbol Element)* {
         yyValue = SList.create (h, tl);
     };
 
-Alternative Alternative =
-    e:Element as:Annotations? {
+Pair<Alternative> ASTAlternatives =
+    h:ASTAlternative tl:(void:"|":Symbol ASTAlternative)* {
+        yyValue = SList.create (h, tl);
+    };
+
+Alternative ASTAlternative =
+    e:Element1 as:Annotations? {
         yyValue = new Alternative (e, as, new DefaultAction ());
     };
 
@@ -76,7 +100,7 @@ Element Element =
     Element1;
 
 constant Action<Element> AltTail =
-    void:"/":SSymbol right:Element {
+    void:"/":Symbol right:Element {
         yyValue = new Action<Element> () {
             public Element run (Element left) {
                 return new Alt (left, right);
@@ -84,63 +108,84 @@ constant Action<Element> AltTail =
         };
     };
 
-Element Element1 =
+ASTElement Element1 =
     seed:Element2 actions:SeqnTail+ {
         yyValue = apply (actions, seed);
     } /
     Element2;
 
-constant Action<Element> SeqnTail =
+constant Action<ASTElement> SeqnTail =
     right:Element2 {
-        yyValue = new Action<Element> () {
-            public Element run (Element left) {
+        yyValue = new Action<ASTElement> () {
+            public ASTElement run (ASTElement left) {
                 return new Seqn (left, right);
             }
         };
     };
 
-Element Element2 =
-    e:Primary void:"*":SSymbol {
+ASTElement Element2 =
+    e:Primary void:"*":Symbol {
         yyValue = new Rep (true, e);
     } /
-    e:Primary void:"+":SSymbol {
+    e:Primary void:"+":Symbol {
         yyValue = new Rep (false, e);
     } /
-    e:Primary void:"?":SSymbol {
+    e:Primary void:"?":Symbol {
         yyValue = new Opt (e);
     } /
     Primary;
 
-Element Primary =
-    void:"(":SSymbol Element void:")":SSymbol /
-    void:"!":SSymbol p:Primary {
+ASTElement Primary =
+    void:"(":Symbol Element void:")":Symbol /
+    void:"!":Symbol p:Primary {
         yyValue = new Not (p);
     } /
     Literal Spacing /
-    s:Identifier {
-        yyValue = new NonTerminal (s);
+    i:IdnUse {
+        yyValue = new NonTerminal (i);
     };
 
 // Annotations
 
-Pair<String> Annotations =
-    void:"{":SSymbol AnnotationList void:"}":SSymbol;
+Pair<Annotation> Annotations =
+    void:"{":Symbol AnnotationList void:"}":Symbol;
 
-Pair<String> AnnotationList =
-    h:Annotation tl:(void:",":SSymbol Annotation)* {
+Pair<Annotation> AnnotationList =
+    h:Annotation tl:(void:",":Symbol Annotation)* {
         yyValue = SList.create (h, tl);
     };
 
-String Annotation =
-    Identifier /
-    MethodAnnotation /
-    DecDigits;
+Annotation Annotation =
+    Associativity /
+    Constructor /
+    Transformation /
+    Precedence;
 
-String MethodAnnotation =
-    DecDigits ":" [a-zA-Z.]+;
+Annotation Associativity =
+    void:"left":Word {
+        yyValue = new Associativity (true);
+    } /
+    void:"right":Word {
+        yyValue = new Associativity (false);
+    };
 
-String DecDigits =    
-    DecDigit+;
+Annotation Constructor =
+    i:Identifier {
+        yyValue = new Constructor (i);
+    };
+
+Annotation Transformation =
+    d:DecDigits void:":":Symbol m:QualIdentifier void:":":Symbol t:QualIdentifier {
+        yyValue = new Transformation (Integer.parseInt (d), m, t);
+    };
+
+Annotation Precedence =    
+    d:DecDigits {
+        yyValue = new Precedence (Integer.parseInt (d));
+    };
+
+String DecDigits =
+    [0-9]+;
 
 // Rats! code section
 
@@ -151,8 +196,18 @@ RatsSection RatsSection =
 
 // Identifiers
 
+IdnUse IdnUse =
+    i:Identifier {
+        yyValue = new IdnUse (i);
+    };
+
+IdnDef IdnDef =
+    i:Identifier {
+        yyValue = new IdnDef (i);
+    };
+
 Pair<String> QualIdentifier =
-    h:Identifier tl:(void:".":SSymbol Identifier)* {
+    h:Identifier tl:(void:".":Symbol Identifier)* {
         yyValue = SList.create (h, tl);
     };
 
@@ -228,10 +283,10 @@ transient String WordCharacters =
 
 // Syntax symbols
 
-String SSymbol =
-    SSymbolCharacters Spacing;
+String Symbol =
+    SymbolCharacters Spacing;
 
-transient String SSymbolCharacters =
+transient String SymbolCharacters =
     ":" / "=" / "/" / "|" / "{" / "}" / "(" / ")" / "!" / "." / "," /
     "*" / "+" / "?" / ";";
 

@@ -3,15 +3,23 @@ import org.kiama.output.PrettyPrinter
 object Translator extends PrettyPrinter {
     
     import ast._
-    import Analyser.partitionLiterals
-    import org.kiama.attribution.Attribution.initTree
+    import sbt.File
+    import sbt.IO.write
 
-    def translate (flags : Flags, grammar : Grammar) : String = {
+    def translate (flags : Flags, genFile : File, grammar : Grammar) = {
 
-        def toRats (grammar : Grammar) : Doc = {
+        import Analyser.partitionLiterals
+        import org.kiama.attribution.Attribution.initTree
+
+        // Count of non-terminals on the RHS of an alternative
+        // FIXME: remove or hide better
+        var ntcount = 0
+
+        def toRats : Doc = {
             val (keywords, symbols) = partitionLiterals (grammar)
             "module" <+> grammar.pkg.mkString (".") <> semi <@>
             toHeader (grammar.header, keywords) <@>
+            toOptions <@>
             toSymbols (symbols) <@>
             toRules (grammar.rules) <@>
             toDefaults
@@ -28,9 +36,7 @@ object Translator extends PrettyPrinter {
                 toBraceSection ("static",
                     group (toKeywords (keywords))
                 )
-            ) <@>
-            line <>
-            "option setOfString (KEYWORDS);"
+            ) 
 
         def toBraceSection (keyword : String, contents : Doc, prefix : Doc = empty) : Doc =
             keyword <+> braces (prefix <> nest (line <> contents) <> line)
@@ -41,6 +47,18 @@ object Translator extends PrettyPrinter {
                     fillsep (keywords.toSeq.sorted map (s => dquotes (text (s))), comma)
                 )
             ) <> semi
+
+        def toOptions : Doc = {
+            val options =
+                "setOfString (KEYWORDS)" ::
+                    (if (flags.useScalaPositions)
+                         List ("withLocation")
+                     else
+                         Nil)
+
+            line <>
+            "option" <+> hsep (options map text, comma) <> semi
+        }
 
         def toSymbols (symbols : Set[String]) : Doc = {
 
@@ -67,87 +85,92 @@ object Translator extends PrettyPrinter {
 
         def toRule (rule : Rule) =
             rule match {
-                case g : GrammarRule   => toGrammarRule (g)
-                case RatsSection (c)   => string (c.mkString)
+                case r : ASTRule     => toASTRule (r)
+                case r : StringRule  => toStringRule (r)
+                case RatsSection (c) => string (c.mkString)
             }
 
-        def toGrammarRule (grammarRule : GrammarRule) : Doc = {
+        def toRHS (elem : Element, isASTRule : Boolean = false) : Doc = {
 
-            val GrammarRule (lhs, declType, alts, isConst) = grammarRule
+            def bind (doc : Doc) : Doc =
+                if (isASTRule) {
+                    ntcount = ntcount + 1
+                    "v" <> value (ntcount) <> colon <> doc
+                } else
+                    doc
 
-            val tipe = if (declType == null) lhs.s else declType
+            def toLiteral (s : String) : Doc = {
+                val prefix : Doc = if (isASTRule) "void" <> colon else ""
+                val form = if (s.forall (_.isLetter)) "Word" else "Symbol"
+                val suffix = if (isASTRule) colon <> form else empty
+                prefix <> dquotes (s) <> suffix
+            }
 
-            var ntcount = 0
+            elem match {
+
+                case NonTerminal (IdnUse (i))  => bind (i)
+
+                case Not (elem)         => "!" <> parens (toRHS (elem))
+                case Opt (elem)         => bind (parens (toRHS (elem)) <> "?")
+                case Rep (zero, elem)   => bind (parens (toRHS (elem)) <> (if (zero) "*" else "+"))
+
+                case Alt (left, right)  => parens (toRHS (left) <> "/" <> toRHS (right))
+                case Seqn (left, right) => toRHS (left, isASTRule) <+> toRHS (right, isASTRule)
+
+                case CharLit (str)      => toLiteral (str)
+                case StringLit (str)    => toLiteral (str)
+
+                case CharClass (str)    => brackets (str)
+
+                case Epsilon ()         => "/* empty */"
+                case Wildcard ()        => "_"
+
+            }
+
+        }
+
+        def toASTRule (astRule : ASTRule) : Doc = {
+
+            val ASTRule (lhs, declType, alts, isConst) = astRule
+
+            val typeName = if (declType == null) lhs.name else declType.name
 
             def toAlternative (a : Alternative) : Doc = {
                 ntcount = 0
                 toRHS (a.rhs, true) <+> toAction (a)
             }
 
-            def toLiteral (s : String) : Doc = {
-                val prefix : Doc = if (tipe == "String") "" else ("void" <> colon)
-                val form = if (s.forall (_.isLetter)) "Word" else "Symbol"
-                val suffix = if (tipe == "String") empty else colon <> form
-                prefix <> dquotes (s) <> suffix
-            }
-
-            def bind (doc : Doc, cond : Boolean) : Doc =
-                if (cond) {
-                    ntcount = ntcount + 1
-                    "v" <> value (ntcount) <> colon <> doc
-                } else
-                    doc
-
-            def toRHS (elem : Element, addBindings : Boolean = false) : Doc =
-                elem match {
-
-                    case NonTerminal (str)  => bind (str, (tipe != "String") && addBindings)
-
-                    case Not (elem)         => "!" <> parens (toRHS (elem))
-                    case Opt (elem)         => bind (parens (toRHS (elem)) <> "?",
-                                                     addBindings)
-                    case Rep (zero, elem)   => bind (parens (toRHS (elem)) <> (if (zero) "*" else "+"),
-                                                     addBindings)
-
-                    case Alt (left, right)  => parens (toRHS (left) <> "/" <> toRHS (right))
-                    case Seqn (left, right) => toRHS (left, addBindings) <+> toRHS (right, addBindings)
-
-                    case CharLit (str)      => toLiteral (str)
-                    case StringLit (str)    => toLiteral (str)
-
-                    case CharClass (str)    => brackets (str)
-
-                    case Epsilon ()         => "/* empty */"
-                    case Wildcard ()        => "_"
-
-                }
-
             def toAction (alt : Alternative) : Doc = {
 
-                val constr =
-                    alt.anns match {
-                        case con :: _ => con
-                        case _        => tipe
-                    }
+                // FIXME: repeated elsewhere
+                val constr : String =
+                    if (alt.anns == null)
+                        typeName
+                    else
+                        alt.anns.collect {
+                            case Constructor (name) =>
+                                name
+                        } match {
+                            case name :: _ => name
+                            case _         => typeName
+                        }
 
                 /**
                  * Does the annotation list for this alternative contain an annotation
                  * of the form n:m? If so, return Some (m), otherwise return None.
                  * If there are multiple such annotations, the first one is used.
                  */
-                def hasNAnnotation (n : Int) : Option[String] =
+                def transformer (n : Int) : Option[String] =
                     if (alt.anns == null)
                         None
-                    else {
-                        val nString = n.toString + ":"
-                        alt.anns.foldLeft (None : Option[String]) {
-                            case (o, ann) =>
-                                if (ann.startsWith (nString))
-                                    Some (ann.drop (nString.length))
-                                else
-                                    o
+                    else
+                        alt.anns.collect {
+                            case Transformation (m, method, _) if n == m =>
+                                method
+                        } match {
+                            case method :: _ => Some (method.mkString ("."))
+                            case _           => None
                         }
-                    }
 
                 // The arguments are v1 .. vn. Normally these are passed straight through
                 // to the constructor. However, if there is an annotation of the form 
@@ -157,7 +180,7 @@ object Translator extends PrettyPrinter {
                     (1 to ntcount).map {
                         case n =>
                             val argName = "v" <> value (n)
-                            (hasNAnnotation (n) match {
+                            (transformer (n) match {
                                 case Some (method) =>
                                     method <+> parens (argName)
                                 case None =>
@@ -168,10 +191,9 @@ object Translator extends PrettyPrinter {
                 // Pretty-printed argument list for constructor
                 val args = hsep (argList, comma)
 
-                // No action at all if a) the type is String, b) the alternative is tagged as
-                // requiring no action, or c) it's a transfer rule among other rules.
-                if ((tipe == "String") || (alt.action == NoAction ()) ||
-                        ((alt.anns == null) && (alts.length > 1)))
+                // No action at all if a) the alternative is tagged as requiring no action,
+                // or b) it's a transfer alternative among other alternative.
+                if ((alt.action == NoAction ()) || ((alt.anns == null) && (alts.length > 1)))
                     empty
                 else
                     braces (nest (line <>
@@ -184,9 +206,9 @@ object Translator extends PrettyPrinter {
                                 case NoAction () =>
                                     // Not reachable
                                     empty
-                                case TailAction (tipe, constr) =>
-                                    toBraceSection ("new Action<" + tipe + "> ()",
-                                        toBraceSection ("public " + tipe + " run (" + tipe + " left)",
+                                case TailAction (typeName, constr) =>
+                                    toBraceSection ("new Action<" + typeName + "> ()",
+                                        toBraceSection ("public " + typeName + " run (" + typeName + " left)",
                                             "return new" <+> constr <+> "(left, v1);"
                                         ) <> semi
                                     )
@@ -197,7 +219,23 @@ object Translator extends PrettyPrinter {
 
             line <>
             (if (isConst) "constant " else empty) <>
-            "public" <+> tipe <+> lhs.s <+> equal <>
+            "public" <+> typeName <+> lhs.name <+> equal <>
+            nest (
+                line <>
+                lsep2 (alts map toAlternative, "/") <> semi
+            )
+
+        }
+
+        def toStringRule (stringRule : StringRule) : Doc = {
+
+            val StringRule (lhs, alts) = stringRule
+
+            def toAlternative (e : Element) : Doc =
+                toRHS (e, false)
+
+            line <>
+            "public" <+> "String" <+> lhs.name <+> equal <>
             nest (
                 line <>
                 lsep2 (alts map toAlternative, "/") <> semi
@@ -263,7 +301,10 @@ object Translator extends PrettyPrinter {
 
         // Convert grammar to a pretty printer document representing the translated
         // Rats! specification
-        pretty (toRats (grammar))
+        val code = pretty (toRats)
+
+        // Put the code in the specified file
+        write (genFile, code)
 
     }
 

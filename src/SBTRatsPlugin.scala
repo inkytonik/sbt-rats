@@ -14,19 +14,26 @@ import xtc.parser.Rats
  */
 case class Flags (
     useScalaLists : Boolean,
+    useScalaPositions : Boolean,
     useDefaultComments : Boolean,
     useDefaultLayout : Boolean,
-    useDefaultWords : Boolean
+    useDefaultWords : Boolean,
+    defineASTClasses : Boolean
 )
 
 // FIXME: remove prettyprinter
 
 object SBTRatsPlugin extends Plugin with PrettyPrinter {
 
+    import Analyser.check
     import ast.Grammar
     import Desugarer.desugar
+    import Generator.{generateASTClasses, generateSupportFile}
     import parser.Parser
+    import org.kiama.attribution.Attribution.initTree
     import org.kiama.util.IO.filereader
+    import org.kiama.util.Messaging.{messagecount, resetmessages, sortedmessages}
+    import scala.collection.mutable.ListBuffer
     import scala.util.matching.Regex
     import Translator.translate
 
@@ -47,6 +54,16 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
     val ratsUseScalaLists = SettingKey[Boolean] (
         "rats-use-scala-lists",
             "Use Scala lists instead of Rats! pair-based lists"
+    )
+
+    /**
+     * Set the locations of Scala Positional semantic values instead of 
+     * Rats! locations. Requires the Rats! option `withLocation` to have
+     * any effect.
+     */
+    val ratsUseScalaPositions = SettingKey[Boolean] (
+        "rats-use-scala-positions",
+            "Set the position of any Positional semantic values (requires withLocation option)"
     )
 
     /**
@@ -75,6 +92,15 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
     val ratsUseDefaultWords = SettingKey[Boolean] (
         "rats-use-default-words",
             "Use a default definition for words (syntax mode only)"
+    )
+
+    /**
+     * If a syntax definition is being used, generate definitions for 
+     * compatible abstract syntax trees as Scala case classes.
+     */
+    val ratsDefineASTClasses = SettingKey[Boolean] (
+        "rats-define-ast-classes",
+            "Define Scala classes to represent abstract syntax trees (syntax mode only)"
     )
 
     /**
@@ -116,12 +142,15 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
                            str : TaskStreams) : Set[File] = {
         val genDir = tgtDir / "sbt-rats"
         IO.createDirectory (genDir)
+        val outDir = smDir / "sbt-rats"
+        IO.createDirectory (outDir)
         if (main.ext == "rats")
-            runRatsImpl (flags, main, tgtDir, genDir, smDir, str)
+            runRatsImpl (flags, main, genDir, outDir, str)
         else {
-            runSyntaxImpl (flags, main, genDir, str) match {
-                case Some (ratsMain) =>
-                    runRatsImpl (flags, ratsMain, tgtDir, genDir, smDir, str)
+            runSyntaxImpl (flags, main, genDir, outDir, str) match {
+                case Some ((ratsMain, otherFiles)) =>
+                    runRatsImpl (flags, ratsMain, genDir, outDir, str) ++
+                        otherFiles
                 case _ =>
                     Set.empty
             }
@@ -130,40 +159,76 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
 
     /**
      * Convert a syntax definition into Rats! file and other supporting Scala
-     * sources.
+     * sources. Returns None if something went wrong, otherwise returns a 
+     * pair of the generated Rats! specification file and a list of other
+     * files that were generated.
      */
-    def runSyntaxImpl (flags : Flags, main : File, genDir : File,
-                       str : TaskStreams) : Option[File] = {
-        str.log.info ("Running Syntax generation on %s, output to %s".format (
-                          main, genDir))
+    def runSyntaxImpl (flags : Flags, main : File, genDir : File, outDir : File,
+                       str : TaskStreams) : Option[(File,List[File])] = {
+        str.log.info ("Running Syntax generation on %s, output to %s and %s".format (
+                          main, genDir, outDir))
         val filename = main.absolutePath
         val reader = filereader (filename)
         val p = new Parser (reader, filename)
         val pr = p.pGrammar (0)
         if (pr.hasValue) {
+
+            // The abstract syntax tree (AST) representing the syntax
             val grammar = p.value (pr).asInstanceOf[Grammar]
-            val desugaredGrammar = desugar (grammar)
-            str.log.info (pretty_any (desugaredGrammar))
-            val ratsCode = translate (flags, desugaredGrammar)
-            val name = grammar.pkg.last
-            val genFile = genDir / (name + ".rats")
-            IO.write (genFile, ratsCode)
-            Some (genFile)
+
+            // Check AST for semantic errors
+            initTree (grammar)
+            resetmessages
+            check (grammar)
+
+            if (messagecount == 0) {
+
+                // No errors, go on to desugaring, translation and generation
+                val desugaredGrammar = desugar (grammar)
+
+                // Generate the Rats! specification
+                val name = grammar.pkg.last
+                val genFile = genDir / (name + ".rats")
+                str.log.info ("Syntax generating Rats! file %s".format (genFile))
+                translate (flags, genFile, desugaredGrammar)
+
+                // Buffer of extra generated files
+                val extraFiles = ListBuffer[File] ()
+
+                // If requested, generate the AST classes
+                if (flags.defineASTClasses) {
+                    val astFile = outDir / "Syntax.scala"
+                    str.log.info ("Syntax generating AST classes %s".format (astFile))
+                    generateASTClasses (flags, astFile, grammar)
+                    extraFiles.append (astFile)
+                }
+
+                Some ((genFile, extraFiles.result ()))
+
+            } else {
+
+                // str.log.error ("Syntax semantic analysis of %s failed".format (main))
+                for (record <- sortedmessages)
+                    str.log.error (record.toString)
+                sys.error ("Syntax semantic analysis of %s failed".format (filename))
+                None
+
+            }
+
         } else {
-            str.log.info ("Parsing Syntax %s failed".format (main))
+
+            str.log.info ("Syntax parsing %s failed".format (main))
             sys.error (p.format (pr.parseError))
             None
+
         }
     }
 
     /**
      * Run Rats! on the `main` file.
      */
-    def runRatsImpl (flags : Flags, main : File,
-                     tgtDir: File, genDir : File, smDir : File,
+    def runRatsImpl (flags : Flags, main : File, genDir : File, outDir : File,
                      str : TaskStreams) : Set[File] = {
-        val outDir = smDir / "sbt-rats"
-        IO.createDirectory (outDir)
         val mainPath = main.absolutePath
         val mainDir = main.getParentFile
         str.log.info ("Running Rats! on %s, output to %s".format (mainPath, genDir))
@@ -173,30 +238,45 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
                          "-out", genDir.absolutePath,
                          mainPath))
         if (rats.getRuntime.seenError) {
+
             sys.error ("Rats! failed")
             Set.empty
+
         } else {
             val genFiles = (genDir ** "*.java").get.toSet
             genFiles.size match {
+
                 case 1 =>
                     val genFile = genFiles.head
                     str.log.info ("Rats! generated %s".format (genFile))
+
                     val outFile = outDir / genFile.name
+
                     if (flags.useScalaLists) {
+
                         str.log.info ("Rats! transforming %s for Scala into %s".format (
                                           genFile, outFile))
                         transformForScala (flags, genFile, outFile)
+
                         val supportFile = outDir / "ParserSupport.scala"
-                        writeSupportFile (supportFile)
+                        str.log.info ("Rats! generating Scala support file %s".format (
+                                          supportFile))
+                        generateSupportFile (flags, supportFile)
+
                         Set (outFile, supportFile)
+
                     } else {
+
                         str.log.info ("Rats! copying %s to %s".format (genFile, outFile))
                         IO.copyFile (genFile, outFile, true)
                         Set (outFile)
+
                     }
+
                 case 0 =>
                     sys.error ("Rats! didn't generate any files")
                     Set.empty
+
                 case _ =>
                     sys.error ("Rats! generated more than one file: %s".format (
                                     genFiles.mkString (" ")))
@@ -217,6 +297,7 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
     /**
      * Transform the generated file into the output file as per the flag parameters.
      *  - useScalaLists: replace xtc pairs with Scala lists
+     *  - useScalaPositions: replace Rats! location code, gen LineColPosition class
      */
     def transformForScala (flags : Flags, genFile : File, outFile : File) {
 
@@ -242,45 +323,47 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
                 )
             makeReplacements (contents, pairsToLists)
         }
+        def transformPositions (contents : String) : String = {
+            val locatablesToPositions =
+                List (
+                    """import xtc\.tree\.Locatable;""".r ->
+                        """import scala.util.parsing.input.Positional;
+                          |import scala.util.parsing.input.Position;
+                          |import sbtrats.LineColPosition;""".stripMargin,
+                    """Locatable""".r ->
+                        """Positional""",
+                    """public final class (\w+) extends ParserBase \{""".r ->
+                        """
+                        |public final class $1 extends ParserBase {
+                        |
+                        |  /** Set position of a Positional */
+                        |  void setLocation(final Positional positional, final int index) {
+                        |    if (null != positional) {
+                        |      Column c = column(index);
+                        |      positional.setPos(new LineColPosition(c.line, c.column));
+                        |    }
+                        |  }
+                        |""".stripMargin
+                )
+
+            makeReplacements (contents, locatablesToPositions)
+        }
 
         val contents = IO.read (genFile)
+
         val contents1 = 
             if (flags.useScalaLists)
                 transformPairsToLists (contents)
             else
                 contents
-        IO.write (outFile, contents1)                
 
-    }
+        val contents2  =
+            if (flags.useScalaPositions) {
+                transformPositions (contents1)
+            } else
+                contents1
 
-    /**
-     * Write module of supporting code for Scala-based parsers.
-     */
-    def writeSupportFile (supportFile : File) {
-
-        val contents = """
-            |// AUTOMATICALLY GENERATED by sbt-rats - EDIT AT YOUR OWN RISK
-            |
-            |package sbtrats
-            |
-            |trait Action[T] {
-            |    def run (arg : T) : T
-            |}
-            |
-            |object ParserSupport {
-            |
-            |    def apply[T] (actions : List[Action[T]], seed : T) : T = {
-            |        var result = seed
-            |        for (action <- actions) {
-            |            result = action.run (result)
-            |        }
-            |        result
-            |    }
-            |
-            |}
-            |""".stripMargin
-
-        IO.write (supportFile, contents)        
+        IO.write (outFile, contents2)
 
     }
 
@@ -300,15 +383,20 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
 
         ratsUseScalaLists := false,
 
+        ratsUseScalaPositions := false,
+
         ratsUseDefaultLayout := true,
 
         ratsUseDefaultWords := true,
 
         ratsUseDefaultComments := true,
 
-        ratsFlags <<= (ratsUseScalaLists, ratsUseDefaultComments, ratsUseDefaultLayout,
-                       ratsUseDefaultWords) { (lists, comments, layout, words) =>
-            Flags (lists, comments, layout, words)
+        ratsDefineASTClasses := true,
+
+        ratsFlags <<= (ratsUseScalaLists, ratsUseScalaPositions, ratsUseDefaultComments,
+                       ratsUseDefaultLayout, ratsUseDefaultWords, ratsDefineASTClasses) {
+            (lists, posns, comments, layout, words, ast) =>
+                Flags (lists, posns, comments, layout, words, ast)
         }
 
     )
