@@ -15,6 +15,7 @@ import xtc.parser.Rats
 case class Flags (
     useScalaLists : Boolean,
     useScalaPositions : Boolean,
+    useScalaOptions : Boolean,
     useDefaultComments : Boolean,
     useDefaultLayout : Boolean,
     useDefaultWords : Boolean,
@@ -54,7 +55,17 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
      */
     val ratsUseScalaLists = SettingKey[Boolean] (
         "rats-use-scala-lists",
-            "Use Scala lists instead of Rats! pair-based lists"
+            "Use Scala lists instead of Rats! pair-based lists for repetitions"
+    )
+
+    /**
+     * If true, assume that the Rats!-generated parser is to be used with
+     * Scala and use Scala lists for repeated constructs. Otherwise, use
+     * the default Rats! pair-based lists.
+     */
+    val ratsUseScalaOptions = SettingKey[Boolean] (
+        "rats-use-scala-options",
+            "Use Scala options instead of Rats!-style possibly-nullable fields for options"
     )
 
     /**
@@ -333,6 +344,25 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
                 )
             makeReplacements (contents, pairsToLists)
         }
+
+        def transformNullablesToOptions (contents : String) : String = {
+            val nullablesToOptions =
+                List (
+                    """import xtc\.util\.Pair;""".r ->
+                        """import xtc.util.Pair;
+                          |import scala.Option;""".stripMargin,
+                    """(\s+)(\w+)\s+(yyOpValue[0-9]+);""".r ->
+                        """$1Option<$2> $3;""",
+                    """(yyOpValue[0-9]+) = (v[^;]+);""".r ->
+                        """$1 = Option.apply ($2);""",
+                    """(yyOpValue[0-9]+) = null;""".r ->
+                        """$1 = Option.empty();""",
+                    """(\w+) (v[0-9]+) = (yyOpValue[0-9]+);""".r ->
+                        """Option<$1> $2 = $3;"""
+                )
+            makeReplacements (contents, nullablesToOptions)
+        }
+
         def transformPositions (contents : String) : String = {
             val locatablesToPositions =
                 List (
@@ -355,7 +385,6 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
                         |  }
                         |""".stripMargin
                 )
-
             makeReplacements (contents, locatablesToPositions)
         }
 
@@ -367,13 +396,19 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
             else
                 contents
 
-        val contents2  =
-            if (flags.useScalaPositions) {
-                transformPositions (contents1)
-            } else
+        val contents2 = 
+            if (flags.useScalaOptions)
+                transformNullablesToOptions (contents1)
+            else
                 contents1
 
-        IO.write (outFile, contents2)
+        val contents3 =
+            if (flags.useScalaPositions) {
+                transformPositions (contents2)
+            } else
+                contents2
+
+        IO.write (outFile, contents3)
 
     }
 
@@ -395,6 +430,8 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
 
         ratsUseScalaPositions := false,
 
+        ratsUseScalaOptions := false,
+
         ratsUseDefaultLayout := true,
 
         ratsUseDefaultWords := true,
@@ -405,11 +442,11 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
 
         ratsUseKiama := false,
 
-        ratsFlags <<= (ratsUseScalaLists, ratsUseScalaPositions, ratsUseDefaultComments,
-                       ratsUseDefaultLayout, ratsUseDefaultWords, ratsDefineASTClasses,
-                       ratsUseKiama) {
-            (lists, posns, comments, layout, words, ast, kiama) =>
-                Flags (lists, posns, comments, layout, words, ast, kiama)
+        ratsFlags <<= (ratsUseScalaLists, ratsUseScalaPositions, ratsUseScalaPositions,
+                       ratsUseDefaultComments, ratsUseDefaultLayout, ratsUseDefaultWords,
+                       ratsDefineASTClasses, ratsUseKiama) {
+            (lists, options, posns, comments, layout, words, ast, kiama) =>
+                Flags (lists, options, posns, comments, layout, words, ast, kiama)
         }
 
     )

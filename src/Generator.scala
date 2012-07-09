@@ -146,8 +146,13 @@ object Generator extends PrettyPrinter {
                             traverseRHS (r)
                         case NonTerminal (IdnUse (name)) =>
                             addField (nameToFieldName ("", name, ""), elem)
-                        case Opt (NonTerminal (IdnUse (name))) =>
-                            addField (nameToFieldName ("opt", name, ""), elem)
+                        case Opt (innerElem @ NonTerminal (IdnUse (name))) =>
+                            val optElem =
+                                if (flags.useScalaOptions)
+                                    elem
+                                else
+                                    innerElem
+                            addField (nameToFieldName ("opt", name, ""), optElem)
                         case Rep (zero, NonTerminal (IdnUse (name))) =>
                             addField (nameToFieldName (if (zero) "opt" else "", name, "s"), elem)
                         case _ =>
