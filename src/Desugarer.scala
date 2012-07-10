@@ -1,7 +1,7 @@
 object Desugarer {
 
-    import Analyser.{actionTypeName, constr, first, init, isLeftAssociative,
-        isLeftRecursive, lhs, precedence, tail, typeName}
+    import Analyser.{actionTypeName, constr, isLeftAssociative, isLeftRecursive, lhs,
+        precedence, typeName}
     import ast._
     import org.kiama.rewriting.Rewriter.{alltd, rewrite, rule}
     import scala.collection.mutable.ListBuffer
@@ -151,7 +151,7 @@ object Desugarer {
             // The iteration seed rule has the the form: nt = prevnt tailnt*
             // We only need it if there are left associative alternatives
             if (! leftAssocAlts.isEmpty)
-                baseAlts.append (Alternative (Seqn (prevnt, Rep (true, tailnt)),
+                baseAlts.append (Alternative (List (prevnt, Rep (true, tailnt)),
                                               Nil,
                                               ApplyAction ()))
 
@@ -159,12 +159,9 @@ object Desugarer {
             // the recursive case to the next level
             val recurseAlts =
                 rightAssocAlts.map {
-                    case Alternative (rhs : Seqn, anns, _) =>
-                        val newInitRHS = rewrite (replaceIdns (astRule.idndef.name, prevntname)) (rhs->init)
-                        val newRHS = Seqn (newInitRHS, nt)
-                        Alternative (newRHS, anns, DefaultAction ())
-                    case _ =>
-                        sys.error ("non-Seqn tail alternative rightAssocAlt found in makeIterativeRules")
+                    case Alternative (rhs, anns, _) =>
+                        val newInitRHS = rewrite (replaceIdns (astRule.idndef.name, prevntname)) (rhs.init)
+                        Alternative (newInitRHS :+ nt, anns, DefaultAction ())
                 }
             baseAlts.appendAll (recurseAlts)
 
@@ -172,7 +169,7 @@ object Desugarer {
             // we also need a fall-through alternative to get us to the next precedence level.
             // If there are left associative alternatives the seed rule takes care of this.
             if (leftAssocAlts.isEmpty && (! rightAssocAlts.isEmpty))
-                baseAlts.append (Alternative (prevnt, Nil, NoAction ()))
+                baseAlts.append (Alternative (List (prevnt), Nil, NoAction ()))
 
             // Define the base rule using the base alternatives
             rules.append (ASTRule (IdnDef (ntname), IdnUse (astRule->typeName), baseAlts.result ()))
@@ -184,11 +181,9 @@ object Desugarer {
                 // that defines the tail of the iteration. We ignore any old action.
                 val tailAlts =
                     leftAssocAlts.map {
-                        case alt @ Alternative (rhs : Seqn, _, _) =>
-                            val newRHS = rewrite (replaceIdns (astRule.idndef.name, prevntname)) (rhs->tail)
+                        case alt @ Alternative (rhs, _, _) =>
+                            val newRHS = rewrite (replaceIdns (astRule.idndef.name, prevntname)) (rhs.tail)
                             Alternative (newRHS, Nil, TailAction (astRule->typeName, alt->constr))
-                        case _ =>
-                            sys.error ("non-Seqn tail alternative leftAssocAlt found in makeIterativeRules")
                     }
 
                 // Define the tail rule
@@ -239,7 +234,7 @@ object Desugarer {
             // The head rule connects the original non-terminal to the precedence chain
             val headRule =
                 ASTRule (astRule.idndef, IdnUse (astRule->typeName),
-                         List (Alternative (topnt, null, NoAction ())))
+                         List (Alternative (List (topnt), null, NoAction ())))
 
             (newr, List (headRule) ++: precRules)
 

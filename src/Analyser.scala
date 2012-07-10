@@ -185,45 +185,6 @@ object Analyser extends Environments {
     // Properties
 
     /**
-     * The first element in a sequence of elements, or the element 
-     * itself if it's not a sequence.
-     */
-    lazy val first : Element => Element =
-        attr {
-            case Seqn (l, _) => l->first
-            case e           => e
-        }
-
-    /**
-     * The elements of a sequence except the last.
-     */
-    lazy val init : Seqn => ASTElement =
-        attr {
-            case Seqn (l, r) => l
-        }
-
-    /**
-     * The elements of a sequence except the first.
-     */
-    lazy val tail : Seqn => ASTElement =
-        attr {
-            case Seqn (l : Seqn, r) => Seqn (l->tail, r)
-            case Seqn (l, r)        => r
-        }
-
-    /**
-     * The top-level elements in a element sequence as a list.
-     * FIXME: best way to do this?
-     */
-    lazy val elements : Element => List[Element] =
-        attr {
-            case Seqn (l, r) =>
-                elements (l) ++ elements (r)
-            case e =>
-                List (e)
-        }
-
-    /**
      * The name of the type that represents values of a particular rule.
      * Either given explicitly, or if implicit, the same as the LHS of 
      * the rule. Also works on 
@@ -298,7 +259,7 @@ object Analyser extends Environments {
     lazy val isLeftRecursive : Alternative => Boolean =
         attr {
             case alt =>
-                (alt.rhs)->first == NonTerminal (IdnUse (alt->astrule->lhs))
+                alt.rhs.head == NonTerminal (IdnUse (alt->astrule->lhs))
         }
 
     /**
@@ -308,7 +269,7 @@ object Analyser extends Environments {
     lazy val isRecursive : Alternative => Boolean =
         attr {
             case alt =>
-                ((alt.rhs)->elements contains NonTerminal (IdnUse (alt->astrule->lhs))) 
+                alt.rhs contains NonTerminal (IdnUse (alt->astrule->lhs))
         }
 
     /**
@@ -503,7 +464,7 @@ object Analyser extends Environments {
         attr {
             case alt =>
                 val lhsnt = alt->astrule->lhs
-                ((alt.rhs)->elements) match {
+                alt.rhs match {
 
                     case List (elem @ NonTermIdn (nt), Literal (op)) if nt == lhsnt =>
                         Some ((1, op, alt->precedence, Postfix, elem->fieldName, ""))

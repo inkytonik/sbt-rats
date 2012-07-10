@@ -87,8 +87,8 @@ Pair<Alternative> ASTAlternatives =
     };
 
 Alternative ASTAlternative =
-    e:Element1 as:Annotations? {
-        yyValue = new Alternative (e, as, new DefaultAction ());
+    es:ASTElement+ as:Annotations? {
+        yyValue = new Alternative (es, as, new DefaultAction ());
     };
 
 // Elements
@@ -108,22 +108,22 @@ constant Action<Element> AltTail =
         };
     };
 
-ASTElement Element1 =
+Element Element1 =
     seed:Element2 actions:SeqnTail+ {
         yyValue = apply (actions, seed);
     } /
     Element2;
 
-constant Action<ASTElement> SeqnTail =
+constant Action<Element> SeqnTail =
     right:Element2 {
-        yyValue = new Action<ASTElement> () {
-            public ASTElement run (ASTElement left) {
+        yyValue = new Action<Element> () {
+            public Element run (Element left) {
                 return new Seqn (left, right);
             }
         };
     };
 
-ASTElement Element2 =
+Element Element2 =
     e:Primary void:"*":Symbol {
         yyValue = new Rep (true, e);
     } /
@@ -135,12 +135,32 @@ ASTElement Element2 =
     } /
     Primary;
 
-ASTElement Primary =
+Element Primary =
     void:"(":Symbol Element void:")":Symbol /
     void:"!":Symbol p:Primary {
         yyValue = new Not (p);
     } /
     Literal Spacing /
+    i:IdnUse {
+        yyValue = new NonTerminal (i);
+    };
+
+// AST elements
+
+Element ASTElement =
+    e:ASTPrimary void:"*":Symbol {
+        yyValue = new Rep (true, e);
+    } /
+    e:ASTPrimary void:"+":Symbol {
+        yyValue = new Rep (false, e);
+    } /
+    e:ASTPrimary void:"?":Symbol {
+        yyValue = new Opt (e);
+    } /
+    Literal Spacing /
+    ASTPrimary;
+
+Element ASTPrimary =
     i:IdnUse {
         yyValue = new NonTerminal (i);
     };

@@ -2,8 +2,8 @@ import org.kiama.output.PrettyPrinter
 
 object Generator extends PrettyPrinter {
 
-    import Analyser.{constr, elements, elemtype, fieldName, fieldTypes, isParenPP,
-        lhs, optConstr, orderOpPrecFixityNonterm, requiresNoPPCase, treeAlternatives,
+    import Analyser.{constr, elemtype, fieldName, fieldTypes, isParenPP, lhs,
+        optConstr, orderOpPrecFixityNonterm, requiresNoPPCase, treeAlternatives,
         typeName}
     import ast._
     import org.kiama.attribution.Attribution.initTree
@@ -94,25 +94,23 @@ object Generator extends PrettyPrinter {
                 /**
                  * Traverse the elements on the RHS of the rule to collect fields. 
                  */
-                def traverseRHS (elem : Element) {
-                    elem match {
-                        case Seqn (l, r) =>
-                            traverseRHS (l)
-                            traverseRHS (r)
-                        case NonTerminal (IdnUse (name)) =>
-                            addField (elem)
-                        case Opt (innerElem @ NonTerminal (IdnUse (name))) =>
-                            val optElem =
-                                if (flags.useScalaOptions)
-                                    elem
-                                else
-                                    innerElem
-                            addField (optElem)
-                        case Rep (zero, NonTerminal (IdnUse (name))) =>
-                            addField (elem)
-                        case _ =>
-                            // No argument for the rest of the element kinds
-                    }
+                def traverseRHS (elems : List[Element]) {
+                    for (elem <- elems)
+                        elem match {
+                            case NonTerminal (IdnUse (name)) =>
+                                addField (elem)
+                            case Opt (innerElem @ NonTerminal (IdnUse (name))) =>
+                                val optElem =
+                                    if (flags.useScalaOptions)
+                                        elem
+                                    else
+                                        innerElem
+                                addField (optElem)
+                            case Rep (zero, NonTerminal (IdnUse (name))) =>
+                                addField (elem)
+                            case _ =>
+                                // No argument for the rest of the element kinds
+                        }
                 }
 
                 // Traverse the RHS elememts to collect field information
@@ -394,39 +392,37 @@ object Generator extends PrettyPrinter {
                  * Traverse the elements on the RHS of the rule to collect pattern
                  * variables and the Doc expression.
                  */
-                def traverseRHS (elem : Element) {
-                    elem match {
-                        case Seqn (l, r) =>
-                            traverseRHS (l)
-                            traverseRHS (r)
-                        case NonTerminal (IdnUse (name)) =>
-                            varcount = varcount + 1
-                            val func = if (elem->elemtype == "String")
-                                           "value"
-                                       else
-                                           "toDoc"
-                            addExp (func <+> parens (varName (varcount)))
-                        case Opt (innerElem @ NonTerminal (IdnUse (name))) =>
-                            varcount = varcount + 1
-                            val func = if (elem->elemtype == "String")
-                                           "toOptionTDoc"
-                                       else
-                                           "toOptionASTNodeDoc"
-                            addExp (func <+> parens (varName (varcount)))
-                        case Rep (zero, NonTerminal (IdnUse (name))) =>
-                            varcount = varcount + 1
-                            val func = if (elem->elemtype == "String")
-                                           "toListTDoc"
-                                       else
-                                           "toListASTNodeDoc"
-                            addExp (func <+> parens (varName (varcount)))
-                        case CharLit (s) =>
-                            addExp (squotes (s))
-                        case StringLit (s) =>
-                            addExp (dquotes (s))
-                        case _ =>
-                            // No variable for the rest of the element kinds
-                    }
+                def traverseRHS (elems : List[Element]) {
+                    for (elem <- elems)
+                        elem match {
+                            case NonTerminal (IdnUse (name)) =>
+                                varcount = varcount + 1
+                                val func = if (elem->elemtype == "String")
+                                               "value"
+                                           else
+                                               "toDoc"
+                                addExp (func <+> parens (varName (varcount)))
+                            case Opt (innerElem @ NonTerminal (IdnUse (name))) =>
+                                varcount = varcount + 1
+                                val func = if (elem->elemtype == "String")
+                                               "toOptionTDoc"
+                                           else
+                                               "toOptionASTNodeDoc"
+                                addExp (func <+> parens (varName (varcount)))
+                            case Rep (zero, NonTerminal (IdnUse (name))) =>
+                                varcount = varcount + 1
+                                val func = if (elem->elemtype == "String")
+                                               "toListTDoc"
+                                           else
+                                               "toListASTNodeDoc"
+                                addExp (func <+> parens (varName (varcount)))
+                            case CharLit (s) =>
+                                addExp (squotes (s))
+                            case StringLit (s) =>
+                                addExp (dquotes (s))
+                            case _ =>
+                                // No variable for the rest of the element kinds
+                        }
                 }
 
                 if (alt->requiresNoPPCase)

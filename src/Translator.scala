@@ -136,7 +136,7 @@ object Translator extends PrettyPrinter {
 
             def toAlternative (a : Alternative) : Doc = {
                 ntcount = 0
-                toRHS (a.rhs, true) <+> toAction (a)
+                hsep (a.rhs map (elem => toRHS (elem, true))) <+> toAction (a)
             }
 
             def toAction (alt : Alternative) : Doc = {
