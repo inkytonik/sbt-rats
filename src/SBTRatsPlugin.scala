@@ -20,6 +20,7 @@ case class Flags (
     useDefaultLayout : Boolean,
     useDefaultWords : Boolean,
     defineASTClasses : Boolean,
+    definePrettyPrinter : Boolean,
     useKiama : Boolean
 )
 
@@ -30,7 +31,7 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
     import Analyser.check
     import ast.Grammar
     import Desugarer.desugar
-    import Generator.{generateASTClasses, generateSupportFile}
+    import Generator.{generateASTClasses, generatePrettyPrinter, generateSupportFile}
     import parser.Parser
     import org.kiama.attribution.Attribution.initTree
     import org.kiama.util.IO.filereader
@@ -75,7 +76,7 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
      */
     val ratsUseScalaPositions = SettingKey[Boolean] (
         "rats-use-scala-positions",
-            "Set the position of any Positional semantic values (requires withLocation option)"
+            "Set the position of any Positional semantic values (requires Rats! withLocation option)"
     )
 
     /**
@@ -116,12 +117,21 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
     )
 
     /**
+     * If a syntax definition is being used and AST classes are being generated,
+     * also generate definitions for a Kiama-based pretty printer for the AST.
+     */
+    val ratsDefinePrettyPrinter = SettingKey[Boolean] (
+        "rats-define-pretty-printer",
+            "Define Kiama-based pretty-printer for abstract syntax trees (syntax mode only, requires ratsDefineASTClasses)"
+    )
+
+    /**
      * Include support in generated components to make it easy to use them
      * with Kiama.
      */
     val ratsUseKiama = SettingKey[Boolean] (
         "rats-use-kiama",
-            "Add support for using Kiama with generated components"
+            "Add extra support for using Kiama with generated components"
     )
 
     /**
@@ -222,6 +232,14 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
                     str.log.info ("Syntax generating AST classes %s".format (astFile))
                     generateASTClasses (flags, astFile, grammar)
                     extraFiles.append (astFile)
+                }
+
+                // If requested, generate the AST classes
+                if (flags.defineASTClasses && flags.definePrettyPrinter) {
+                    val ppFile = outDir / "PrettyPrinter.scala"
+                    str.log.info ("Syntax AST pretty-printer %s".format (ppFile))
+                    generatePrettyPrinter (flags, ppFile, grammar)
+                    extraFiles.append (ppFile)
                 }
 
                 Some ((genFile, extraFiles.result ()))
@@ -438,15 +456,17 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
 
         ratsUseDefaultComments := true,
 
-        ratsDefineASTClasses := true,
+        ratsDefineASTClasses := false,
+
+        ratsDefinePrettyPrinter := false,
 
         ratsUseKiama := false,
 
         ratsFlags <<= (ratsUseScalaLists, ratsUseScalaPositions, ratsUseScalaPositions,
                        ratsUseDefaultComments, ratsUseDefaultLayout, ratsUseDefaultWords,
-                       ratsDefineASTClasses, ratsUseKiama) {
-            (lists, options, posns, comments, layout, words, ast, kiama) =>
-                Flags (lists, options, posns, comments, layout, words, ast, kiama)
+                       ratsDefineASTClasses, ratsDefinePrettyPrinter, ratsUseKiama) {
+            (lists, options, posns, comments, layout, words, ast, pp, kiama) =>
+                Flags (lists, options, posns, comments, layout, words, ast, pp, kiama)
         }
 
     )

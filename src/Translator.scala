@@ -8,7 +8,8 @@ object Translator extends PrettyPrinter {
 
     def translate (flags : Flags, genFile : File, grammar : Grammar) = {
 
-        import Analyser.partitionLiterals
+        import Analyser.{constr, partitionLiterals, requiresNoAction, transformer,
+            typeName}
         import org.kiama.attribution.Attribution.initTree
 
         // Count of non-terminals on the RHS of an alternative
@@ -131,9 +132,7 @@ object Translator extends PrettyPrinter {
 
         def toASTRule (astRule : ASTRule) : Doc = {
 
-            val ASTRule (lhs, declType, alts, isConst) = astRule
-
-            val typeName = if (declType == null) lhs.name else declType.name
+            val ASTRule (lhs, declType, alts, isConst, _) = astRule
 
             def toAlternative (a : Alternative) : Doc = {
                 ntcount = 0
@@ -141,36 +140,6 @@ object Translator extends PrettyPrinter {
             }
 
             def toAction (alt : Alternative) : Doc = {
-
-                // FIXME: repeated elsewhere
-                val constr : String =
-                    if (alt.anns == null)
-                        typeName
-                    else
-                        alt.anns.collect {
-                            case Constructor (name) =>
-                                name
-                        } match {
-                            case name :: _ => name
-                            case _         => typeName
-                        }
-
-                /**
-                 * Does the annotation list for this alternative contain an annotation
-                 * of the form n:m? If so, return Some (m), otherwise return None.
-                 * If there are multiple such annotations, the first one is used.
-                 */
-                def transformer (n : Int) : Option[String] =
-                    if (alt.anns == null)
-                        None
-                    else
-                        alt.anns.collect {
-                            case Transformation (m, method, _) if n == m =>
-                                method
-                        } match {
-                            case method :: _ => Some (method.mkString ("."))
-                            case _           => None
-                        }
 
                 // The arguments are v1 .. vn. Normally these are passed straight through
                 // to the constructor. However, if there is an annotation of the form 
@@ -180,7 +149,7 @@ object Translator extends PrettyPrinter {
                     (1 to ntcount).map {
                         case n =>
                             val argName = "v" <> value (n)
-                            (transformer (n) match {
+                            (alt->transformer (n) match {
                                 case Some (method) =>
                                     method <+> parens (argName)
                                 case None =>
@@ -191,9 +160,7 @@ object Translator extends PrettyPrinter {
                 // Pretty-printed argument list for constructor
                 val args = hsep (argList, comma)
 
-                // No action at all if a) the alternative is tagged as requiring no action,
-                // or b) it's a transfer alternative among other alternative.
-                if ((alt.action == NoAction ()) || ((alt.anns == null) && (alts.length > 1)))
+                if (alt->requiresNoAction)
                     empty
                 else
                     braces (nest (line <>
@@ -202,7 +169,7 @@ object Translator extends PrettyPrinter {
                                 case ApplyAction () =>
                                     "ParserSupport.apply (v2, v1)"
                                 case DefaultAction () =>
-                                    "new" <+> constr <+> parens (args)
+                                    "new" <+> text (alt->constr) <+> parens (args)
                                 case NoAction () =>
                                     // Not reachable
                                     empty
@@ -219,7 +186,7 @@ object Translator extends PrettyPrinter {
 
             line <>
             (if (isConst) "constant " else empty) <>
-            "public" <+> typeName <+> lhs.name <+> equal <>
+            "public" <+> text (astRule->typeName) <+> lhs.name <+> equal <>
             nest (
                 line <>
                 lsep2 (alts map toAlternative, "/") <> semi

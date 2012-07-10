@@ -9,7 +9,7 @@ case class Grammar (pkg : List[String], header : String, rules : List[Rule]) ext
 
 sealed abstract class Rule extends ASTNode
 case class ASTRule (idndef : IdnDef, tipe : IdnUse, alts : List[Alternative],
-                    isConst : Boolean = false) extends Rule
+                    isConst : Boolean = false, anns: List[Annotation] = Nil) extends Rule
 case class StringRule (idndef : IdnDef, alts : List[Element]) extends Rule
 case class RatsSection (code : String) extends Rule
 
@@ -20,6 +20,7 @@ abstract class Annotation extends ASTNode
 case class Constructor (name : String) extends Annotation
 case class Transformation (num : Int, method : List[String], tipe : List[String]) extends Annotation
 case class Associativity (isLeft : Boolean) extends Annotation
+case class Parenthesized () extends Annotation
 case class Precedence (level : Int) extends Annotation
 
 sealed abstract class Action extends ASTNode

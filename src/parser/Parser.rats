@@ -14,7 +14,7 @@ header {
 body {
     static {
         add (KEYWORDS, new String[] {
-            "comment", "end", "header", "left", "rats", "right", "String"
+            "comment", "end", "header", "left", "paren", "rats", "right", "String"
         });
     }
 
@@ -59,11 +59,11 @@ Rule Rule =
 // Grammar rules
 
 Rule GrammarRule =
-    i:IdnDef StringType void:"=":Symbol as:StringAlternatives {
-        yyValue = new StringRule (i, as);
+    i:IdnDef StringType void:"=":Symbol alts:StringAlternatives {
+        yyValue = new StringRule (i, alts);
     } /
-    i:IdnDef t:Type? void:"=":Symbol as:ASTAlternatives {
-        yyValue = new ASTRule (i, t, as, false);
+    i:IdnDef t:Type? anns:Annotations? void:"=":Symbol alts:ASTAlternatives {
+        yyValue = new ASTRule (i, t, alts, false, anns);
     };
 
 // Types
@@ -157,6 +157,7 @@ Pair<Annotation> AnnotationList =
 
 Annotation Annotation =
     Associativity /
+    Parenthesized /
     Constructor /
     Transformation /
     Precedence;
@@ -172,6 +173,11 @@ Annotation Associativity =
 Annotation Constructor =
     i:Identifier {
         yyValue = new Constructor (i);
+    };
+
+Annotation Parenthesized =
+    void:"paren":Word {
+        yyValue = new Parenthesized ();
     };
 
 Annotation Transformation =

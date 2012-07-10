@@ -4,8 +4,9 @@ object Analyser extends Environments {
 
     import ast._
     import org.kiama.==>
-    import org.kiama.attribution.Attribution.attr
+    import org.kiama.attribution.Attribution.{attr, paramAttr}
     import org.kiama.attribution.Decorators.{chain, Chain, down}
+    import org.kiama.output.{Fixity, Infix, LeftAssoc, Postfix, Prefix, RightAssoc}
     import org.kiama.util.Messaging.message
     import org.kiama.util.Patterns.HasParent
 
@@ -49,9 +50,22 @@ object Analyser extends Environments {
     // Entities
 
     /**
-     * A non-terminal with the given type.
+     * Non-terminals with a particular type
      */
-    case class NonTerm (tipe : String) extends Entity
+    abstract class NonTerm extends Entity {
+        def tipe : String
+    }
+
+    /**
+     * A user-defined non-terminal with the given type and defined by the given
+     * AST rule.
+     */
+    case class UserNonTerm (tipe : String, astRule : ASTRule) extends NonTerm
+
+    /**
+     * A pre-defined non-terminal with the given type.
+     */
+    case class PreNonTerm (tipe : String) extends NonTerm
 
     /**
      * A type.
@@ -64,10 +78,10 @@ object Analyser extends Environments {
      * the user.
      */
     def defenv : Environment =
-        rootenv ("Comment" -> NonTerm ("String"),
-                 "Spacing" -> NonTerm ("void"),
+        rootenv ("Comment" -> PreNonTerm ("String"),
+                 "Spacing" -> PreNonTerm ("void"),
                  "String" -> Type (),
-                 "Word" -> NonTerm ("String"))
+                 "Word" -> PreNonTerm ("String"))
 
     lazy val literals : Chain[ASTNode,Set[String]] =
         chain (literalsin, literalsout)
@@ -82,7 +96,6 @@ object Analyser extends Environments {
     }
 
     // Name analysis
-
 
     lazy val preenv : Chain[ASTNode,Environment] =
         chain (envin, envout)
@@ -102,13 +115,13 @@ object Analyser extends Environments {
 
     def entityFromDecl (n : IdnDef, i : String) : Entity =
         n.parent match {
-            case ASTRule (_, tipe, _, _) =>
-                NonTerm (if (tipe == null) i else tipe.name)
+            case astRule @ ASTRule (_, tipe, _, _, _) =>
+                UserNonTerm (if (tipe == null) i else tipe.name, astRule)
             case StringRule (_, _) =>
-                NonTerm ("String")
+                PreNonTerm ("String")
         }
 
-    lazy val env=
+    lazy val env =
         down[ASTNode, Environment] {
             case n if n isRoot =>
                 n->preenv
@@ -126,8 +139,8 @@ object Analyser extends Environments {
         attr {
             case NonTerminal (i) =>
                 (i->entity) match {
-                    case NonTerm (t) =>
-                        t
+                    case nt : NonTerm =>
+                        nt.tipe
                     case e =>
                         sys.error ("nttype: non-NonTerm " + e + " in NonTerm position")
                 }
@@ -140,6 +153,376 @@ object Analyser extends Environments {
             case Rep (_, n : NonTerminal) => "List[%s]".format (n->nttype)
             case e =>
                 sys.error ("elemtype: unexpected element kind " + e)
+        }
+
+    // Patterns
+
+    /**
+     * Pattern to match a literal element.
+     */
+    object Literal {
+        def unapply (e : Element) : Option[String] =
+            e match {
+                case CharLit (s)   => Some (s)
+                case StringLit (s) => Some (s)
+                case _             => None
+            }
+    }
+
+    /**
+     * Pattern to match a non-terminal name.
+     */
+    object NonTermIdn {
+        def unapply (e : Element) : Option[String] =
+            e match {
+                case NonTerminal (IdnUse (name)) =>
+                    Some (name)
+                case _ =>
+                    None
+            }
+    }
+
+    // Properties
+
+    /**
+     * The first element in a sequence of elements, or the element 
+     * itself if it's not a sequence.
+     */
+    lazy val first : Element => Element =
+        attr {
+            case Seqn (l, _) => l->first
+            case e           => e
+        }
+
+    /**
+     * The elements of a sequence except the last.
+     */
+    lazy val init : Seqn => ASTElement =
+        attr {
+            case Seqn (l, r) => l
+        }
+
+    /**
+     * The elements of a sequence except the first.
+     */
+    lazy val tail : Seqn => ASTElement =
+        attr {
+            case Seqn (l : Seqn, r) => Seqn (l->tail, r)
+            case Seqn (l, r)        => r
+        }
+
+    /**
+     * The top-level elements in a element sequence as a list.
+     * FIXME: best way to do this?
+     */
+    lazy val elements : Element => List[Element] =
+        attr {
+            case Seqn (l, r) =>
+                elements (l) ++ elements (r)
+            case e =>
+                List (e)
+        }
+
+    /**
+     * The name of the type that represents values of a particular rule.
+     * Either given explicitly, or if implicit, the same as the LHS of 
+     * the rule. Also works on 
+     */
+    lazy val typeName : ASTRule => String =
+        attr {
+            case astRule if astRule.tipe == null =>
+                astRule.idndef.name
+            case astRule =>
+                astRule.tipe.name
+        }
+
+    /**
+     * The action type of a recursive rule.
+     */
+    lazy val actionTypeName : ASTRule => String =
+        attr {
+            case astRule =>
+                "Action<" + (astRule->typeName) + ">"
+        }
+
+    /**
+     * Is this rule to be parenthesized when pretty-printing?
+     */
+    lazy val isParenPP : ASTRule => Boolean =
+        attr {
+            case astRule if astRule.tipe != null =>
+                // Need to look up the rule for the type and check its annotations
+                // FIXME: need to use other clause too? what if have tipe *and* paren annotation?
+                (astRule.tipe)->entity match {
+                    case UserNonTerm (_, otherRule) =>
+                        otherRule->isParenPP
+                    case _ =>
+                        false
+                }
+            case astRule =>
+                (astRule.anns != null) && (astRule.anns contains (Parenthesized ()))
+        }
+
+    /**
+     * The precedence level of an alternative. If no explicit precedence level
+     * is given in the annotations of the alternative, return one. If there is
+     * more than one precedence annotation, the first one is used.
+     */
+    lazy val precedence : Alternative => Int =
+        attr {
+            case alt =>
+                if (alt.anns == null)
+                    1
+                else
+                    alt.anns.collect {
+                        case Precedence (level) => level
+                    } match {
+                        case level :: _ => level
+                        case _          => 1
+                    }
+        }
+
+    /**
+     * The LHS side symbol of a rule.
+     */
+    lazy val lhs : ASTRule => String =
+        attr {
+            case astRule =>
+                astRule.idndef.name
+        }
+
+    /**
+     * Whether an alternative is left-recursive: a sequence of more
+     * than one element on the RHS and the first one is the LHS.
+     */
+    lazy val isLeftRecursive : Alternative => Boolean =
+        attr {
+            case alt =>
+                (alt.rhs)->first == NonTerminal (IdnUse (alt->astrule->lhs))
+        }
+
+    /**
+     * Whether an alternative is recursive: the LHS appears in the RHS
+     * sequence.
+     */
+    lazy val isRecursive : Alternative => Boolean =
+        attr {
+            case alt =>
+                ((alt.rhs)->elements contains NonTerminal (IdnUse (alt->astrule->lhs))) 
+        }
+
+    /**
+     * Whether the alternative is left associative or not. If there is no
+     * `right` annotation, we assume it's left associative.
+     */
+    lazy val isLeftAssociative : Alternative => Boolean =
+        attr {
+            case alt =>
+                if (alt.anns == null)
+                    true
+                else
+                    alt.anns.collect {
+                        case Associativity (isLeft) => isLeft
+                    } match {
+                        case isLeft :: _ => isLeft
+                        case _           => true
+                    }
+        }
+
+    /**
+     * The ASTRule of an alternative.
+     */
+    lazy val astrule : Alternative => ASTRule =
+        attr {
+            case alt =>
+                alt.parent.asInstanceOf[ASTRule]
+        }
+
+    /**
+     * The optional consructor for an alternative. If there are constructor
+     * annotations, take the first one. Otherwise, return None.
+     */
+    lazy val optConstr : Alternative => Option[String] =
+        attr {
+            case alt =>
+                if (alt.anns == null)
+                    None
+                else
+                    alt.anns.collect {
+                        case Constructor (name) =>
+                            name
+                    } match {
+                        case name :: _ => Some (name)
+                        case _         => None
+                    }
+        }
+
+    /**
+     * The consructor for an alternative. If there are constructor
+     * annotations, take the first one. Otherwise, use the type name
+     * of the enclosing rule.
+     */
+    lazy val constr : Alternative => String =
+        attr {
+            case alt =>
+                (alt->optConstr) match {
+                    case None =>
+                        alt->astrule->typeName
+                    case Some (name) =>
+                        name
+                }
+        }
+
+    /**
+     * Does the annotation list for this alternative contain an annotation
+     * of the form n:m:_? If so, return Some (m), otherwise return None.
+     * If there are multiple such annotations, the first one is used.
+     */
+    lazy val transformer : Int => Alternative => Option[String] =
+        paramAttr {
+            case n => {
+                case alt =>
+                    if (alt.anns == null)
+                        None
+                    else
+                        alt.anns.collect {
+                            case Transformation (m, method, _) if n == m =>
+                                method
+                        } match {
+                            case method :: _ => Some (method.mkString ("."))
+                            case _           => None
+                        }
+            }
+
+        }
+
+    /**
+     * Whether or not an alternative requires an action. We don't need one
+     * if a) the alternative has an explicit decoration that it requires no
+     * action, or b) it's a transfer alternative among other alternatives.
+     */
+    lazy val requiresNoAction : Alternative => Boolean =
+        attr {
+            case alt =>
+                (alt.action == NoAction ()) ||
+                ((alt.anns == null) && ((alt->astrule).alts.length > 1))
+        }
+
+    /**
+     * Whether or not the alternative needs a pretty-printing clause:
+     * if it has no action or if it's part of a parenthesized rule and
+     * and features the recursive symbol. In the latter case it will be
+     * handled by the paren pretty printer.
+     */
+    lazy val requiresNoPPCase : Alternative => Boolean =
+        attr {
+            case alt =>
+                (alt->requiresNoAction) ||
+                ((alt->astrule->isParenPP) && (alt->isRecursive))
+        }
+
+    /**
+     * Alternatives of a rule that have something to say about the tree.
+     */
+    lazy val treeAlternatives : ASTRule => List[Alternative] =
+        attr {
+            case astRule => 
+                astRule.alts.filter (alt => (alt.anns != null) && (alt.anns.length > 0))
+        }
+
+    /**
+     * Map of field number to type as given by the alternative's
+     * annotations.
+     */
+    lazy val fieldTypes : Alternative => Map[Int,String] =
+        attr {
+            case alt =>
+                if (alt.anns == null)
+                    Map.empty
+                else
+                    alt.anns.collect {
+                        case Transformation (n, _, t) =>
+                            (n, t.mkString ("."))
+                    }.reverse.toMap
+        }
+
+    /**
+     * List of Scala keywords used to avoid declaring a field whose name
+     * is a keyword.
+     */
+    val scalaKeywords = List (
+        "abstract", "case", "catch", "class", "def", "do", "else",
+        "extends", "false", "final", "finally", "for", "forSome", "if",
+        "implicit", "import", "lazy", "match", "new", "null", "object",
+        "override", "package", "private", "protected", "return", "sealed",
+        "super", "this", "throw", "trait", "true", "try", "type", "val",
+        "var", "while", "with", "yield"
+    )
+
+    /**
+     * Convert a non-terminal name to a field name. Prefix is a string that
+     * we want to put on the beginning of the field name, suffix should go
+     * on the end. Additonally, if the final result would clash with a
+     * Scala keyword, add an addition "Field" suffix.
+     */
+    def nameToFieldName (prefix : String, name : String, suffix : String) : String = {
+        val fieldName =
+            if (prefix == "")
+                "%s%s".format (name.toLowerCase, suffix)
+            else
+                "%s%s%s%s".format (prefix, name.head.toUpper, name.tail.toLowerCase,
+                                   suffix)
+        if (scalaKeywords contains fieldName)
+            "%sField".format (fieldName)
+        else
+            fieldName
+    }
+
+    /**
+     * Make a name for a field to represent a particular element.
+     */
+    lazy val fieldName : Element => String =
+        attr {
+            case NonTerminal (IdnUse (name)) =>
+                nameToFieldName ("", name, "")
+            case Opt (NonTerminal (IdnUse (name))) =>
+                nameToFieldName ("opt", name, "")
+            case Rep (zero, NonTerminal (IdnUse (name))) =>
+                nameToFieldName (if (zero) "opt" else "", name, "s")
+            case elem =>
+                // Remove once ASTRule RHS elements are simplified so these are the only cases??
+                sys.error ("fieldName: unexpected element kind " + elem)
+        }
+
+    /**
+     * Collected information about an alternative: it's order (unary=1,
+     * binary=2, operator, precedence, fixity and non-terminals. If we can't
+     * tell or it's a case we don't support, return None.
+     */
+    lazy val orderOpPrecFixityNonterm : Alternative => Option[(Int, String, Int, Fixity, String, String)] =
+        attr {
+            case alt =>
+                val lhsnt = alt->astrule->lhs
+                ((alt.rhs)->elements) match {
+
+                    case List (elem @ NonTermIdn (nt), Literal (op)) if nt == lhsnt =>
+                        Some ((1, op, alt->precedence, Postfix, elem->fieldName, ""))
+
+                    case List (Literal (op), elem @ NonTermIdn (nt)) if nt == lhsnt =>
+                        Some ((1, op, alt->precedence, Prefix, elem->fieldName, ""))
+
+                    case List (elem1 @ NonTermIdn (nt1), Literal (op), elem2 @ NonTermIdn (nt2))
+                            if (nt1 == lhsnt) && (nt2 == lhsnt) =>
+                        val fixity = Infix (if (alt->isLeftAssociative)
+                                                LeftAssoc
+                                            else
+                                                RightAssoc)
+                        Some ((2, op, alt->precedence, fixity, elem1->fieldName, elem2->fieldName))
+
+                    case elems =>
+                        None
+
+                }
         }
 
 }
