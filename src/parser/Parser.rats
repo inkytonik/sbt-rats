@@ -3,6 +3,9 @@ module parser.Parser;
 header {
     import ast.*;
     import ast.SList.*;
+    import org.kiama.output.LeftAssoc$;
+    import org.kiama.output.NonAssoc$;
+    import org.kiama.output.RightAssoc$;
     import scala.collection.immutable.List;
     import scala.collection.immutable.Nil$;
     import scala.collection.immutable.$colon$colon;
@@ -14,8 +17,8 @@ header {
 body {
     static {
         add (KEYWORDS, new String[] {
-            "comment", "end", "header", "left", "nest", "paren", "rats",
-            "right", "sp", "String"
+            "comment", "end", "header", "left", "nest", "none", "paren",
+            "rats", "right", "sp", "String"
         });
     }
 
@@ -202,10 +205,13 @@ Annotation Annotation =
 
 Annotation Associativity =
     void:"left":Word {
-        yyValue = new Associativity (true);
+        yyValue = new Associativity (LeftAssoc$.MODULE$);
+    } /
+    void:"none":Word {
+        yyValue = new Associativity (NonAssoc$.MODULE$);
     } /
     void:"right":Word {
-        yyValue = new Associativity (false);
+        yyValue = new Associativity (RightAssoc$.MODULE$);
     };
 
 Annotation Constructor =

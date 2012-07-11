@@ -38,7 +38,7 @@ object Generator extends PrettyPrinter {
                                flags.useScalaPositions) <>
             includeImportWhen ("org.kiama.attribution.Attributable",
                                flags.useKiama) <>
-            includeImportWhen ("org.kiama.output.{Infix, LeftAssoc, NonAssoc, Prefix}",
+            includeImportWhen ("org.kiama.output.{Infix, LeftAssoc, NonAssoc, Prefix, RightAssoc}",
                                flags.definePrettyPrinter) <>
             includeImportWhen ("org.kiama.output.{PrettyBinaryExpression, PrettyExpression, PrettyUnaryExpression}",
                                flags.definePrettyPrinter)

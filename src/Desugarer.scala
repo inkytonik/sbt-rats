@@ -1,8 +1,9 @@
 object Desugarer {
 
-    import Analyser.{actionTypeName, constr, isLeftAssociative, isLeftRecursive, lhs,
+    import Analyser.{actionTypeName, associativity, constr, isLeftRecursive, lhs,
         precedence, typeName}
     import ast._
+    import org.kiama.output.{LeftAssoc, NonAssoc, RightAssoc}
     import org.kiama.rewriting.Rewriter.{alltd, rewrite, rule}
     import scala.collection.mutable.ListBuffer
 
@@ -136,8 +137,13 @@ object Desugarer {
             // A non-terminal for the tail
             def tailnt = NonTerminal (IdnUse (tailntname))
 
-            // Partition alternative into left and right associative ones
-            val (leftAssocAlts, rightAssocAlts) = alts.partition (isLeftAssociative)
+            // Collect the alternatives together by associativity
+            val assocAlts = alts.groupBy (associativity)
+
+            // Convenience short-hands to alternatives for each associativity
+            val leftAssocAlts = assocAlts.getOrElse (LeftAssoc, Nil)
+            val noneAssocAlts = assocAlts.getOrElse (NonAssoc, Nil)
+            val rightAssocAlts = assocAlts.getOrElse (RightAssoc, Nil)
 
             // Buffer of rules that we will return
             val rules = new ListBuffer[ASTRule]
@@ -157,18 +163,28 @@ object Desugarer {
 
             // Each right associative alternative turns into a single rule that defines
             // the recursive case to the next level
-            val recurseAlts =
+            val rightAlts =
                 rightAssocAlts.map {
                     case Alternative (rhs, anns, _) =>
                         val newInitRHS = rewrite (replaceIdns (astRule.idndef.name, prevntname)) (rhs.init)
                         Alternative (newInitRHS :+ nt, anns, DefaultAction ())
                 }
-            baseAlts.appendAll (recurseAlts)
+            baseAlts.appendAll (rightAlts)
 
-            // If there are right recursive alternatives and no left recursive alternatives
+            // Each non-associative alternative turns into a single rule that defines
+            // all recursive references to the next level
+            val noneAlts =
+                noneAssocAlts.map {
+                    case Alternative (rhs, anns, _) =>
+                        val newRHS = rewrite (replaceIdns (astRule.idndef.name, prevntname)) (rhs)
+                        Alternative (newRHS, anns, DefaultAction ())
+                }
+            baseAlts.appendAll (noneAlts)
+
+            // If there are none/right recursive alternatives and no left recursive alternatives
             // we also need a fall-through alternative to get us to the next precedence level.
             // If there are left associative alternatives the seed rule takes care of this.
-            if (leftAssocAlts.isEmpty && (! rightAssocAlts.isEmpty))
+            if (leftAssocAlts.isEmpty && (! noneAssocAlts.isEmpty || ! rightAssocAlts.isEmpty))
                 baseAlts.append (Alternative (List (prevnt), Nil, NoAction ()))
 
             // Define the base rule using the base alternatives

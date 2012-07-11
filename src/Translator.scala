@@ -195,8 +195,8 @@ object Translator extends PrettyPrinter {
             }
 
             line <>
-            (if (isConst) "constant " else empty) <>
-            "public" <+> text (astRule->typeName) <+> lhs.name <+> equal <>
+            (if (isConst) "constant" else "public") <+>
+            text (astRule->typeName) <+> lhs.name <+> equal <>
             nest (
                 line <>
                 lsep2 (alts map toAlternative, "/") <> semi

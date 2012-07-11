@@ -1,6 +1,7 @@
 package ast
 
 import org.kiama.attribution.Attributable
+import org.kiama.output.Side
 import scala.util.parsing.input.Positional
 
 abstract class ASTNode extends Attributable with Positional
@@ -17,9 +18,9 @@ case class Alternative (rhs : List[Element], anns: List[Annotation],
                         action : Action) extends ASTNode
 
 sealed abstract class Annotation extends ASTNode
+case class Associativity (side : Side) extends Annotation
 case class Constructor (name : String) extends Annotation
 case class Transformation (num : Int, method : List[String], tipe : List[String]) extends Annotation
-case class Associativity (isLeft : Boolean) extends Annotation
 case class Parenthesized () extends Annotation
 case class Precedence (level : Int) extends Annotation
 

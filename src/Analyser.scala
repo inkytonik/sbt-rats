@@ -6,7 +6,8 @@ object Analyser extends Environments {
     import org.kiama.==>
     import org.kiama.attribution.Attribution.{attr, paramAttr}
     import org.kiama.attribution.Decorators.{chain, Chain, down}
-    import org.kiama.output.{Fixity, Infix, LeftAssoc, Postfix, Prefix, RightAssoc}
+    import org.kiama.output.{Fixity, Infix, LeftAssoc, NonAssoc, Postfix, Prefix,
+        RightAssoc, Side}
     import org.kiama.util.Messaging.message
     import org.kiama.util.Patterns.HasParent
 
@@ -275,20 +276,22 @@ object Analyser extends Environments {
         }
 
     /**
-     * Whether the alternative is left associative or not. If there is no
-     * `right` annotation, we assume it's left associative.
+     * The associativity of an alternative. If there are no associativity
+     * annotations, it's left associative. Otherwise, it's the first such
+     * annotation that applies.
      */
-    lazy val isLeftAssociative : Alternative => Boolean =
+    lazy val associativity : Alternative => Side =
         attr {
             case alt =>
                 if (alt.anns == null)
-                    true
+                    LeftAssoc
                 else
                     alt.anns.collect {
-                        case Associativity (isLeft) => isLeft
+                        case Associativity (side) =>
+                            side
                     } match {
-                        case isLeft :: _ => isLeft
-                        case _           => true
+                        case assoc :: _ => assoc
+                        case _          => LeftAssoc
                     }
         }
 
@@ -302,7 +305,7 @@ object Analyser extends Environments {
         }
 
     /**
-     * The optional consructor for an alternative. If there are constructor
+     * The optional constructor for an alternative. If there are constructor
      * annotations, take the first one. Otherwise, return None.
      */
     lazy val optConstr : Alternative => Option[String] =
@@ -476,10 +479,7 @@ object Analyser extends Environments {
 
                     case List (elem1 @ NonTermIdn (nt1), Literal (op), elem2 @ NonTermIdn (nt2))
                             if (nt1 == lhsnt) && (nt2 == lhsnt) =>
-                        val fixity = Infix (if (alt->isLeftAssociative)
-                                                LeftAssoc
-                                            else
-                                                RightAssoc)
+                        val fixity = Infix (alt->associativity)
                         Some ((2, op, alt->precedence, fixity, elem1->fieldName, elem2->fieldName))
 
                     case elems =>
