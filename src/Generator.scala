@@ -108,6 +108,8 @@ object Generator extends PrettyPrinter {
                                 addField (optElem)
                             case Rep (zero, NonTerminal (IdnUse (name))) =>
                                 addField (elem)
+                            case Nest (nestedElem) =>
+                                addField (nestedElem)
                             case _ =>
                                 // No argument for the rest of the element kinds
                         }
@@ -268,7 +270,7 @@ object Generator extends PrettyPrinter {
             val toDoc = toToDoc
 
             line <>
-            "object PrettyPrinter extends PP with PPP {" <@>
+            "trait PrettyPrinter extends PP with PPP {" <@>
             nest (
                 toPretty <@>
                 toToOptionTDoc <@>
@@ -279,7 +281,10 @@ object Generator extends PrettyPrinter {
                 toToParenDoc (toParenDocCases.result)
             ) <@>
             line <>
-            "}"
+            "}" <>
+            line <@>
+            "object PrettyPrinter extends PrettyPrinter" <>
+            line
 
         }
 
@@ -288,7 +293,7 @@ object Generator extends PrettyPrinter {
             "def pretty (astNode : ASTNode) : String =" <>
             nest (
                 line <>
-                "super.pretty (toDoc (astNode))"
+                "super.pretty (group (toDoc (astNode)))"
             )
 
         def toToDoc : Doc =
@@ -372,16 +377,6 @@ object Generator extends PrettyPrinter {
                 // Count of variables in the pattern
                 var varcount = 0
 
-                // List of conversion expressions that we are building
-                val exps = ListBuffer[Doc] ()
-
-                /**
-                 * Add a new expression to the expression buffer.
-                 */
-                def addExp (exp : Doc) {
-                    exps.append (exp)
-                }
-
                 /**
                  * Make a variable name from a variable count.
                  */
@@ -392,43 +387,59 @@ object Generator extends PrettyPrinter {
                  * Traverse the elements on the RHS of the rule to collect pattern
                  * variables and the Doc expression.
                  */
-                def traverseRHS (elems : List[Element]) {
-                    for (elem <- elems)
+                def traverseRHS (elems : List[Element]) : List[Doc] = {
+
+                    def traverseElem (elem : Element) : Option[Doc] = {
                         elem match {
                             case NonTerminal (IdnUse (name)) =>
                                 varcount = varcount + 1
-                                val func = if (elem->elemtype == "String")
-                                               "value"
-                                           else
-                                               "toDoc"
-                                addExp (func <+> parens (varName (varcount)))
+                                val args = parens (varName (varcount))
+                                if (elem->elemtype == "String")
+                                    Some ("value" <+> args)
+                                else
+                                    Some ("toDoc" <+> args)
                             case Opt (innerElem @ NonTerminal (IdnUse (name))) =>
                                 varcount = varcount + 1
                                 val func = if (elem->elemtype == "String")
                                                "toOptionTDoc"
                                            else
                                                "toOptionASTNodeDoc"
-                                addExp (func <+> parens (varName (varcount)))
+                                Some (func <+> parens (varName (varcount)))
                             case Rep (zero, NonTerminal (IdnUse (name))) =>
                                 varcount = varcount + 1
                                 val func = if (elem->elemtype == "String")
                                                "toListTDoc"
                                            else
                                                "toListASTNodeDoc"
-                                addExp (func <+> parens (varName (varcount)))
+                                Some (func <+> parens (varName (varcount)))
                             case CharLit (s) =>
-                                addExp (squotes (s))
+                                if (s.length == 1)
+                                    Some (squotes (s))
+                                else
+                                    Some (dquotes (s))
                             case StringLit (s) =>
-                                addExp (dquotes (s))
+                                Some (dquotes (s) <+> "<> space")
+                            case Nest (e) =>
+                                traverseElem (e).map (
+                                    d => "nest" <+> parens (d)
+                                )
+                            case Newline () =>
+                                Some ("line")
+                            case Space () =>
+                                Some ("space")
                             case _ =>
-                                // No variable for the rest of the element kinds
+                                None
                         }
+                    }
+
+                    elems.map (traverseElem).flatten
+
                 }
 
                 if (alt->requiresNoPPCase)
                     empty
                 else {
-                    traverseRHS (alt.rhs)
+                    val exps = traverseRHS (alt.rhs)
 
                     val pattern = {
                         val vars =

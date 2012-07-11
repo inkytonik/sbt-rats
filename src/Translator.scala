@@ -91,14 +91,7 @@ object Translator extends PrettyPrinter {
                 case RatsSection (c) => string (c.mkString)
             }
 
-        def toRHS (elem : Element, isASTRule : Boolean = false) : Doc = {
-
-            def bind (doc : Doc) : Doc =
-                if (isASTRule) {
-                    ntcount = ntcount + 1
-                    "v" <> value (ntcount) <> colon <> doc
-                } else
-                    doc
+        def toRHS (elem : Element, isASTRule : Boolean) : Doc = {
 
             def toLiteral (s : String) : Doc = {
                 val prefix : Doc = if (isASTRule) "void" <> colon else ""
@@ -107,26 +100,43 @@ object Translator extends PrettyPrinter {
                 prefix <> dquotes (s) <> suffix
             }
 
-            elem match {
+            def toElem (elem : Element, doBindings : Boolean = false) : Doc = {
 
-                case NonTerminal (IdnUse (i))  => bind (i)
+                def bind (doc : Doc) : Doc =
+                    if (doBindings) {
+                        ntcount = ntcount + 1
+                        "v" <> value (ntcount) <> colon <> doc
+                    } else
+                        doc
 
-                case Not (elem)         => "!" <> parens (toRHS (elem))
-                case Opt (elem)         => bind (parens (toRHS (elem)) <> "?")
-                case Rep (zero, elem)   => bind (parens (toRHS (elem)) <> (if (zero) "*" else "+"))
+                elem match {
+                    case NonTerminal (IdnUse (i))  => bind (i)
 
-                case Alt (left, right)  => parens (toRHS (left) <> "/" <> toRHS (right))
-                case Seqn (left, right) => toRHS (left, isASTRule) <+> toRHS (right, isASTRule)
+                    case Not (elem)                => "!" <> parens (toElem (elem))
+                    case Opt (elem)                => bind (parens (toElem (elem)) <> "?")
+                    case Rep (zero, elem)          => bind (parens (toElem (elem)) <>
+                                                                (if (zero) "*" else "+"))
 
-                case CharLit (str)      => toLiteral (str)
-                case StringLit (str)    => toLiteral (str)
+                    case Alt (left, right)         => parens (toElem (left) <> "/" <>
+                                                                  toElem (right))
+                    case Seqn (left, right)        => toElem (left) <+> toElem (right)
 
-                case CharClass (str)    => brackets (str)
+                    case CharLit (str)             => toLiteral (str)
+                    case StringLit (str)           => toLiteral (str)
 
-                case Epsilon ()         => "/* empty */"
-                case Wildcard ()        => "_"
+                    case CharClass (str)           => brackets (str)
+
+                    case Epsilon ()                => "/* empty */"
+                    case Wildcard ()               => "_"
+
+                    case Nest (elem)               => toElem (elem, doBindings)
+
+                    case _                         => empty
+                }
 
             }
+
+            toElem (elem, isASTRule)
 
         }
 

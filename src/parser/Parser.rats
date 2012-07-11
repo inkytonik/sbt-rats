@@ -14,7 +14,8 @@ header {
 body {
     static {
         add (KEYWORDS, new String[] {
-            "comment", "end", "header", "left", "paren", "rats", "right", "String"
+            "comment", "end", "header", "left", "nest", "paren", "rats",
+            "right", "sp", "String"
         });
     }
 
@@ -148,6 +149,10 @@ Element Primary =
 // AST elements
 
 Element ASTElement =
+    Formatting /
+    ASTFactor;
+
+Element ASTFactor =
     e:ASTPrimary void:"*":Symbol {
         yyValue = new Rep (true, e);
     } /
@@ -163,6 +168,19 @@ Element ASTElement =
 Element ASTPrimary =
     i:IdnUse {
         yyValue = new NonTerminal (i);
+    };
+
+// Formatting
+
+Element Formatting =
+    void:"\\n":Symbol {
+        yyValue = new Newline ();
+      }
+    / void:"nest":Word void:"(":Symbol e:ASTFactor void:")":Symbol {
+        yyValue = new Nest (e);
+    }
+    / void:"sp":Word {
+        yyValue = new Space ();
     };
 
 // Annotations
@@ -314,7 +332,7 @@ String Symbol =
 
 transient String SymbolCharacters =
     ":" / "=" / "/" / "|" / "{" / "}" / "(" / ")" / "!" / "." / "," /
-    "*" / "+" / "?" / ";";
+    "*" / "+" / "?" / ";" / "\\n";
 
 transient void Spacing   = (Space / SLComment / MLComment)*;
 transient void FSpacing  = (Space / SLComment / MLComment)+;

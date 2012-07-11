@@ -16,7 +16,7 @@ case class RatsSection (code : String) extends Rule
 case class Alternative (rhs : List[Element], anns: List[Annotation],
                         action : Action) extends ASTNode
 
-abstract class Annotation extends ASTNode
+sealed abstract class Annotation extends ASTNode
 case class Constructor (name : String) extends Annotation
 case class Transformation (num : Int, method : List[String], tipe : List[String]) extends Annotation
 case class Associativity (isLeft : Boolean) extends Annotation
@@ -42,7 +42,12 @@ case class Seqn (left : Element, right : Element) extends Element
 case class StringLit (s : String) extends Element
 case class Wildcard () extends Element
 
-abstract class Identifier extends ASTNode {
+sealed abstract class Formatting extends Element
+case class Nest (e : Element) extends Formatting
+case class Newline () extends Formatting
+case class Space () extends Formatting
+
+sealed abstract class Identifier extends ASTNode {
     def name : String
 }
 case class IdnDef (name : String) extends Identifier
