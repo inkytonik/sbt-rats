@@ -79,9 +79,11 @@ object Analyser extends Environments {
      */
     def defenv : Environment =
         rootenv ("Comment" -> PreNonTerm ("String"),
+                 "Identifier" -> PreNonTerm ("String"),
                  "Spacing" -> PreNonTerm ("void"),
                  "String" -> Type (),
-                 "Word" -> PreNonTerm ("String"))
+                 "Word" -> PreNonTerm ("String"),
+                 "WordCharacters" -> PreNonTerm ("String"))
 
     lazy val literals : Chain[ASTNode,Set[String]] =
         chain (literalsin, literalsout)

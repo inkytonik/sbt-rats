@@ -254,6 +254,11 @@ object Translator extends PrettyPrinter {
                 if (flags.useDefaultWords)
                     """
                     |// Default word specification
+                    |String Identifier =
+                    |    Word &{
+                    |        ! contains (KEYWORDS, yyValue)
+                    |    };
+                    |
                     |String Word =
                     |    WordCharacters Spacing;
                     |
