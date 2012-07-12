@@ -1,8 +1,9 @@
 object Desugarer {
 
-    import Analyser.{actionTypeName, associativity, constr, isLeftRecursive, lhs,
-        precedence, typeName}
+    import Analyser.{actionTypeName, associativity, constr, isLeftRecursive,
+        isTransferAlt, lhs, precedence, typeName}
     import ast._
+    import org.kiama.attribution.Attribution.initTree
     import org.kiama.output.{LeftAssoc, NonAssoc, RightAssoc}
     import org.kiama.rewriting.Rewriter.{alltd, rewrite, rule}
     import scala.collection.mutable.ListBuffer
@@ -10,8 +11,29 @@ object Desugarer {
     /**
      * Desugar the directly left recursive rules.
      */
-    def desugar (grammar : Grammar) : Grammar =
-        removeLeftRecursion (grammar)
+    def desugar (grammar : Grammar) : Grammar = {
+        val grammar1 = fixTransferAlts (grammar)
+        initTree (grammar1)
+        removeLeftRecursion (grammar1)
+    }
+
+    /**
+     * Detect transfer rules. Find rules that just transfer a semantic
+     * value from RHS to LHS and mark them as requiring no action.
+     */
+    def fixTransferAlts (grammar : Grammar) = {
+
+        val fixTransferAltsStrategy =
+            alltd (
+                rule {
+                    case alt @ Alternative (rhs, anns, _) if alt->isTransferAlt =>
+                        Alternative (rhs, anns, NoAction ())
+                }
+            )
+
+        rewrite (fixTransferAltsStrategy) (grammar)
+
+    }
 
     /**
      * Remove direct left recursive rules and replace with equivalent iterative
@@ -74,7 +96,7 @@ object Desugarer {
 
         val newRules = new ListBuffer[ASTRule]
 
-        val removeLeftRecursiveRules =
+        val removeLeftRecursionStrategy =
             alltd (
                 rule {
                     case r : ASTRule =>
@@ -86,7 +108,7 @@ object Desugarer {
             )
 
         // Rewrite to get a transformed grammar and some new rules to add to it
-        val newg = rewrite (removeLeftRecursiveRules) (grammar)
+        val newg = rewrite (removeLeftRecursionStrategy) (grammar)
 
         Grammar (grammar.pkg, grammar.header, newg.rules ++ newRules.result)
 

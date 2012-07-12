@@ -6,7 +6,6 @@
 
 import sbt._
 import Keys._
-import org.kiama.output.PrettyPrinter
 import xtc.parser.Rats
 
 /**
@@ -24,9 +23,7 @@ case class Flags (
     useKiama : Boolean
 )
 
-// FIXME: remove prettyprinter
-
-object SBTRatsPlugin extends Plugin with PrettyPrinter {
+object SBTRatsPlugin extends Plugin {
 
     import Analyser.check
     import ast.Grammar
@@ -216,6 +213,7 @@ object SBTRatsPlugin extends Plugin with PrettyPrinter {
 
                 // No errors, go on to desugaring, translation and generation
                 val desugaredGrammar = desugar (grammar)
+                initTree (desugaredGrammar)
 
                 // Generate the Rats! specification
                 val name = grammar.pkg.last

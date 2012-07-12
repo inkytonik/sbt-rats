@@ -17,8 +17,8 @@ header {
 body {
     static {
         add (KEYWORDS, new String[] {
-            "comment", "end", "header", "left", "nest", "none", "paren",
-            "rats", "right", "sp", "String"
+            "comment", "end", "header", "left", "line", "nest", "none",
+            "paren", "rats", "right", "sp", "String"
         });
     }
 
@@ -198,7 +198,7 @@ Pair<Annotation> AnnotationList =
 
 Annotation Annotation =
     Associativity /
-    Parenthesized /
+    Formatter /
     Constructor /
     Transformation /
     Precedence;
@@ -219,7 +219,10 @@ Annotation Constructor =
         yyValue = new Constructor (i);
     };
 
-Annotation Parenthesized =
+Annotation Formatter =
+    void:"line":Word {
+        yyValue = new Line ();
+    } /
     void:"paren":Word {
         yyValue = new Parenthesized ();
     };

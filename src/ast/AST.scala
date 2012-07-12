@@ -20,9 +20,10 @@ case class Alternative (rhs : List[Element], anns: List[Annotation],
 sealed abstract class Annotation extends ASTNode
 case class Associativity (side : Side) extends Annotation
 case class Constructor (name : String) extends Annotation
-case class Transformation (num : Int, method : List[String], tipe : List[String]) extends Annotation
+case class Line () extends Annotation
 case class Parenthesized () extends Annotation
 case class Precedence (level : Int) extends Annotation
+case class Transformation (num : Int, method : List[String], tipe : List[String]) extends Annotation
 
 sealed abstract class Action extends ASTNode
 case class ApplyAction () extends Action

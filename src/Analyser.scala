@@ -210,21 +210,36 @@ object Analyser extends Environments {
         }
 
     /**
+     * Look for a particular annotation on a rule or, if it's a typed rule,
+     * on the rule that defines its type.
+     */
+    def hasRuleAnnotation (astRule : ASTRule, ann : Annotation) : Boolean =
+        if (astRule.tipe == null)
+            (astRule.anns != null) && (astRule.anns contains (ann))
+        else 
+            (astRule.tipe)->entity match {
+                case UserNonTerm (_, otherRule) =>
+                    hasRuleAnnotation (otherRule, ann)
+                case _ =>
+                    false
+            }
+
+    /**
+     * Is this rule to be prefixed by line breaks when pretty-printing?
+     */
+    lazy val isLinePP : ASTRule => Boolean =
+        attr {
+            case astRule =>
+                hasRuleAnnotation (astRule, Line ())
+        }
+
+    /**
      * Is this rule to be parenthesized when pretty-printing?
      */
     lazy val isParenPP : ASTRule => Boolean =
         attr {
-            case astRule if astRule.tipe != null =>
-                // Need to look up the rule for the type and check its annotations
-                // FIXME: need to use other clause too? what if have tipe *and* paren annotation?
-                (astRule.tipe)->entity match {
-                    case UserNonTerm (_, otherRule) =>
-                        otherRule->isParenPP
-                    case _ =>
-                        false
-                }
             case astRule =>
-                (astRule.anns != null) && (astRule.anns contains (Parenthesized ()))
+                hasRuleAnnotation (astRule, Parenthesized ())
         }
 
     /**
@@ -364,27 +379,62 @@ object Analyser extends Environments {
 
     /**
      * Whether or not an alternative requires an action. We don't need one
-     * if a) the alternative has an explicit decoration that it requires no
-     * action, or b) it's a transfer alternative among other alternatives.
+     * if the alternative has an explicit decoration that it requires no
+     * action.
      */
     lazy val requiresNoAction : Alternative => Boolean =
         attr {
             case alt =>
-                (alt.action == NoAction ()) ||
-                ((alt.anns == null) && ((alt->astrule).alts.length > 1))
+                alt.action == NoAction ()
+        }
+
+    /**
+     * Is this alternative a transfer alternative or not? A transfer
+     * alternative is one that has a single non-terminal on the right-hand
+     * side, the type of that non-terminal is the same as the type of the
+     * rule and there are no annotations.
+     */
+    lazy val isTransferAlt : Alternative => Boolean =
+        attr {
+            case alt if alt.anns == null =>
+                alt->syntaxElements match {
+                    case List (nt : NonTerminal) =>
+                        nt->nttype == alt->astrule->typeName
+                    case _ =>
+                        false
+                }
+            case _ =>
+                false
+        }
+
+    /**
+     * The elements of an alternative, ignoring the elements that don't
+     * contribute to the abstract syntax.
+     */
+    lazy val syntaxElements : Alternative => List[Element] =
+        attr {
+            case alt =>
+                alt.rhs.filterNot {
+                    case _ : Formatting | _ : CharLit | _ : StringLit =>
+                        true
+                    case _ =>
+                        false
+                }
         }
 
     /**
      * Whether or not the alternative needs a pretty-printing clause:
-     * if it has no action or if it's part of a parenthesized rule and
-     * and features the recursive symbol. In the latter case it will be
-     * handled by the paren pretty printer.
+     * if it has no action, if it's part of a parenthesized rule and
+     * and features the recursive symbols, or if it's a transfer 
+     * alternative. In the second case it will be handled by the paren
+     * pretty printer.
      */
     lazy val requiresNoPPCase : Alternative => Boolean =
         attr {
             case alt =>
                 (alt->requiresNoAction) ||
-                ((alt->astrule->isParenPP) && (alt->isRecursive))
+                ((alt->astrule->isParenPP) && (alt->isRecursive)) ||
+                (alt->isTransferAlt)
         }
 
     /**

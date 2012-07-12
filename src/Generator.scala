@@ -2,8 +2,9 @@ import org.kiama.output.PrettyPrinter
 
 object Generator extends PrettyPrinter {
 
-    import Analyser.{constr, elemtype, fieldName, fieldTypes, isParenPP, lhs,
-        orderOpPrecFixityNonterm, requiresNoPPCase, treeAlternatives, typeName}
+    import Analyser.{constr, elemtype, fieldName, fieldTypes, isLinePP,
+        isParenPP, isTransferAlt, lhs, orderOpPrecFixityNonterm, requiresNoPPCase,
+        treeAlternatives, typeName}
     import ast._
     import org.kiama.attribution.Attribution.initTree
     import org.kiama.rewriting.Rewriter.{alltd, rewrite, query}
@@ -215,10 +216,13 @@ object Generator extends PrettyPrinter {
 
             line <>
             (if (alts.length == 1)
-                if (astRule.tipe == null)
-                    "case class" <+> lhs.name <+> toFields (alts.head) <+> superClass
+                if (alts.head->isTransferAlt)
+                    "sealed abstract class" <+> lhs.name <+> superClass
                 else
-                    toConcreteClass (tipe.name) (alts.head)
+                    if (astRule.tipe == null)
+                        "case class" <+> lhs.name <+> toFields (alts.head) <+> superClass
+                    else
+                        toConcreteClass (tipe.name) (alts.head)
              else
                 if (astRule.tipe == null)
                     "sealed abstract class" <+> lhs.name <+> superClass <@>
@@ -448,7 +452,8 @@ object Generator extends PrettyPrinter {
 
                     val body =
                         line <>
-                        ssep (exps, " <> ")
+                        (if (astRule->isLinePP) "line <> " else empty) <>
+                            ssep (exps, " <> ")
 
                     val newCase =
                         line <>
