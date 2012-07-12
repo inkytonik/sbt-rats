@@ -3,8 +3,7 @@ import org.kiama.output.PrettyPrinter
 object Generator extends PrettyPrinter {
 
     import Analyser.{constr, elemtype, fieldName, fieldTypes, isParenPP, lhs,
-        optConstr, orderOpPrecFixityNonterm, requiresNoPPCase, treeAlternatives,
-        typeName}
+        orderOpPrecFixityNonterm, requiresNoPPCase, treeAlternatives, typeName}
     import ast._
     import org.kiama.attribution.Attribution.initTree
     import org.kiama.rewriting.Rewriter.{alltd, rewrite, query}
@@ -198,13 +197,8 @@ object Generator extends PrettyPrinter {
                     empty
 
             def toConcreteClass (parent : String) (alt : Alternative) : Doc =
-                (alt->optConstr) match {
-                    case Some (name) => 
-                        "case class" <+> name <+> toFields (alt) <+> "extends" <+> parent <+>
-                             toParenPPInfo (alt)
-                    case _ =>
-                        empty
-                }
+                "case class" <+> text (alt->constr) <+> toFields (alt) <+> "extends" <+>
+                    parent <+> toParenPPInfo (alt)
 
             // Common super class clause
             val superClass =
@@ -220,14 +214,19 @@ object Generator extends PrettyPrinter {
             val ASTRule (lhs, tipe, alts, _, _) = astRule
 
             line <>
-            (if (astRule.tipe == null)
-                if (alts.length == 1)
+            (if (alts.length == 1)
+                if (astRule.tipe == null)
                     "case class" <+> lhs.name <+> toFields (alts.head) <+> superClass
-                else
+                else {
+                    println ("processing " + alts.head + " tipe =" + tipe.name)
+                    toConcreteClass (tipe.name) (alts.head)
+                }
+             else
+                if (astRule.tipe == null)
                     "sealed abstract class" <+> lhs.name <+> superClass <@>
                     vsep (treeAlts map (toConcreteClass (lhs.name)))
-             else
-                vsep (treeAlts map (toConcreteClass (tipe.name)))) <>
+                else
+                    vsep (treeAlts map (toConcreteClass (tipe.name)))) <>
             line
 
         }

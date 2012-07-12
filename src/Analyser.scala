@@ -325,15 +325,15 @@ object Analyser extends Environments {
 
     /**
      * The consructor for an alternative. If there are constructor
-     * annotations, take the first one. Otherwise, use the type name
-     * of the enclosing rule.
+     * annotations, take the first one. Otherwise, use the left-hand 
+     * side of the enclosing rule.
      */
     lazy val constr : Alternative => String =
         attr {
             case alt =>
                 (alt->optConstr) match {
                     case None =>
-                        alt->astrule->typeName
+                        alt->astrule->lhs
                     case Some (name) =>
                         name
                 }
