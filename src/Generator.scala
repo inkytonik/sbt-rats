@@ -217,10 +217,8 @@ object Generator extends PrettyPrinter {
             (if (alts.length == 1)
                 if (astRule.tipe == null)
                     "case class" <+> lhs.name <+> toFields (alts.head) <+> superClass
-                else {
-                    println ("processing " + alts.head + " tipe =" + tipe.name)
+                else
                     toConcreteClass (tipe.name) (alts.head)
-                }
              else
                 if (astRule.tipe == null)
                     "sealed abstract class" <+> lhs.name <+> superClass <@>
