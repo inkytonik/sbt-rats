@@ -1,7 +1,9 @@
 /*
- * This file is part of sbt-rats.
- *
- * Copyright (C) 2012 Anthony M Sloane, Macquarie University.
+ * This file is part of the sbt-rats plugin.
+ * Copyright (c) 2012 Anthony M Sloane, Macquarie University.
+ * All rights reserved.
+ * Distributed under the New BSD license.
+ * See file LICENSE at top of distribution.
  */
 
 import sbt._
