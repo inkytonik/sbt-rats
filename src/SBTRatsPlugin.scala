@@ -380,7 +380,8 @@ object SBTRatsPlugin extends Plugin {
         }
 
         def transformPositions (contents : String) : String = {
-            val locatablesToPositions =
+
+            val locatablesToPositionsScala =
                 List (
                     """import xtc\.tree\.Locatable;""".r ->
                         """import scala.util.parsing.input.Positional;
@@ -401,7 +402,36 @@ object SBTRatsPlugin extends Plugin {
                         |  }
                         |""".stripMargin
                 )
-            makeReplacements (contents, locatablesToPositions)
+
+            val locatablesToPositionsKiama =
+                List (
+                    """import xtc\.tree\.Locatable;""".r ->
+                        """import org.kiama.util.Positioned;
+                          |import scala.util.parsing.input.Position;
+                          |import sbtrats.LineColPosition;""".stripMargin,
+                    """Locatable""".r ->
+                        """Positioned""",
+                    """public final class (\w+) extends ParserBase \{""".r ->
+                        """
+                        |public final class $1 extends ParserBase {
+                        |
+                        |  /** Set position of a Positioned */
+                        |  void setLocation(final Positioned positional, final int start) {
+                        |    if (null != positional) {
+                        |      Column s = column(start);
+                        |      positional.setStart(new LineColPosition(s.line, s.column));
+                        |      Column f = column(yyCount == 0 ? 0 : yyCount - 1);
+                        |      positional.setFinish(new LineColPosition(f.line, f.column));
+                        |    }
+                        |  }
+                        |""".stripMargin
+                )
+
+            makeReplacements (contents, if (flags.useKiama)
+                                            locatablesToPositionsKiama
+                                        else
+                                            locatablesToPositionsKiama)
+
         }
 
         val contents = IO.read (genFile)

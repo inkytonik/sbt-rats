@@ -34,14 +34,16 @@ object Generator extends PrettyPrinter {
 
         def toImports : Doc =
             line <>
-            includeImportWhen ("scala.util.parsing.input.Positional",
-                               flags.useScalaPositions) <>
             includeImportWhen ("org.kiama.attribution.Attributable",
                                flags.useKiama) <>
             includeImportWhen ("org.kiama.output.{Infix, LeftAssoc, NonAssoc, Prefix, RightAssoc}",
                                flags.definePrettyPrinter) <>
             includeImportWhen ("org.kiama.output.{PrettyBinaryExpression, PrettyExpression, PrettyUnaryExpression}",
-                               flags.definePrettyPrinter)
+                               flags.definePrettyPrinter) <>
+            includeImportWhen ("scala.util.parsing.input.Positional",
+                               flags.useScalaPositions && !flags.useKiama) <>
+            includeImportWhen ("org.kiama.util.Positioned",
+                               flags.useScalaPositions && flags.useKiama)
 
         def toSyntax : Doc =
             line <>
@@ -54,8 +56,14 @@ object Generator extends PrettyPrinter {
 
         def toSuperClass : Doc = {
             val superTraits = List (
-                if (flags.useScalaPositions) List ("Positional") else Nil,
-                if (flags.useKiama) List ("Attributable") else Nil
+                if (flags.useScalaPositions)
+                    List (if (flags.useKiama) "Positioned" else "Positional")
+                else
+                    Nil,
+                if (flags.useKiama)
+                    List ("Attributable")
+                else
+                    Nil
             ).flatten
 
             line <>
