@@ -25,7 +25,7 @@ header {
 body {
     static {
         add (KEYWORDS, new String[] {
-            "comment", "header", "left", "line", "module", "nest", "none",
+            "header", "left", "line", "module", "nest", "none",
             "paren", "rats", "right", "sp", "String"
         });
     }
