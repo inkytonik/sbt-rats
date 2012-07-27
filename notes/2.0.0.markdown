@@ -1,0 +1,20 @@
+This is a major release of the
+[sbt-rats plugin](https://code.google.com/p/sbt-rats/). The main function of the
+plugin to support the use of the
+[Rats! parser generator](http://cs.nyu.edu/rgrimm/xtc/rats-intro.html)
+with Scala is preserved and updated to work with modern versions of
+sbt.
+
+In addition, the plugin now supports a simpler high-level syntax description
+format that can be automatically translated into Rats! specifications and
+implementations of abstract syntax trees and pretty printers for those trees.
+
+Please see the
+[usage page on the project wiki](https://code.google.com/p/sbt-rats/wiki/Usage)
+for all the details.
+
+* The plugin is now based on Rats! version 2.3.1.
+
+* The plugin is now part of the 
+[sbt Community Plugins](http://www.scala-sbt.org/community-plugins.html)
+collection.
