@@ -252,7 +252,7 @@ object Translator extends PrettyPrinter {
                     """
                     |// Default comment specification
                     |transient void Comment   = SLComment / MLComment;
-                    |transient void SLComment = "//" (![\n\r] _)* EOL;
+                    |transient void SLComment = "//" (!EOL _)* EOL;
                     |transient void MLComment = "/*" (MLComment / !"*/" _)* "*/";
                     |""".stripMargin
                 else
