@@ -464,14 +464,15 @@ object SBTRatsPlugin extends Plugin {
      * Settings for the plugin:
      *  - run Rats! as a source generator
      *  - add the Rats! jar to the dependent libraries
-     *  - default value for rats-use-scala-lists
+     *  - default values for settings
+     *  - group settings together to pass around
      */
     val sbtRatsSettings = Seq (
 
         sourceGenerators in Compile <+= runGenerators,
 
         libraryDependencies ++= Seq (
-            "rats" % "rats" % "2.3.1" from "http://cs.nyu.edu/rgrimm/xtc/rats.jar"
+            "xtc" % "rats-runtime" % "2.3.1"
         ),
 
         ratsUseScalaLists := false,

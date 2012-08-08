@@ -2,7 +2,7 @@ sbtPlugin := true
 
 name := "sbt-rats"
 
-version := "2.0.0-SNAPSHOT"
+version := "2.0.1"
 
 organization := "com.googlecode.sbt-rats"
 
@@ -24,7 +24,7 @@ shellPrompt <<= (name, version) { (n, v) =>
 
 libraryDependencies ++= Seq (
     "com.googlecode.kiama" % "kiama_2.9.2" % "1.3.0",
-    "rats" % "rats" % "2.3.1" from "http://cs.nyu.edu/rgrimm/xtc/rats.jar"
+    "xtc" % "rats" % "2.3.1"
 )
 
 // Source code locations
@@ -45,3 +45,15 @@ unmanagedResourceDirectories in Test <<= unmanagedResourceDirectories
 unmanagedResources in Test <<= scalaSource map { s => {
     (s ** (-"*.scala" && -HiddenFileFilter)).get
 }}
+
+// Publishing
+
+publishTo := Some (Resolver.url (
+    "sbt-plugin-releases",
+    new URL (
+        "http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-releases/"
+    )) (
+        Resolver.ivyStylePatterns
+    ))
+
+publishMavenStyle := false
