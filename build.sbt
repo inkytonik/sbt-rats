@@ -8,7 +8,7 @@ organization := "com.googlecode.sbt-rats"
 
 // Scala compiler settings
 
-scalaVersion := "2.9.1"
+scalaVersion := "2.9.2"
 
 scalacOptions ++= Seq ("-deprecation", "-unchecked")
 
@@ -48,12 +48,6 @@ unmanagedResources in Test <<= scalaSource map { s => {
 
 // Publishing
 
-publishTo := Some (Resolver.url (
-    "sbt-plugin-releases",
-    new URL (
-        "http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-releases/"
-    )) (
-        Resolver.ivyStylePatterns
-    ))
+publishTo := Some (Classpaths.sbtPluginReleases)
 
 publishMavenStyle := false
