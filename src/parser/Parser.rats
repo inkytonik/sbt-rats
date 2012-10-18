@@ -205,9 +205,6 @@ Pair<RuleAnnotation> RuleAnnotationList =
     };
 
 RuleAnnotation RuleAnnotation =
-    Formatter;
-
-RuleAnnotation Formatter =
     void:"line":Word {
         yyValue = new Line ();
     } /
@@ -226,12 +223,6 @@ Pair<AltAnnotation> AltAnnotationList =
     };
 
 AltAnnotation AltAnnotation =
-    Associativity /
-    Constructor /
-    Transformation /
-    Precedence;
-
-AltAnnotation Associativity =
     void:"left":Word {
         yyValue = new Associativity (LeftAssoc$.MODULE$);
     } /
@@ -240,19 +231,13 @@ AltAnnotation Associativity =
     } /
     void:"right":Word {
         yyValue = new Associativity (RightAssoc$.MODULE$);
-    };
-
-AltAnnotation Constructor =
+    } /
     i:Identifier {
         yyValue = new Constructor (i);
-    };
-
-AltAnnotation Transformation =
+    } /
     d:DecDigits void:":":Symbol m:QualIdentifier void:":":Symbol t:QualIdentifier {
         yyValue = new Transformation (Integer.parseInt (d), m, t);
-    };
-
-AltAnnotation Precedence =    
+    } /
     d:DecDigits {
         yyValue = new Precedence (Integer.parseInt (d));
     };
