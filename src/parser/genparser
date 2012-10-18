@@ -4,7 +4,7 @@
 # use sbt-rats itself, but we code the generation and massaging here to avoid
 # having to implement a boot-strapping process.
 
-java -cp $HOME/.ivy2/cache/rats/rats/jars/rats-2.3.1.jar xtc.parser.Rats Parser.rats
+java -cp $HOME/.ivy2/cache/xtc/rats/jars/rats-2.3.1.jar xtc.parser.Rats Parser.rats
 
 sed -E -i .orig \
  \
