@@ -18,20 +18,22 @@ case class Grammar (pkg : List[String], header : String, rules : List[Rule]) ext
 
 sealed abstract class Rule extends ASTNode
 case class ASTRule (idndef : IdnDef, tipe : IdnUse, alts : List[Alternative],
-                    isConst : Boolean = false, anns: List[Annotation] = Nil) extends Rule
+                    isConst : Boolean = false, anns: List[RuleAnnotation] = Nil) extends Rule
 case class StringRule (idndef : IdnDef, alts : List[Element]) extends Rule
 case class RatsSection (code : String) extends Rule
 
-case class Alternative (rhs : List[Element], anns: List[Annotation],
+case class Alternative (rhs : List[Element], anns: List[AltAnnotation],
                         action : Action) extends ASTNode
 
-sealed abstract class Annotation extends ASTNode
-case class Associativity (side : Side) extends Annotation
-case class Constructor (name : String) extends Annotation
-case class Line () extends Annotation
-case class Parenthesized () extends Annotation
-case class Precedence (level : Int) extends Annotation
-case class Transformation (num : Int, method : List[String], tipe : List[String]) extends Annotation
+sealed abstract class RuleAnnotation extends ASTNode
+case class Line () extends RuleAnnotation
+case class Parenthesized () extends RuleAnnotation
+
+sealed abstract class AltAnnotation extends ASTNode
+case class Associativity (side : Side) extends AltAnnotation
+case class Constructor (name : String) extends AltAnnotation
+case class Precedence (level : Int) extends AltAnnotation
+case class Transformation (num : Int, method : List[String], tipe : List[String]) extends AltAnnotation
 
 sealed abstract class Action extends ASTNode
 case class ApplyAction () extends Action

@@ -74,7 +74,7 @@ Rule GrammarRule =
     i:IdnDef StringType void:"=":Symbol alts:StringAlternatives {
         yyValue = new StringRule (i, alts);
     } /
-    i:IdnDef t:Type? anns:Annotations? void:"=":Symbol alts:ASTAlternatives {
+    i:IdnDef t:Type? anns:RuleAnnotations? void:"=":Symbol alts:ASTAlternatives {
         yyValue = new ASTRule (i, t, alts, false, anns);
     };
 
@@ -99,7 +99,7 @@ Pair<Alternative> ASTAlternatives =
     };
 
 Alternative ASTAlternative =
-    es:ASTElement+ as:Annotations? {
+    es:ASTElement+ as:AltAnnotations? {
         yyValue = new Alternative (es, as, new DefaultAction ());
     };
 
@@ -194,24 +194,44 @@ Element Formatting =
         yyValue = new Space ();
     };
 
-// Annotations
+// Rule annotations
 
-Pair<Annotation> Annotations =
-    void:"{":Symbol AnnotationList void:"}":Symbol;
+Pair<RuleAnnotation> RuleAnnotations =
+    void:"{":Symbol RuleAnnotationList void:"}":Symbol;
 
-Pair<Annotation> AnnotationList =
-    h:Annotation tl:(void:",":Symbol Annotation)* {
+Pair<RuleAnnotation> RuleAnnotationList =
+    h:RuleAnnotation tl:(void:",":Symbol RuleAnnotation)* {
         yyValue = SList.create (h, tl);
     };
 
-Annotation Annotation =
+RuleAnnotation RuleAnnotation =
+    Formatter;
+
+RuleAnnotation Formatter =
+    void:"line":Word {
+        yyValue = new Line ();
+    } /
+    void:"paren":Word {
+        yyValue = new Parenthesized ();
+    };
+
+// Alternative annotations
+
+Pair<AltAnnotation> AltAnnotations =
+    void:"{":Symbol AltAnnotationList void:"}":Symbol;
+
+Pair<AltAnnotation> AltAnnotationList =
+    h:AltAnnotation tl:(void:",":Symbol AltAnnotation)* {
+        yyValue = SList.create (h, tl);
+    };
+
+AltAnnotation AltAnnotation =
     Associativity /
-    Formatter /
     Constructor /
     Transformation /
     Precedence;
 
-Annotation Associativity =
+AltAnnotation Associativity =
     void:"left":Word {
         yyValue = new Associativity (LeftAssoc$.MODULE$);
     } /
@@ -222,25 +242,17 @@ Annotation Associativity =
         yyValue = new Associativity (RightAssoc$.MODULE$);
     };
 
-Annotation Constructor =
+AltAnnotation Constructor =
     i:Identifier {
         yyValue = new Constructor (i);
     };
 
-Annotation Formatter =
-    void:"line":Word {
-        yyValue = new Line ();
-    } /
-    void:"paren":Word {
-        yyValue = new Parenthesized ();
-    };
-
-Annotation Transformation =
+AltAnnotation Transformation =
     d:DecDigits void:":":Symbol m:QualIdentifier void:":":Symbol t:QualIdentifier {
         yyValue = new Transformation (Integer.parseInt (d), m, t);
     };
 
-Annotation Precedence =    
+AltAnnotation Precedence =    
     d:DecDigits {
         yyValue = new Precedence (Integer.parseInt (d));
     };

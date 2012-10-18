@@ -221,7 +221,7 @@ object Analyser extends Environments {
      * Look for a particular annotation on a rule or, if it's a typed rule,
      * on the rule that defines its type.
      */
-    def hasRuleAnnotation (astRule : ASTRule, ann : Annotation) : Boolean =
+    def hasRuleAnnotation (astRule : ASTRule, ann : RuleAnnotation) : Boolean =
         if (astRule.tipe == null)
             (astRule.anns != null) && (astRule.anns contains (ann))
         else 
