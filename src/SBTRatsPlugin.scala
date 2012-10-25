@@ -472,7 +472,7 @@ object SBTRatsPlugin extends Plugin {
         sourceGenerators in Compile <+= runGenerators,
 
         libraryDependencies ++= Seq (
-            "xtc" % "rats-runtime" % "2.3.1"
+            "xtc" % "rats" % "2.3.1"
         ),
 
         ratsUseScalaLists := false,
