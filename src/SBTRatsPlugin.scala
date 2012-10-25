@@ -432,7 +432,7 @@ object SBTRatsPlugin extends Plugin {
             makeReplacements (contents, if (flags.useKiama)
                                             locatablesToPositionsKiama
                                         else
-                                            locatablesToPositionsKiama)
+                                            locatablesToPositionsScala)
 
         }
 
