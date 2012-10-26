@@ -11,8 +11,8 @@ import org.kiama.output.PrettyPrinter
 object Generator extends PrettyPrinter {
 
     import Analyser.{constr, elemtype, fieldName, fieldTypes, isLinePP,
-        isParenPP, isTransferAlt, lhs, orderOpPrecFixityNonterm, requiresNoPPCase,
-        treeAlternatives, typeName}
+        isParenPP, isTransferAlt, lhs, nameToFieldName, orderOpPrecFixityNonterm,
+        requiresNoPPCase, treeAlternatives, typeName}
     import ast._
     import org.kiama.attribution.Attribution.initTree
     import org.kiama.rewriting.Rewriter.{alltd, rewrite, query}
@@ -126,6 +126,9 @@ object Generator extends PrettyPrinter {
                                 addField (elem)
                             case Nest (nestedElem) =>
                                 addField (nestedElem)
+                            case Block (name, _) =>
+                                val fieldName = nameToFieldName ("", name, "")
+                                fields.append (Field (fieldName, "String"))
                             case _ =>
                                 // No argument for the rest of the element kinds
                         }

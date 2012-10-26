@@ -177,6 +177,9 @@ Element ASTFactor =
     ASTPrimary;
 
 Element ASTPrimary =
+    i:Identifier void:"[":Symbol d:DecDigits void:"]":Symbol {
+        yyValue = new Block (i, Integer.parseInt (d));
+    } /
     i:IdnUse {
         yyValue = new NonTerminal (i);
     };
@@ -210,6 +213,9 @@ RuleAnnotation RuleAnnotation =
     } /
     void:"paren":Word {
         yyValue = new Parenthesized ();
+    } /
+    void:"nospacing":Word {
+        yyValue = new NoSpacing ();
     };
 
 // Alternative annotations
@@ -245,11 +251,30 @@ AltAnnotation AltAnnotation =
 String DecDigits =
     [0-9]+;
 
-// Rats! code section
+// Rats! sections
 
-RatsSection RatsSection =
+Rule RatsSection =
+      RatsRule void:".":Symbol
+    / RatsBlock;
+
+// Rats! rule
+
+RatsRule RatsRule =
+    i:IdnDef StringType void:"=":Symbol void:"rats":Word s:CodeBlock {
+        yyValue = new RatsRule (i, new IdnUse ("String"), s);
+    } /
+    i:IdnDef t:Type void:"=":Symbol void:"rats":Word s:CodeBlock {
+        yyValue = new RatsRule (i, t, s);
+    } /
+    i:IdnDef void:"=":Symbol void:"rats":Word s:CodeBlock {
+        yyValue = new RatsRule (i, null, s);
+    };
+
+// Rats! block
+
+RatsBlock RatsBlock =
     void:"rats":Word s:CodeBlock {
-        yyValue = new RatsSection (s);
+        yyValue = new RatsBlock (s);
     };
 
 // Identifiers
@@ -346,7 +371,7 @@ String Symbol =
 
 transient String SymbolCharacters =
     ":" / "=" / "/" / "|" / "{" / "}" / "(" / ")" / "!" / "." / "," /
-    "*" / "+" / "?" / ";" / "\\n";
+    "*" / "+" / "?" / "[" / "]" / ";" / "\\n";
 
 transient void Spacing   = (Space / SLComment / MLComment)*;
 transient void FSpacing  = (Space / SLComment / MLComment)+;

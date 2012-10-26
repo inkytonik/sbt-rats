@@ -20,13 +20,17 @@ sealed abstract class Rule extends ASTNode
 case class ASTRule (idndef : IdnDef, tipe : IdnUse, alts : List[Alternative],
                     isConst : Boolean = false, anns: List[RuleAnnotation] = Nil) extends Rule
 case class StringRule (idndef : IdnDef, alts : List[Element]) extends Rule
-case class RatsSection (code : String) extends Rule
+
+sealed abstract class RatsSection extends Rule
+case class RatsBlock (code : String) extends RatsSection
+case class RatsRule (idndef : IdnDef, tipe : IdnUse, code : String) extends RatsSection
 
 case class Alternative (rhs : List[Element], anns: List[AltAnnotation],
                         action : Action) extends ASTNode
 
 sealed abstract class RuleAnnotation extends ASTNode
 case class Line () extends RuleAnnotation
+case class NoSpacing () extends RuleAnnotation
 case class Parenthesized () extends RuleAnnotation
 
 sealed abstract class AltAnnotation extends ASTNode
@@ -43,6 +47,7 @@ case class TailAction (tipe : String, constr : String) extends Action
 
 sealed abstract class Element extends ASTNode
 case class Alt (l : Element, r : Element) extends Element
+case class Block (name : String, n : Int) extends Element
 case class CharClass (s : String) extends Element
 case class CharLit (s : String) extends Element
 case class Epsilon () extends Element

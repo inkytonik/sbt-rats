@@ -16,8 +16,8 @@ object Translator extends PrettyPrinter {
 
     def translate (flags : Flags, genFile : File, grammar : Grammar) = {
 
-        import Analyser.{constr, partitionLiterals, requiresNoAction, transformer,
-            typeName}
+        import Analyser.{constr, hasSpacing, partitionLiterals,
+            requiresNoAction, transformer, typeName}
         import org.kiama.attribution.Attribution.initTree
 
         // Count of non-terminals on the RHS of an alternative
@@ -27,25 +27,59 @@ object Translator extends PrettyPrinter {
         def toRats : Doc = {
             val (keywords, symbols) = partitionLiterals (grammar)
             "module" <+> grammar.pkg.mkString (".") <> semi <@>
-            toHeader (grammar.header, keywords) <@>
+            toHeader (grammar.header) <@>
+            toBody (keywords) <@>
             toOptions <@>
             toSymbols (symbols) <@>
             toRules (grammar.rules) <@>
             toDefaults
         }
 
-        def toHeader (header : String, keywords : Set[String]) : Doc =
+        def toHeader (header : String) : Doc =
             line <>
             toBraceSection ("header",
                 "import sbtrats.Action;",
                 if (header == null) empty else string (header)
-            ) <@>
+            )
+
+        def toBody (keywords : Set[String]) : Doc = {
+
+            val lengthParserMethod =
+                """
+                |int strToInt (String number) {
+                |    try {
+                |        byte[] bytes = number.getBytes ("ISO-8859-1");
+                |        return new java.math.BigInteger (1, bytes).intValue ();
+                |    } catch (java.io.UnsupportedEncodingException e) {
+                |        System.err.println ("strToInt: unsupported encoding exception");
+                |        return 0;
+                |    }
+                |}
+                |
+                |Result parseBytes (String number, int start, int base) throws IOException {
+                |    int n = strToInt (number);
+                |    StringBuilder buf = new StringBuilder (n);
+                |    for (int i = 0; i < n; i++) {
+                |        int c = character (base + i);
+                |        if (c != -1) {
+                |            buf.append ((char)c);
+                |        } else {
+                |            return new ParseError ("expected " + n + " bytes but EOF found", base + i);
+                |        }
+                |    }
+                |    return new SemanticValue (buf.toString (), base + n);
+                |}
+                |""".stripMargin
+
             line <>
             toBraceSection ("body",
                 toBraceSection ("static",
                     group (toKeywords (keywords))
-                )
-            ) 
+                ) <@>
+                string (lengthParserMethod)
+            )
+
+        }
 
         def toBraceSection (keyword : String, contents : Doc, prefix : Doc = empty) : Doc =
             keyword <+> braces (prefix <> nest (line <> contents) <> line)
@@ -94,17 +128,18 @@ object Translator extends PrettyPrinter {
 
         def toRule (rule : Rule) =
             rule match {
-                case r : ASTRule     => toASTRule (r)
-                case r : StringRule  => toStringRule (r)
-                case RatsSection (c) => string (c.mkString)
+                case r : ASTRule    => toASTRule (r)
+                case r : StringRule => toStringRule (r)
+                case r : RatsRule   => toRatsRule (r)
+                case RatsBlock (c)  => string (c.mkString)
             }
 
-        def toRHS (elem : Element, isASTRule : Boolean) : Doc = {
+        def toRHS (elem : Element, isASTRule : Boolean, useSpacing : Boolean) : Doc = {
 
             def toLiteral (s : String) : Doc = {
                 val prefix : Doc = if (isASTRule) "void" <> colon else ""
                 val form = if (s.forall (_.isLetter)) "Word" else "Symbol"
-                val suffix = if (isASTRule) colon <> form else empty
+                val suffix = if (useSpacing) colon <> form else empty
                 prefix <> dquotes (s) <> suffix
             }
 
@@ -116,6 +151,34 @@ object Translator extends PrettyPrinter {
                         "v" <> value (ntcount) <> colon <> doc
                     } else
                         doc
+    
+                def action (d : Doc) : Doc =
+                    "^" <> braces (nest (line <> d) <> line)
+
+                def toBlock (n : Int) : Doc = {
+                    ntcount = ntcount + 1
+                    action (
+                        "String v" <> value (ntcount) <> semi <>
+                        line <>
+                        "yyResult = parseBytes(v" <> value (n) <> ", yyStart, yyBase);" <>
+                        line <>
+                        "if (yyResult.hasValue()) {" <>
+                        nest (
+                            line <>
+                            "v" <> value (ntcount) <+> "= yyResult.semanticValue();" <>
+                            line <>
+                            "yyResult = new SemanticValue(null, yyResult.index);"
+                        ) <>
+                        line <>
+                        "} else {" <>
+                        nest (
+                            line <>
+                            "v" <> value (ntcount) <+> "= null;"
+                        ) <>
+                        line <>
+                        "}"
+                    )
+                }
 
                 elem match {
                     case NonTerminal (IdnUse (i))  => bind (i)
@@ -139,6 +202,8 @@ object Translator extends PrettyPrinter {
 
                     case Nest (elem)               => toElem (elem, doBindings)
 
+                    case Block (_, n)              => toBlock (n)
+
                     case _                         => empty
                 }
 
@@ -154,7 +219,12 @@ object Translator extends PrettyPrinter {
 
             def toAlternative (a : Alternative) : Doc = {
                 ntcount = 0
-                hsep (a.rhs map (elem => toRHS (elem, true))) <+> toAction (a)
+
+                // We want to use spacing between symbols by default but not if
+                // there is a "nospacing" annotation on the rule
+                val useSpacing = astRule->hasSpacing
+
+                hsep (a.rhs map (elem => toRHS (elem, true, useSpacing))) <+> toAction (a)
             }
 
             def toAction (alt : Alternative) : Doc = {
@@ -217,7 +287,7 @@ object Translator extends PrettyPrinter {
             val StringRule (lhs, alts) = stringRule
 
             def toAlternative (e : Element) : Doc =
-                toRHS (e, false)
+                toRHS (e, false, false)
 
             line <>
             "public" <+> "String" <+> lhs.name <+> equal <>
@@ -225,6 +295,16 @@ object Translator extends PrettyPrinter {
                 line <>
                 lsep2 (alts map toAlternative, "/") <> semi
             )
+
+        }
+
+        def toRatsRule (ratsRule : RatsRule) : Doc = {
+
+            val RatsRule (lhs, tipe, code) = ratsRule
+
+            line <>
+            "public" <+> tipe.name <+> lhs.name <+> equal <>
+            code <> semi
 
         }
 

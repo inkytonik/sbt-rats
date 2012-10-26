@@ -72,6 +72,12 @@ object Analyser extends Environments {
     case class UserNonTerm (tipe : String, astRule : ASTRule) extends NonTerm
 
     /**
+     * A user-defined non-terminal with the given type and defined by the given
+     * Rats rule.
+     */
+    case class RatsNonTerm (tipe : String, ratsRule : RatsRule) extends NonTerm
+
+    /**
      * A pre-defined non-terminal with the given type.
      */
     case class PreNonTerm (tipe : String) extends NonTerm
@@ -130,6 +136,8 @@ object Analyser extends Environments {
                 UserNonTerm (if (tipe == null) i else tipe.name, astRule)
             case StringRule (_, _) =>
                 PreNonTerm ("String")
+            case ratsRule @ RatsRule (_, tipe, _) =>
+                RatsNonTerm (if (tipe == null) i else tipe.name, ratsRule)
         }
 
     lazy val env =
@@ -248,6 +256,16 @@ object Analyser extends Environments {
         attr {
             case astRule =>
                 hasRuleAnnotation (astRule, Parenthesized ())
+        }
+
+    /**
+     * Is spacing turned on for this rule? I.e., does it not have a 
+     * `nospacing` annotation?
+     */
+    lazy val hasSpacing : ASTRule => Boolean =
+        attr {
+            case astRule =>
+                !hasRuleAnnotation (astRule, NoSpacing ())
         }
 
     /**
