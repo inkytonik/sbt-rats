@@ -186,7 +186,7 @@ object Desugarer {
 
             // The iteration seed rule has the the form: nt = prevnt tailnt*
             // We only need it if there are left associative alternatives
-            if (! leftAssocAlts.isEmpty)
+            if (leftAssocAlts.nonEmpty)
                 baseAlts.append (Alternative (List (prevnt, Rep (true, tailnt)),
                                               Nil,
                                               ApplyAction ()))
@@ -214,14 +214,14 @@ object Desugarer {
             // If there are none/right recursive alternatives and no left recursive alternatives
             // we also need a fall-through alternative to get us to the next precedence level.
             // If there are left associative alternatives the seed rule takes care of this.
-            if (leftAssocAlts.isEmpty && (! noneAssocAlts.isEmpty || ! rightAssocAlts.isEmpty))
+            if (leftAssocAlts.isEmpty && (noneAssocAlts.nonEmpty || rightAssocAlts.nonEmpty))
                 baseAlts.append (Alternative (List (prevnt), Nil, NoAction ()))
 
             // Define the base rule using the base alternatives
             rules.append (ASTRule (IdnDef (ntname), IdnUse (astRule->typeName), baseAlts.result ()))
 
             // Generate the tail rule if there are any left associative alternatives
-            if (! leftAssocAlts.isEmpty) {
+            if (leftAssocAlts.nonEmpty) {
 
                 // Each left associative alternative turns into an alternative of a rule
                 // that defines the tail of the iteration. We ignore any old action.
