@@ -113,16 +113,16 @@ object Generator extends PrettyPrinter {
                 def traverseRHS (elems : List[Element]) {
                     for (elem <- elems)
                         elem match {
-                            case NonTerminal (IdnUse (name)) =>
+                            case _ : NonTerminal =>
                                 addField (elem)
-                            case Opt (innerElem @ NonTerminal (IdnUse (name))) =>
+                            case Opt (innerElem : NonTerminal) =>
                                 val optElem =
                                     if (flags.useScalaOptions)
                                         elem
                                     else
                                         innerElem
                                 addField (optElem)
-                            case Rep (zero, NonTerminal (IdnUse (name))) =>
+                            case Rep (zero, _ : NonTerminal) =>
                                 addField (elem)
                             case Nest (nestedElem) =>
                                 addField (nestedElem)
@@ -411,21 +411,21 @@ object Generator extends PrettyPrinter {
 
                     def traverseElem (elem : Element) : Option[Doc] = {
                         elem match {
-                            case NonTerminal (IdnUse (name)) =>
+                            case _ : NonTerminal =>
                                 varcount = varcount + 1
                                 val args = parens (varName (varcount))
                                 if (elem->elemtype == "String")
                                     Some ("value" <+> args)
                                 else
                                     Some ("toDoc" <+> args)
-                            case Opt (innerElem @ NonTerminal (IdnUse (name))) =>
+                            case Opt (innerElem : NonTerminal) =>
                                 varcount = varcount + 1
                                 val func = if (elem->elemtype == "String")
                                                "toOptionTDoc"
                                            else
                                                "toOptionASTNodeDoc"
                                 Some (func <+> parens (varName (varcount)))
-                            case Rep (zero, NonTerminal (IdnUse (name))) =>
+                            case Rep (zero, _ : NonTerminal) =>
                                 varcount = varcount + 1
                                 val func = if (elem->elemtype == "String")
                                                "toListTDoc"

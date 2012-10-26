@@ -134,7 +134,7 @@ object Analyser extends Environments {
         n.parent match {
             case astRule @ ASTRule (_, tipe, _, _, _) =>
                 UserNonTerm (if (tipe == null) i else tipe.name, astRule)
-            case StringRule (_, _) =>
+            case _ : StringRule =>
                 PreNonTerm ("String")
             case ratsRule @ RatsRule (_, tipe, _) =>
                 RatsNonTerm (if (tipe == null) i else tipe.name, ratsRule)
