@@ -24,22 +24,25 @@ object Analyser extends Environments {
             case d @ IdnDef (i) if d->entity == MultipleEntity =>
                 message (d, i + " is declared more than once")
 
-            // FIXME: Really should be the following, but second case never seems to be
-            // reached if the first one is there...
-            //
-            // case u @ IdnUse (i) if u->entity == UnknownEntity =>
-            //     message (u, i + " is not declared")
-
-            // case HasParent (u @ IdnUse (i), _ : NonTerminal) =>
-            //     println (i + " defined to be " + (u->entity))
-            //     if (u->entity == Type ())
-            //         message (u, "type " + i + " found where non-terminal expected")
-
             case u @ IdnUse (i) =>
                 if (u->entity == UnknownEntity)
                     message (u, i + " is not declared")
                 else if ((u.parent.isInstanceOf[NonTerminal]) && (u->entity == Type ()))
                     message (u, "type " + i + " found where non-terminal expected")
+
+            case b @ Block (_, n) =>
+                b.parent match {
+                    case alt : Alternative =>
+                        val numalts = alt.rhs.length
+                        if (b.index + 1 == n)
+                            message (b, "block non-terminal can't refer to itself")
+                        else if ((n < 1) || (n > numalts))
+                            message (b, "block non-terminal reference " + n +
+                                        " out of range 1.." + numalts)
+                    case _ =>
+                        // Do nothing
+                }
+
 
             case _ =>
                 // Do nothing by default
