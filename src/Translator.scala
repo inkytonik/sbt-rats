@@ -92,13 +92,12 @@ object Translator extends PrettyPrinter {
             ) <> semi
 
         def toOptions : Doc = {
+            val possibleOptions =
+                List (true                    -> "setOfString (KEYWORDS)",
+                      flags.verboseOutput     -> "verbose",
+                      flags.useScalaPositions -> "withLocation")
             val options =
-                "setOfString (KEYWORDS)" ::
-                    (if (flags.useScalaPositions)
-                         List ("withLocation")
-                     else
-                         Nil)
-
+                possibleOptions.filter (_._1).map (_._2)
             line <>
             "option" <+> hsep (options map text, comma) <> semi
         }
