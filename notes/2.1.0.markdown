@@ -1,0 +1,36 @@
+This is a release of the sbt-rats plugin containing the following changes:
+
+* More support for parsing where whitespace is not significant, such as 
+  is needed to parse binary formats (issue 6).
+
+    * new `nospacing` directive for productions that causes whitespace after
+    literals in those productions to not be skipped automatically.
+
+    * new block non-terminals written `Foo[n]` where `n` is a number referring
+    to another non-terminal in the same right-hand side. The `Foo` will be 
+    parsed as a block of bytes whose length is given by non-terminal `n`.
+  
+    * Rats! sections can now be used on the right-hand side of productions
+    so that the full power of Rats! can be used to define a non-terminal.
+  
+    * Support routines `strToInt` and `parseBytes` that are used by the 
+    block parsers, but may be useful in other places.
+  
+    * See the updated Usage page on the sbt-rats wiki for an example that
+    parses PNG files.
+
+* New `ratsVerboseOutput` plugin flag to turn on verbose debugging output
+in the generated parser (issue 12).
+
+* The error messages produced when syntax errors are found in syntax
+definition files have been improved in some cases (issue 9).
+
+* Bug fix: actually use Scala-based positioning code when requested.
+
+* Projects that use the plugin now depend on the main Rats! jar, not
+just the Rats! runtime, because options such as `verbose` require
+classes in the main Rats! jar.
+
+* Moved to sbt 0.12.1.
+
+* Some other minor code tidying and error message improvement.
