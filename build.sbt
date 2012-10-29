@@ -2,7 +2,7 @@ sbtPlugin := true
 
 name := "sbt-rats"
 
-version := "2.1.1-SNAPSHOT"
+version := "2.2.0-SNAPSHOT"
 
 organization := "com.googlecode.sbt-rats"
 
