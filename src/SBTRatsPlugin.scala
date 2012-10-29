@@ -28,17 +28,13 @@ case class Flags (
 
 object SBTRatsPlugin extends Plugin {
 
-    import Analyser.check
     import ast.Grammar
-    import Desugarer.desugar
-    import Generator.{generateASTClasses, generatePrettyPrinter, generateSupportFile}
     import parser.Parser
     import org.kiama.attribution.Attribution.initTree
     import org.kiama.util.IO.filereader
     import org.kiama.util.Messaging.{messagecount, resetmessages, sortedmessages}
     import scala.collection.mutable.ListBuffer
     import scala.util.matching.Regex
-    import Translator.translate
 
     /**
      * The file that contains the main Rats! module or main syntax
@@ -216,31 +212,43 @@ object SBTRatsPlugin extends Plugin {
             // The abstract syntax tree (AST) representing the syntax
             val grammar = p.value (pr).asInstanceOf[Grammar]
 
+            // Make an analyser for this run
+            val analyser = new Analyser (flags)
+
             // Check AST for semantic errors
             initTree (grammar)
             resetmessages
-            check (grammar)
+            analyser.check (grammar)
 
             if (messagecount == 0) {
 
+                // Make a desugarer for this run
+                val desugarer = new Desugarer (analyser)
+
                 // No errors, go on to desugaring, translation and generation
-                val desugaredGrammar = desugar (grammar)
+                val desugaredGrammar = desugarer.desugar (grammar)
                 initTree (desugaredGrammar)
+
+                // Make a translator for this run
+                val translator = new Translator (analyser)
 
                 // Generate the Rats! specification
                 val name = grammar.pkg.last
                 val genFile = genDir / (name + ".rats")
                 str.log.info ("Syntax generating Rats! file %s".format (genFile))
-                translate (flags, genFile, desugaredGrammar)
+                translator.translate (flags, genFile, desugaredGrammar)
 
                 // Buffer of extra generated files
                 val extraFiles = ListBuffer[File] ()
+
+                // Make a generator for this run
+                val generator = new Generator (analyser)
 
                 // If requested, generate the AST classes
                 if (flags.defineASTClasses) {
                     val astFile = outDir / "Syntax.scala"
                     str.log.info ("Syntax generating AST classes %s".format (astFile))
-                    generateASTClasses (flags, astFile, grammar)
+                    generator.generateASTClasses (flags, astFile, grammar)
                     extraFiles.append (astFile)
                 }
 
@@ -248,8 +256,17 @@ object SBTRatsPlugin extends Plugin {
                 if (flags.defineASTClasses && flags.definePrettyPrinter) {
                     val ppFile = outDir / "PrettyPrinter.scala"
                     str.log.info ("Syntax AST pretty-printer %s".format (ppFile))
-                    generatePrettyPrinter (flags, ppFile, grammar)
+                    generator.generatePrettyPrinter (flags, ppFile, grammar)
                     extraFiles.append (ppFile)
+                }
+
+                // If requested, generate support files
+                if (flags.useScalaLists) {
+                    val supportFile = outDir / "ParserSupport.scala"
+                    str.log.info ("Rats! generating Scala support file %s".format (
+                                      supportFile))
+                    generator.generateSupportFile (flags, supportFile)
+                    extraFiles.append (supportFile)
                 }
 
                 Some ((genFile, extraFiles.result ()))
@@ -306,13 +323,7 @@ object SBTRatsPlugin extends Plugin {
                         str.log.info ("Rats! transforming %s for Scala into %s".format (
                                           genFile, outFile))
                         transformForScala (flags, genFile, outFile)
-
-                        val supportFile = outDir / "ParserSupport.scala"
-                        str.log.info ("Rats! generating Scala support file %s".format (
-                                          supportFile))
-                        generateSupportFile (flags, supportFile)
-
-                        Set (outFile, supportFile)
+                        Set (outFile)
 
                     } else {
 

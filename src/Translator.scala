@@ -8,7 +8,11 @@
 
 import org.kiama.output.PrettyPrinter
 
-object Translator extends PrettyPrinter {
+/**
+ * Translator to Rats! specifications, parameteriesed by the sementic
+ * analyser to use.
+ */
+class Translator (analyser : Analyser) extends PrettyPrinter {
     
     import ast._
     import sbt.File
@@ -16,7 +20,7 @@ object Translator extends PrettyPrinter {
 
     def translate (flags : Flags, genFile : File, grammar : Grammar) = {
 
-        import Analyser.{constr, hasSpacing, partitionLiterals,
+        import analyser.{constr, hasSpacing, partitionLiterals,
             requiresNoAction, transformer, typeName}
         import org.kiama.attribution.Attribution.initTree
 

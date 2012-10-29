@@ -8,7 +8,11 @@
 
 import org.kiama.util.Environments
 
-object Analyser extends Environments {
+/**
+ * Semantic analyser for syntax definitions, parameterised by the flags
+ * that apply to this build.
+ */
+class Analyser (flags : Flags) extends Environments {
 
     import ast._
     import org.kiama.==>
@@ -95,13 +99,23 @@ object Analyser extends Environments {
      * either provided by the plugin or are expected to be defined by 
      * the user.
      */
-    def defenv : Environment =
-        rootenv ("Comment" -> PreNonTerm ("String"),
-                 "Identifier" -> PreNonTerm ("String"),
-                 "Spacing" -> PreNonTerm ("void"),
-                 "String" -> Type (),
-                 "Word" -> PreNonTerm ("String"),
-                 "WordCharacters" -> PreNonTerm ("String"))
+    def defenv : Environment = {
+        val possibleBindings =
+            List (flags.useDefaultComments -> ("Comment" -> PreNonTerm ("void")),
+                  flags.useDefaultLayout   -> ("EOF" -> PreNonTerm ("void")),
+                  flags.useDefaultLayout   -> ("EOL" -> PreNonTerm ("void")),
+                  flags.useDefaultWords    -> ("Identifier" -> PreNonTerm ("String")),
+                  flags.useDefaultComments -> ("SLComment" -> PreNonTerm ("void")),
+                  flags.useDefaultComments -> ("MLComment" -> PreNonTerm ("void")),
+                  flags.useDefaultLayout   -> ("Space" -> PreNonTerm ("void")),
+                  flags.useDefaultLayout   -> ("Spacing" -> PreNonTerm ("void")),
+                  true                     -> ("String" -> Type ()),
+                  flags.useDefaultWords    -> ("Word" -> PreNonTerm ("String")),
+                  flags.useDefaultWords    -> ("WordCharacters" -> PreNonTerm ("String")))
+        val bindings =
+            possibleBindings.filter (_._1).map (_._2)
+        rootenv (bindings : _*)
+    }
 
     lazy val literals : Chain[ASTNode,Set[String]] =
         chain (literalsin, literalsout)

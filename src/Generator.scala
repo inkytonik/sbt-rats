@@ -8,9 +8,13 @@
 
 import org.kiama.output.PrettyPrinter
 
-object Generator extends PrettyPrinter {
+/**
+ * Generator of auxiliary files from a syntax specification, parameterised
+ * by the analyser to use.
+ */
+class Generator (analyser : Analyser) extends PrettyPrinter {
 
-    import Analyser.{constr, elemtype, fieldName, fieldTypes, isLinePP,
+    import analyser.{constr, elemtype, fieldName, fieldTypes, isLinePP,
         isParenPP, isTransferAlt, lhs, nameToFieldName, orderOpPrecFixityNonterm,
         requiresNoPPCase, treeAlternatives, typeName}
     import ast._

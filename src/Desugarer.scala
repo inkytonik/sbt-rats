@@ -6,9 +6,13 @@
  * See file LICENSE at top of distribution.
  */
 
-object Desugarer {
+/**
+ * Desugarer from syntax definition to simplified form, parameterised by
+ * the analyser to use.
+ */
+class Desugarer (analyser : Analyser) {
 
-    import Analyser.{actionTypeName, associativity, constr, isLeftRecursive,
+    import analyser.{actionTypeName, associativity, constr, isLeftRecursive,
         isTransferAlt, lhs, precedence, typeName}
     import ast._
     import org.kiama.attribution.Attribution.initTree
