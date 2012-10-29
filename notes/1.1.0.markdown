@@ -1,0 +1,7 @@
+sbt-rats provides
+
+  * a `rats` sbt action for generating parsers from Rats! specifications
+
+This release adds
+  
+  * support for Scala linked lists and positions, instead of Rats!-specific ones
