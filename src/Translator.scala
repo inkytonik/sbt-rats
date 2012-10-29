@@ -322,7 +322,6 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                     """
                     |// Default layout specification
                     |transient void Spacing   = (Space / Comment)*;
-                    |transient void FSpacing  = (Space / Comment)+;
                     |transient void Space     = ' ' / '\t' / '\f' / EOL;
                     |transient void EOL       = '\r' '\n' / '\r' / '\n';
                     |transient void EOF       = !_;    
