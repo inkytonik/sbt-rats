@@ -110,6 +110,7 @@ class Analyser (flags : Flags) extends Environments {
                   flags.useDefaultLayout   -> ("Space" -> PreNonTerm ("void")),
                   flags.useDefaultLayout   -> ("Spacing" -> PreNonTerm ("void")),
                   true                     -> ("String" -> Type ()),
+                  true                     -> ("Void" -> Type ()),
                   flags.useDefaultWords    -> ("Word" -> PreNonTerm ("String")),
                   flags.useDefaultWords    -> ("WordCharacters" -> PreNonTerm ("String")))
         val bindings =
@@ -151,8 +152,11 @@ class Analyser (flags : Flags) extends Environments {
         n.parent match {
             case astRule @ ASTRule (_, tipe, _, _, _) =>
                 UserNonTerm (if (tipe == null) i else tipe.name, astRule)
-            case _ : StringRule =>
-                PreNonTerm ("String")
+            case StringRule (_, _, save) =>
+                if (save)
+                    PreNonTerm ("String")
+                else
+                    PreNonTerm ("Void")
             case ratsRule @ RatsRule (_, tipe, _) =>
                 RatsNonTerm (if (tipe == null) i else tipe.name, ratsRule)
         }

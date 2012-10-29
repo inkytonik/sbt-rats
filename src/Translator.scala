@@ -287,13 +287,15 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
 
         def toStringRule (stringRule : StringRule) : Doc = {
 
-            val StringRule (lhs, alts) = stringRule
+            val StringRule (lhs, alts, save) = stringRule
+
+            val tipe = if (save) "String" else "void"
 
             def toAlternative (e : Element) : Doc =
                 toRHS (e, false, false)
 
             line <>
-            "public" <+> "String" <+> lhs.name <+> equal <>
+            "public" <+> tipe <+> lhs.name <+> equal <>
             nest (
                 line <>
                 lsep2 (alts map toAlternative, "/") <> semi

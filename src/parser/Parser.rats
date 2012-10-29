@@ -71,14 +71,20 @@ Rule Rule =
 // Grammar rules
 
 Rule GrammarRule =
+    i:IdnDef VoidType void:"=":Symbol alts:StringAlternatives {
+        yyValue = new StringRule (i, alts, false);
+    } /
     i:IdnDef StringType void:"=":Symbol alts:StringAlternatives {
-        yyValue = new StringRule (i, alts);
+        yyValue = new StringRule (i, alts, true);
     } /
     i:IdnDef t:Type? anns:RuleAnnotations? void:"=":Symbol alts:ASTAlternatives {
         yyValue = new ASTRule (i, t, alts, false, anns);
     };
 
 // Types
+
+transient void VoidType =
+    void:":":Symbol void:"Void":Word;
 
 transient void StringType =
     void:":":Symbol void:"String":Word;
