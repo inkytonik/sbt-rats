@@ -25,8 +25,8 @@ header {
 body {
     static {
         add (KEYWORDS, new String[] {
-            "header", "left", "line", "module", "nest", "none",
-            "paren", "rats", "right", "sp", "String"
+            "body", "header", "left", "line", "module", "nest",
+            "none", "paren", "rats", "right", "sp", "String"
         });
     }
 
@@ -42,8 +42,8 @@ body {
 option setOfString (KEYWORDS), withLocation;
 
 public Grammar Grammar =
-    p:PackageDecl h:HeaderSection? rs:Rule* EOF {
-        yyValue = new Grammar (p, h, rs);
+    p:PackageDecl h:HeaderSection? b:BodySection? rs:Rule* EOF {
+        yyValue = new Grammar (p, h, b, rs);
     };
 
 // Package declarations
@@ -55,6 +55,13 @@ Pair<String> PackageDecl =
 
 String HeaderSection =
     void:"header":Word CodeBlock;
+
+// Body section
+
+String BodySection =
+    void:"body":Word CodeBlock;
+
+// Code blocks
 
 String CodeBlock =
     '{' yyValue:CodeBlockText '}' Spacing;

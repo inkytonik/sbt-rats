@@ -32,7 +32,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
             val (keywords, symbols) = partitionLiterals (grammar)
             "module" <+> grammar.pkg.mkString (".") <> semi <@>
             toHeader (grammar.header) <@>
-            toBody (keywords) <@>
+            toBody (grammar.body, keywords) <@>
             toOptions <@>
             toSymbols (symbols) <@>
             toRules (grammar.rules) <@>
@@ -46,7 +46,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                 if (header == null) empty else string (header)
             )
 
-        def toBody (keywords : Set[String]) : Doc = {
+        def toBody (body : String, keywords : Set[String]) : Doc = {
 
             val lengthParserMethod =
                 """
@@ -75,8 +75,11 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                 |}
                 |""".stripMargin
 
+            val bodyPrefix = if (body == null) empty else text (body)
+
             line <>
             toBraceSection ("body",
+                bodyPrefix <@>
                 toBraceSection ("static",
                     group (toKeywords (keywords))
                 ) <@>

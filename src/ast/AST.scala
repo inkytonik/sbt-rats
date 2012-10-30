@@ -14,7 +14,8 @@ import scala.util.parsing.input.Positional
 
 abstract class ASTNode extends Attributable with Positional
 
-case class Grammar (pkg : List[String], header : String, rules : List[Rule]) extends ASTNode
+case class Grammar (pkg : List[String], header : String, body : String,
+                    rules : List[Rule]) extends ASTNode
 
 sealed abstract class Rule extends ASTNode
 case class ASTRule (idndef : IdnDef, tipe : IdnUse, alts : List[Alternative],
