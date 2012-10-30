@@ -188,8 +188,9 @@ class Analyser (flags : Flags) extends Environments {
 
     lazy val elemtype : Element => String =
         attr {
-            case n : NonTerminal          => n->nttype
-            case Opt (n : NonTerminal)    =>
+            case n : NonTerminal =>
+                n->nttype
+            case Opt (n : NonTerminal) =>
                 if (n->nttype == "Void")
                     "Void"
                 else
@@ -199,6 +200,8 @@ class Analyser (flags : Flags) extends Environments {
                     "Void"
                 else
                     "List[%s]".format (n->nttype)
+            case _ : Block =>
+                "String"
             case e =>
                 sys.error ("elemtype: unexpected element kind " + e)
         }
