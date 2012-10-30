@@ -20,7 +20,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
 
     def translate (flags : Flags, genFile : File, grammar : Grammar) = {
 
-        import analyser.{constr, hasSpacing, partitionLiterals,
+        import analyser.{constr, elemtype, hasSpacing, partitionLiterals,
             requiresNoAction, transformer, typeName}
         import org.kiama.attribution.Attribution.initTree
 
@@ -184,7 +184,11 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                 }
 
                 elem match {
-                    case NonTerminal (IdnUse (i))  => bind (i)
+                    case NonTerminal (IdnUse (i))  =>
+                        if (elem->elemtype == "Void")
+                            value (i)
+                        else
+                            bind (i)
 
                     case Not (elem)                => "!" <> parens (toElem (elem))
                     case Opt (elem)                => bind (parens (toElem (elem)) <> "?")

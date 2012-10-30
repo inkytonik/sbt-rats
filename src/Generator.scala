@@ -116,26 +116,27 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                  */
                 def traverseRHS (elems : List[Element]) {
                     for (elem <- elems)
-                        elem match {
-                            case _ : NonTerminal =>
-                                addField (elem)
-                            case Opt (innerElem : NonTerminal) =>
-                                val optElem =
-                                    if (flags.useScalaOptions)
-                                        elem
-                                    else
-                                        innerElem
-                                addField (optElem)
-                            case Rep (zero, _ : NonTerminal) =>
-                                addField (elem)
-                            case Nest (nestedElem) =>
-                                addField (nestedElem)
-                            case Block (name, _) =>
-                                val fieldName = nameToFieldName ("", name, "")
-                                fields.append (Field (fieldName, "String"))
-                            case _ =>
-                                // No argument for the rest of the element kinds
-                        }
+                        if (elem->elemtype != "Void")
+                            elem match {
+                                case _ : NonTerminal =>
+                                    addField (elem)
+                                case Opt (innerElem : NonTerminal) =>
+                                    val optElem =
+                                        if (flags.useScalaOptions)
+                                            elem
+                                        else
+                                            innerElem
+                                    addField (optElem)
+                                case Rep (zero, _ : NonTerminal) =>
+                                    addField (elem)
+                                case Nest (nestedElem) =>
+                                    addField (nestedElem)
+                                case Block (name, _) =>
+                                    val fieldName = nameToFieldName ("", name, "")
+                                    fields.append (Field (fieldName, "String"))
+                                case _ =>
+                                    // No argument for the rest of the element kinds
+                            }
                 }
 
                 // Traverse the RHS elememts to collect field information
@@ -413,48 +414,50 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                  */
                 def traverseRHS (elems : List[Element]) : List[Doc] = {
 
-                    def traverseElem (elem : Element) : Option[Doc] = {
-                        elem match {
-                            case _ : NonTerminal =>
-                                varcount = varcount + 1
-                                val args = parens (varName (varcount))
-                                if (elem->elemtype == "String")
-                                    Some ("value" <+> args)
-                                else
-                                    Some ("toDoc" <+> args)
-                            case Opt (innerElem : NonTerminal) =>
-                                varcount = varcount + 1
-                                val func = if (elem->elemtype == "String")
-                                               "toOptionTDoc"
-                                           else
-                                               "toOptionASTNodeDoc"
-                                Some (func <+> parens (varName (varcount)))
-                            case Rep (zero, _ : NonTerminal) =>
-                                varcount = varcount + 1
-                                val func = if (elem->elemtype == "String")
-                                               "toListTDoc"
-                                           else
-                                               "toListASTNodeDoc"
-                                Some (func <+> parens (varName (varcount)))
-                            case CharLit (s) =>
-                                if (s.length == 1)
-                                    Some (squotes (s))
-                                else
-                                    Some (dquotes (s))
-                            case StringLit (s) =>
-                                Some (dquotes (s) <+> "<> space")
-                            case Nest (e) =>
-                                traverseElem (e).map (
-                                    d => "nest" <+> parens (d)
-                                )
-                            case Newline () =>
-                                Some ("line")
-                            case Space () =>
-                                Some ("space")
-                            case _ =>
-                                None
-                        }
-                    }
+                    def traverseElem (elem : Element) : Option[Doc] =
+                        if (elem->elemtype == "Void")
+                            None
+                        else
+                            elem match {
+                                case _ : NonTerminal =>
+                                    varcount = varcount + 1
+                                    val args = parens (varName (varcount))
+                                    if (elem->elemtype == "String")
+                                        Some ("value" <+> args)
+                                    else
+                                        Some ("toDoc" <+> args)
+                                case Opt (innerElem : NonTerminal) =>
+                                    varcount = varcount + 1
+                                    val func = if (innerElem->elemtype == "String")
+                                                   "toOptionTDoc"
+                                               else
+                                                   "toOptionASTNodeDoc"
+                                    Some (func <+> parens (varName (varcount)))
+                                case Rep (_, innerElem : NonTerminal) =>
+                                    varcount = varcount + 1
+                                    val func = if (innerElem->elemtype == "String")
+                                                   "toListTDoc"
+                                               else
+                                                   "toListASTNodeDoc"
+                                    Some (func <+> parens (varName (varcount)))
+                                case CharLit (s) =>
+                                    if (s.length == 1)
+                                        Some (squotes (s))
+                                    else
+                                        Some (dquotes (s))
+                                case StringLit (s) =>
+                                    Some (dquotes (s) <+> "<> space")
+                                case Nest (e) =>
+                                    traverseElem (e).map (
+                                        d => "nest" <+> parens (d)
+                                    )
+                                case Newline () =>
+                                    Some ("line")
+                                case Space () =>
+                                    Some ("space")
+                                case _ =>
+                                    None
+                            }
 
                     elems.map (traverseElem).flatten
 
