@@ -106,6 +106,9 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
             "option" <+> hsep (options map text, comma) <> semi
         }
 
+        def escapedDquotes (s : String) : Doc =
+            dquotes (s.replaceAllLiterally ("\"", "\\\""))
+
         def toSymbols (symbols : Set[String]) : Doc = {
 
             // Sort in reverse order of length so that earlier ones take priority
@@ -121,7 +124,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
             "transient String SymbolCharacters =" <>
             nest (
                 line <>
-                fillsep (sortedSymbols map (dquotes (_)), " /")
+                fillsep (sortedSymbols map (escapedDquotes (_)), " /")
             ) <> semi
 
         }
@@ -143,7 +146,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                 val prefix : Doc = if (isASTRule) "void" <> colon else ""
                 val form = if (s.forall (_.isLetter)) "Word" else "Symbol"
                 val suffix = if (useSpacing) colon <> form else empty
-                prefix <> dquotes (s) <> suffix
+                prefix <> escapedDquotes (s) <> suffix
             }
 
             def toElem (elem : Element, doBindings : Boolean = false) : Doc = {
