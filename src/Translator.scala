@@ -101,7 +101,6 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
         def toOptions : Doc = {
             val possibleOptions =
                 List (true                    -> "setOfString (KEYWORDS)",
-                      flags.verboseOutput     -> "verbose",
                       flags.useScalaPositions -> "withLocation")
             val options =
                 possibleOptions.filter (_._1).map (_._2)

@@ -22,7 +22,6 @@ case class Flags (
     useDefaultWords : Boolean,
     defineASTClasses : Boolean,
     definePrettyPrinter : Boolean,
-    verboseOutput : Boolean,
     useKiama : Boolean
 )
 
@@ -128,15 +127,6 @@ object SBTRatsPlugin extends Plugin {
     val ratsUseKiama = SettingKey[Boolean] (
         "rats-use-kiama",
             "Add extra support for using Kiama with generated components"
-    )
-
-    /**
-     * If a syntax definition is being used, add the `verbose` option to the 
-     * Rats! specification so that debugging output is produced when parsing.
-     */
-    val ratsVerboseOutput = SettingKey[Boolean] (
-        "rats-verbose-output",
-            "Produce verbose output during parsing (syntax mode only)"
     )
 
     /**
@@ -512,19 +502,17 @@ object SBTRatsPlugin extends Plugin {
 
         ratsDefinePrettyPrinter := false,
 
-        ratsVerboseOutput := false,
-
         ratsUseKiama := false,
 
         ratsFlags <<= (ratsUseScalaLists, ratsUseScalaPositions,
                        ratsUseScalaPositions, ratsUseDefaultComments,
                        ratsUseDefaultLayout, ratsUseDefaultWords,
                        ratsDefineASTClasses, ratsDefinePrettyPrinter,
-                       ratsVerboseOutput, ratsUseKiama) {
+                       ratsUseKiama) {
             (lists, options, posns, comments, layout, words, ast, pp,
-             verbose, kiama) =>
+             kiama) =>
                 Flags (lists, options, posns, comments, layout, words, ast, pp,
-                       verbose, kiama)
+                       kiama)
         }
 
     )
