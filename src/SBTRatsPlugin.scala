@@ -22,6 +22,8 @@ case class Flags (
     useDefaultWords : Boolean,
     defineASTClasses : Boolean,
     definePrettyPrinter : Boolean,
+    includeKeywordTable : Boolean,
+    includeBinarySupport : Boolean,
     useKiama : Boolean
 )
 
@@ -127,6 +129,23 @@ object SBTRatsPlugin extends Plugin {
     val ratsUseKiama = SettingKey[Boolean] (
         "rats-use-kiama",
             "Add extra support for using Kiama with generated components"
+    )
+
+    /**
+     * Include support for keyword handling by building a table of all of the
+     * keywords from the specification.
+     */
+    val ratsIncludeKeywordTable = SettingKey[Boolean] (
+        "rats-include-keyword-table",
+            "Add a table containing all keywords in the specification (syntax mode only)"
+    )
+
+    /**
+     * Include support for parsing binary formats.
+     */
+    val ratsIncludeBinarySupport = SettingKey[Boolean] (
+        "rats-include-binary-support",
+            "Add extra support for using parsing binary data (syntax mode only)"
     )
 
     /**
@@ -502,17 +521,22 @@ object SBTRatsPlugin extends Plugin {
 
         ratsDefinePrettyPrinter := false,
 
+        ratsIncludeKeywordTable := true,
+
+        ratsIncludeBinarySupport := false,
+
         ratsUseKiama := false,
 
         ratsFlags <<= (ratsUseScalaLists, ratsUseScalaPositions,
                        ratsUseScalaPositions, ratsUseDefaultComments,
                        ratsUseDefaultLayout, ratsUseDefaultWords,
                        ratsDefineASTClasses, ratsDefinePrettyPrinter,
+                       ratsIncludeKeywordTable, ratsIncludeBinarySupport,
                        ratsUseKiama) {
             (lists, options, posns, comments, layout, words, ast, pp,
-             kiama) =>
+             kwtable, binary, kiama) =>
                 Flags (lists, options, posns, comments, layout, words, ast, pp,
-                       kiama)
+                       kwtable, binary, kiama)
         }
 
     )

@@ -46,9 +46,9 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                 if (header == null) empty else string (header)
             )
 
-        def toBody (body : String, keywords : Set[String]) : Doc = {
+        def toBody (userBody : String, keywords : Set[String]) : Doc = {
 
-            val lengthParserMethod =
+            lazy val binarySupport =
                 """
                 |int strToInt (String number) {
                 |    try {
@@ -75,16 +75,21 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                 |}
                 |""".stripMargin
 
-            val bodyPrefix = if (body == null) empty else text (body)
-
-            line <>
-            toBraceSection ("body",
-                bodyPrefix <@>
+            lazy val keywordTable =
                 toBraceSection ("static",
                     group (toKeywords (keywords))
-                ) <@>
-                string (lengthParserMethod)
-            )
+                )
+
+            val possibleBodyParts =
+                List ((userBody != null)         -> text (userBody),
+                      flags.includeBinarySupport -> text (binarySupport),
+                      flags.includeKeywordTable  -> keywordTable)
+
+            val bodyParts =
+                possibleBodyParts.filter (_._1).map (_._2)
+
+            line <>
+            toBraceSection ("body", vsep (bodyParts))
 
         }
 
@@ -100,8 +105,8 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
 
         def toOptions : Doc = {
             val possibleOptions =
-                List (true                    -> "setOfString (KEYWORDS)",
-                      flags.useScalaPositions -> "withLocation")
+                List (flags.includeKeywordTable -> "setOfString (KEYWORDS)",
+                      flags.useScalaPositions   -> "withLocation")
             val options =
                 possibleOptions.filter (_._1).map (_._2)
             line <>
