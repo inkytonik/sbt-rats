@@ -26,7 +26,8 @@ body {
     static {
         add (KEYWORDS, new String[] {
             "body", "header", "left", "line", "module", "nest",
-            "none", "paren", "rats", "right", "sp", "String"
+            "none", "option", "paren", "rats", "right", "setOfString",
+            "sp", "String", "verbose"
         });
     }
 
@@ -42,8 +43,8 @@ body {
 option setOfString (KEYWORDS), withLocation;
 
 public Grammar Grammar =
-    p:PackageDecl h:HeaderSection? b:BodySection? rs:Rule* EOF {
-        yyValue = new Grammar (p, h, b, rs);
+    p:PackageDecl h:HeaderSection? b:BodySection? o:Options? rs:Rule* EOF {
+        yyValue = new Grammar (p, h, b, o, rs);
     };
 
 // Package declarations
@@ -66,8 +67,23 @@ String BodySection =
 String CodeBlock =
     '{' yyValue:CodeBlockText '}' Spacing;
 
-transient String CodeBlockText =
+String CodeBlockText =
     ('{' CodeBlockText '}' / !'}' _)*;
+
+// Options
+
+Pair<RatsOption> Options =
+    void:"option":Word h:Option tl:(void:",":Symbol Option)* {
+        yyValue = SList.create (h, tl);
+    };
+
+RatsOption Option =
+    void:"setOfString":Word void:"(":Symbol n:Word void:")":Symbol { 
+        yyValue = new SetOfString (n);
+    } /
+    void:"verbose":Word {
+        yyValue = new Verbose ();
+    };
 
 // Rules
 
@@ -90,10 +106,10 @@ Rule GrammarRule =
 
 // Types
 
-transient void VoidType =
+void VoidType =
     void:":":Symbol void:"Void":Word;
 
-transient void StringType =
+void StringType =
     void:":":Symbol void:"String":Word;
 
 IdnUse Type =

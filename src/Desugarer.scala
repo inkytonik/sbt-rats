@@ -122,8 +122,7 @@ class Desugarer (analyser : Analyser) {
         // Rewrite to get a transformed grammar and some new rules to add to it
         val newg = rewrite (removeLeftRecursionStrategy) (grammar)
 
-        Grammar (grammar.pkg, grammar.header, grammar.body,
-                 newg.rules ++ newRules.result)
+        grammar.copy (rules = newg.rules ++ newRules.result)
 
     }
 

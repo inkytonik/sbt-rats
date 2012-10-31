@@ -33,7 +33,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
             "module" <+> grammar.pkg.mkString (".") <> semi <@>
             toHeader (grammar.header) <@>
             toBody (grammar.body, keywords) <@>
-            toOptions <@>
+            toOptions (grammar.options) <@>
             toSymbols (symbols) <@>
             toRules (grammar.rules) <@>
             toDefaults
@@ -103,14 +103,23 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                 )
             ) <> semi
 
-        def toOptions : Doc = {
+        def toOptions (options : List[RatsOption]) : Doc = {
+            val userOptionStrings =
+                if (options == null)
+                    Nil
+                else
+                    options.map {
+                        case Verbose ()      => "verbose"
+                        case SetOfString (n) => "setOfString (" + n + ")"
+                    }
             val possibleOptions =
                 List (flags.includeKeywordTable -> "setOfString (KEYWORDS)",
                       flags.useScalaPositions   -> "withLocation")
-            val options =
+            val optionStrings =
+                userOptionStrings ++
                 possibleOptions.filter (_._1).map (_._2)
             line <>
-            "option" <+> hsep (options map text, comma) <> semi
+            "option" <+> hsep (optionStrings map text, comma) <> semi
         }
 
         def escapedDquotes (s : String) : Doc =
