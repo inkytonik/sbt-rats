@@ -125,25 +125,26 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
         def escapedDquotes (s : String) : Doc =
             dquotes (s.replaceAllLiterally ("\"", "\\\""))
 
-        def toSymbols (symbols : Set[String]) : Doc = {
+        def toSymbols (symbols : Set[String]) : Doc =
+            if (symbols.isEmpty)
+                empty
+            else {
+                // Sort in reverse order of length so that earlier ones take priority
+                val sortedSymbols = symbols.toSeq.sortBy (- _.length)
 
-            // Sort in reverse order of length so that earlier ones take priority
-            val sortedSymbols = symbols.toSeq.sortBy (- _.length)
-
-            line <>
-            "String Symbol =" <>
-            nest (
                 line <>
-                "SymbolCharacters Spacing;"
-            ) <@>
-            line <>
-            "transient String SymbolCharacters =" <>
-            nest (
+                "String Symbol =" <>
+                nest (
+                    line <>
+                    "SymbolCharacters Spacing;"
+                ) <@>
                 line <>
-                fillsep (sortedSymbols map (escapedDquotes (_)), " /")
-            ) <> semi
-
-        }
+                "transient String SymbolCharacters =" <>
+                nest (
+                    line <>
+                    fillsep (sortedSymbols map (escapedDquotes (_)), " /")
+                ) <> semi
+            }
 
         def toRules (rules : List[Rule]) : Doc =
             vsep (rules map toRule)
