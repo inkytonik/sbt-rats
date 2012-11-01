@@ -43,13 +43,13 @@ body {
 option setOfString (KEYWORDS), withLocation;
 
 public Grammar Grammar =
-    p:PackageDecl h:HeaderSection? b:BodySection? o:Options? rs:Rule* EOF {
-        yyValue = new Grammar (p, h, b, o, rs);
+    m:ModuleDecl h:HeaderSection? b:BodySection? o:Options? rs:Rule* EOF {
+        yyValue = new Grammar (m, h, b, o, rs);
     };
 
-// Package declarations
+// Module declarations
 
-Pair<String> PackageDecl =
+Pair<String> ModuleDecl =
     void:"module":Word QualIdentifier void:";":Symbol;
 
 // Header section

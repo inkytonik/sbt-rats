@@ -41,9 +41,9 @@ object SBTRatsPlugin extends Plugin {
      * The file that contains the main Rats! module or main syntax
      * definition.
      */
-    val ratsMainModule = SettingKey[File] (
+    val ratsMainModule = SettingKey[Option[File]] (
         "rats-main-module",
-            "The main Rats! module or syntax definition"
+            "The main Rats! module. If not set, use all syntax definitions."
     )
 
     /**
@@ -167,8 +167,8 @@ object SBTRatsPlugin extends Plugin {
                 val cachedFun =
                     FileFunction.cached (cache / "sbt-rats", FilesInfo.lastModified,
                                          FilesInfo.exists) {
-                        (in: Set[File]) =>
-                            runGeneratorsImpl (flags, main, tgtDir, smDir, str)
+                        (inFiles: Set[File]) =>
+                            runGeneratorsImpl (flags, main, inFiles, tgtDir, smDir, str)
                     }
 
                 val inputFiles = (srcDir ** ("*.rats" | "*.syntax")).get.toSet
@@ -178,28 +178,71 @@ object SBTRatsPlugin extends Plugin {
         }
 
     /**
-     * Run the generator(s). If `main` is a .rats file, then just use Rats! on it.
-     * Otherwise, assume it's a syntax definition, translate it and use Rats! on
-     * the result.
+     * Run the generator(s). Use Rats! on either the main Rats! file, or on
+     * the translation of all syntax definition files, whichever applies.
      */
-    def runGeneratorsImpl (flags : Flags, main : File,
+    def runGeneratorsImpl (flags : Flags, main : Option[File], inFiles : Set[File],
                            tgtDir: File, smDir : File,
                            str : TaskStreams) : Set[File] = {
+
+        // Set up output directories
         val genDir = tgtDir / "sbt-rats"
         IO.createDirectory (genDir)
         val outDir = smDir / "sbt-rats"
         IO.createDirectory (outDir)
-        if (main.ext == "rats")
-            runRatsImpl (flags, main, genDir, outDir, str)
-        else {
-            runSyntaxImpl (flags, main, genDir, outDir, str) match {
-                case Some ((ratsMain, otherFiles)) =>
-                    runRatsImpl (flags, ratsMain, genDir, outDir, str) ++
-                        otherFiles
-                case _ =>
-                    Set.empty
+
+        // Make an analyser for this run
+        val analyser = new Analyser (flags)
+
+        // Make a generator for this run
+        val generator = new Generator (analyser)
+
+        // Buffer of generated files
+        val generatedFiles = ListBuffer[File] ()
+
+        // If some Scala support is requested, generate Scala support file
+        if (flags.useScalaLists | flags.useScalaOptions | flags.useScalaPositions) {
+            val supportFile = outDir / "sbtrats" / "ParserSupport.scala"
+            str.log.info ("Rats! generating Scala support file %s".format (
+                              supportFile))
+            generator.generateSupportFile (flags, supportFile)
+            generatedFiles.append (supportFile)
+        }
+
+        def processSyntaxFile (syntaxFile : File) {
+            runSyntaxImpl (flags, syntaxFile, genDir, outDir, str,
+                           analyser, generator) match {
+                case Some ((_, mainFile, newFiles)) =>
+                    generatedFiles.appendAll (newFiles)
+                    val javaFiles = runRatsImpl (flags, mainFile, false, genDir, outDir, str)
+                    generatedFiles.appendAll (javaFiles)
+                case None =>
+                    // Do nothing
             }
         }
+
+        // Check for a main Rats! module
+        main match {
+
+            case Some (mainFile) =>
+                // Got one, just run Rats! on it and we're done.
+                runRatsImpl (flags, mainFile, true, genDir, outDir, str)
+
+            case None =>
+                // Otherwise, we translate all syntax definitions into their
+                // own parser, with optional auxiliary files.
+
+                // Translate each of the syntax files, then run Rats! on result
+                // collect generated files
+                for (inFile <- inFiles)
+                    if (inFile.ext == "syntax")
+                        processSyntaxFile (inFile)
+
+        }
+
+        // Return all of the generated files
+        generatedFiles.result ().toSet
+
     }
 
     /**
@@ -209,7 +252,9 @@ object SBTRatsPlugin extends Plugin {
      * files that were generated.
      */
     def runSyntaxImpl (flags : Flags, main : File, genDir : File, outDir : File,
-                       str : TaskStreams) : Option[(File,List[File])] = {
+                       str : TaskStreams, analyser : Analyser,
+                       generator : Generator) :
+                          Option[(File,File,List[File])] = {
         str.log.info ("Running Syntax generation on %s, output to %s and %s".format (
                           main, genDir, outDir))
         val filename = main.absolutePath
@@ -220,9 +265,6 @@ object SBTRatsPlugin extends Plugin {
 
             // The abstract syntax tree (AST) representing the syntax
             val grammar = p.value (pr).asInstanceOf[Grammar]
-
-            // Make an analyser for this run
-            val analyser = new Analyser (flags)
 
             // Check AST for semantic errors
             initTree (grammar)
@@ -241,21 +283,22 @@ object SBTRatsPlugin extends Plugin {
                 // Make a translator for this run
                 val translator = new Translator (analyser)
 
+                // Extract basename and package directories from grammar name
+                val basename = grammar.module.last
+                val genSubDir = grammar.module.init.foldLeft (genDir) (_ / _)
+                val outSubDir = grammar.module.init.foldLeft (outDir) (_ / _)
+
                 // Generate the Rats! specification
-                val name = grammar.pkg.last
-                val genFile = genDir / (name + ".rats")
+                val genFile = genSubDir / (basename + ".rats")
                 str.log.info ("Syntax generating Rats! file %s".format (genFile))
                 translator.translate (flags, genFile, desugaredGrammar)
 
                 // Buffer of extra generated files
                 val extraFiles = ListBuffer[File] ()
 
-                // Make a generator for this run
-                val generator = new Generator (analyser)
-
                 // If requested, generate the AST classes
                 if (flags.defineASTClasses) {
-                    val astFile = outDir / "Syntax.scala"
+                    val astFile = outSubDir / (basename + "Syntax.scala")
                     str.log.info ("Syntax generating AST classes %s".format (astFile))
                     generator.generateASTClasses (flags, astFile, grammar)
                     extraFiles.append (astFile)
@@ -263,22 +306,13 @@ object SBTRatsPlugin extends Plugin {
 
                 // If requested, generate the AST classes
                 if (flags.defineASTClasses && flags.definePrettyPrinter) {
-                    val ppFile = outDir / "PrettyPrinter.scala"
+                    val ppFile = outSubDir / (basename + "PrettyPrinter.scala")
                     str.log.info ("Syntax AST pretty-printer %s".format (ppFile))
                     generator.generatePrettyPrinter (flags, ppFile, grammar)
                     extraFiles.append (ppFile)
                 }
 
-                // If requested, generate support files
-                if (flags.useScalaLists) {
-                    val supportFile = outDir / "ParserSupport.scala"
-                    str.log.info ("Rats! generating Scala support file %s".format (
-                                      supportFile))
-                    generator.generateSupportFile (flags, supportFile)
-                    extraFiles.append (supportFile)
-                }
-
-                Some ((genFile, extraFiles.result ()))
+                Some ((outSubDir, genFile, extraFiles.result ()))
 
             } else {
 
@@ -302,54 +336,62 @@ object SBTRatsPlugin extends Plugin {
     /**
      * Run Rats! on the `main` file.
      */
-    def runRatsImpl (flags : Flags, main : File, genDir : File, outDir : File,
-                     str : TaskStreams) : Set[File] = {
+    def runRatsImpl (flags : Flags, main : File, isUserMain : Boolean,
+                     genDir : File, outDir : File, str : TaskStreams) : Set[File] = {
+
+        // Set up paths and output directories
         val mainPath = main.absolutePath
         val mainDir = main.getParentFile
-        str.log.info ("Running Rats! on %s, output to %s".format (mainPath, genDir))
+        val ratsOutDir = if (isUserMain) genDir else main.getParentFile
+
+        // Actually run Rats!
+        str.log.info ("Running Rats! on %s, input from %s and %s, output to %s".format (
+                          mainPath, mainDir, genDir, ratsOutDir))
         val rats = new RatsRunner ()
         rats.run (Array ("-silent", "-no-exit",
                          "-in", mainDir.absolutePath,
-                         "-out", genDir.absolutePath,
+                         "-in", genDir.absolutePath,
+                         "-out", ratsOutDir.absolutePath,
                          mainPath))
+
+        // What happened?
         if (rats.getRuntime.seenError) {
 
             sys.error ("Rats! failed")
             Set.empty
 
         } else {
-            val genFiles = (genDir ** "*.java").get.toSet
-            genFiles.size match {
+            // Get the expected generated file
+            val basename = main.getName.takeWhile (_ != '.')
+            val basenameext = basename + ".java"
+            val genFile = ratsOutDir / basenameext
 
-                case 1 =>
-                    val genFile = genFiles.head
-                    str.log.info ("Rats! generated %s".format (genFile))
+            // If we've got it, process it further
+            if (genFile.exists) {
+                str.log.info ("Rats! generated %s".format (genFile))
 
-                    val outFile = outDir / genFile.name
+                val relFile = genFile.getPath.drop (genDir.getPath.length)
+                val outFile = outDir / relFile
 
-                    if (flags.useScalaLists) {
+                if (flags.useScalaLists) {
 
-                        str.log.info ("Rats! transforming %s for Scala into %s".format (
-                                          genFile, outFile))
-                        transformForScala (flags, genFile, outFile)
-                        Set (outFile)
+                    str.log.info ("Rats! transforming %s for Scala into %s".format (
+                                      genFile, outFile))
+                    transformForScala (flags, genFile, outFile)
+                    Set (outFile)
 
-                    } else {
+                } else {
 
-                        str.log.info ("Rats! copying %s to %s".format (genFile, outFile))
-                        IO.copyFile (genFile, outFile, true)
-                        Set (outFile)
+                    str.log.info ("Rats! copying %s to %s".format (genFile, outFile))
+                    IO.copyFile (genFile, outFile, true)
+                    Set (outFile)
 
-                    }
+                }
+            } else {
 
-                case 0 =>
-                    sys.error ("Rats! didn't generate any files")
-                    Set.empty
+                sys.error ("Rats!, can't find generated file %s".format (genFile))
+                Set.empty
 
-                case _ =>
-                    sys.error ("Rats! generated more than one file: %s".format (
-                                    genFiles.mkString (" ")))
-                    Set.empty
             }
         }
     }
@@ -504,6 +546,8 @@ object SBTRatsPlugin extends Plugin {
         libraryDependencies ++= Seq (
             "xtc" % "rats" % "2.3.1"
         ),
+
+        ratsMainModule := None,
 
         ratsUseScalaLists := false,
 

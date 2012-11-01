@@ -30,7 +30,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
 
         def toRats : Doc = {
             val (keywords, symbols) = partitionLiterals (grammar)
-            "module" <+> grammar.pkg.mkString (".") <> semi <@>
+            "module" <+> grammar.module.mkString (".") <> semi <@>
             toHeader (grammar.header) <@>
             toBody (grammar.body, keywords) <@>
             toOptions (grammar.options) <@>
