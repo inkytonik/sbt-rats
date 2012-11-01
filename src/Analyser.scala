@@ -182,7 +182,8 @@ class Analyser (flags : Flags) extends Environments {
                     case nt : NonTerm =>
                         nt.tipe
                     case e =>
-                        sys.error ("nttype: non-NonTerm " + e + " in NonTerm position")
+                        sys.error ("nttype: non-NonTerm " + e + " for " + i +
+                                   " in NonTerm position")
                 }
         }
 
