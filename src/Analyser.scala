@@ -173,38 +173,55 @@ class Analyser (flags : Flags) extends Environments {
                 lookup (n->env, n.name, UnknownEntity)
         }
 
+    lazy val ntname : NonTerminal => String =
+        attr {
+            case NonTerminal (NTName (IdnUse (name))) =>
+                name
+            case NonTerminal (NTGen (name, _)) =>
+                name
+        }
+
     // Type analysis
 
-    lazy val nttype : NonTerminal => String =
+    lazy val idntype : Identifier => String =
         attr {
-            case NonTerminal (i) =>
-                (i->entity) match {
+            case idn =>
+                (idn->entity) match {
                     case nt : NonTerm =>
                         nt.tipe
                     case e =>
-                        sys.error ("nttype: non-NonTerm " + e + " for " + i +
-                                   " in NonTerm position")
+                        sys.error ("idntype: non-NonTerm entity " + e +
+                                   " for identifier " + idn)
                 }
+
+        }
+
+    lazy val nttype : NonTerminal => String =
+        attr {
+            case NonTerminal (NTName (idnuse)) =>
+                idnuse->idntype
+            case NonTerminal (NTGen (_, tipe)) =>
+                tipe
         }
 
     lazy val elemtype : Element => String =
         attr {
-            case n : NonTerminal =>
-                n->nttype
-            case Opt (n : NonTerminal) =>
-                if (n->nttype == "Void")
+            case nt : NonTerminal =>
+                nt->nttype
+            case Opt (nt : NonTerminal) =>
+                if (nt->nttype == "Void")
                     "Void"
                 else
-                    "Option[%s]".format (n->nttype)
-            case Rep (_, n : NonTerminal) =>
-                if (n->nttype == "Void")
+                    "Option[%s]".format (nt->nttype)
+            case Rep (_, nt : NonTerminal) =>
+                if (nt->nttype == "Void")
                     "Void"
                 else
-                    "List[%s]".format (n->nttype)
+                    "List[%s]".format (nt->nttype)
             case _ : Block =>
                 "String"
-            case e =>
-                sys.error ("elemtype: unexpected element kind " + e)
+            case _ =>
+                "Void"
         }
 
     // Patterns
@@ -227,8 +244,8 @@ class Analyser (flags : Flags) extends Environments {
     object NonTermIdn {
         def unapply (e : Element) : Option[String] =
             e match {
-                case NonTerminal (IdnUse (name)) =>
-                    Some (name)
+                case nt : NonTerminal =>
+                    Some (nt->ntname)
                 case _ =>
                     None
             }
@@ -336,7 +353,7 @@ class Analyser (flags : Flags) extends Environments {
     lazy val isLeftRecursive : Alternative => Boolean =
         attr {
             case alt =>
-                alt.rhs.head == NonTerminal (IdnUse (alt->astrule->lhs))
+                alt.rhs.head == NonTerminal (NTName (IdnUse (alt->astrule->lhs)))
         }
 
     /**
@@ -346,7 +363,7 @@ class Analyser (flags : Flags) extends Environments {
     lazy val isRecursive : Alternative => Boolean =
         attr {
             case alt =>
-                alt.rhs contains NonTerminal (IdnUse (alt->astrule->lhs))
+                alt.rhs contains NonTerminal (NTName (IdnUse (alt->astrule->lhs)))
         }
 
     /**
@@ -558,12 +575,12 @@ class Analyser (flags : Flags) extends Environments {
      */
     lazy val fieldName : Element => String =
         attr {
-            case NonTerminal (IdnUse (name)) =>
-                nameToFieldName ("", name, "")
-            case Opt (NonTerminal (IdnUse (name))) =>
-                nameToFieldName ("opt", name, "")
-            case Rep (zero, NonTerminal (IdnUse (name))) =>
-                nameToFieldName (if (zero) "opt" else "", name, "s")
+            case nt : NonTerminal =>
+                nameToFieldName ("", nt->ntname, "")
+            case Opt (nt : NonTerminal) =>
+                nameToFieldName ("opt", nt->ntname, "")
+            case Rep (zero, nt : NonTerminal) =>
+                nameToFieldName (if (zero) "opt" else "", nt->ntname, "s")
             case elem =>
                 // Remove once ASTRule RHS elements are simplified so these are the only cases??
                 sys.error ("fieldName: unexpected element kind " + elem)

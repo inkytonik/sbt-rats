@@ -12,8 +12,8 @@
  */
 class Desugarer (analyser : Analyser) {
 
-    import analyser.{actionTypeName, associativity, constr, isLeftRecursive,
-        isTransferAlt, lhs, precedence, typeName}
+    import analyser.{actionTypeName, associativity, constr, idntype,
+        isLeftRecursive, isTransferAlt, lhs, precedence, typeName}
     import ast._
     import org.kiama.attribution.Attribution.initTree
     import org.kiama.output.{LeftAssoc, NonAssoc, RightAssoc}
@@ -133,14 +133,18 @@ class Desugarer (analyser : Analyser) {
      */
     def removeLeftRecursiveAlternatives (astRule : ASTRule) : (ASTRule, Iterable[ASTRule]) = {
 
+        // The type of the LHS non-terminal, is shared with new non-terminals
+        val lhsnttype = (astRule.idndef)->idntype
+
         /**
-         * Return a strategy that replaces identifier uses of one name by another.
+         * Return a strategy that replaces identifier uses of one name by
+         * which is generated and of the given type.
          */
-        def replaceIdns (name1 : String, name2 : String) =
+        def replaceIdns (name1 : String, name2 : String, tipe : String) =
             alltd (
                 rule {
-                    case IdnUse (name1) =>
-                        IdnUse (name2)
+                    case NTName (IdnUse (`name1`)) =>
+                        NTGen (name2, tipe)
                 }
             )
 
@@ -157,19 +161,19 @@ class Desugarer (analyser : Analyser) {
             val ntname = "%s%d".format (astRule->lhs, prec)
 
             // A non-terminal for this level
-            def nt = NonTerminal (IdnUse (ntname))
+            def nt = NonTerminal (NTGen (ntname, lhsnttype))
 
             // Name for the non-terminal for the previous level
             val prevntname = "%s%d".format (astRule->lhs, prec - 1)
 
             // A non-terminal for the previous level
-            def prevnt = NonTerminal (IdnUse (prevntname))
+            def prevnt = NonTerminal (NTGen (prevntname, lhsnttype))
 
             // Name for the non-terminal for the tail
             val tailntname = ntname + "Tail"
 
             // A non-terminal for the tail
-            def tailnt = NonTerminal (IdnUse (tailntname))
+            def tailnt = NonTerminal (NTGen (tailntname, lhsnttype))
 
             // Collect the alternatives together by associativity
             val assocAlts = alts.groupBy (associativity)
@@ -195,12 +199,16 @@ class Desugarer (analyser : Analyser) {
                                               Nil,
                                               ApplyAction ()))
 
+            // Strategy to replace old occurrences of the previous non-terminal
+            // with the new generated one
+            val renamer = replaceIdns (astRule.idndef.name, prevntname, lhsnttype)
+
             // Each right associative alternative turns into a single rule that defines
             // the recursive case to the next level
             val rightAlts =
                 rightAssocAlts.map {
                     case Alternative (rhs, anns, _) =>
-                        val newInitRHS = rewrite (replaceIdns (astRule.idndef.name, prevntname)) (rhs.init)
+                        val newInitRHS = rewrite (renamer) (rhs.init)
                         Alternative (newInitRHS :+ nt, anns, DefaultAction ())
                 }
             baseAlts.appendAll (rightAlts)
@@ -210,7 +218,7 @@ class Desugarer (analyser : Analyser) {
             val noneAlts =
                 noneAssocAlts.map {
                     case Alternative (rhs, anns, _) =>
-                        val newRHS = rewrite (replaceIdns (astRule.idndef.name, prevntname)) (rhs)
+                        val newRHS = rewrite (renamer) (rhs)
                         Alternative (newRHS, anns, DefaultAction ())
                 }
             baseAlts.appendAll (noneAlts)
@@ -232,7 +240,7 @@ class Desugarer (analyser : Analyser) {
                 val tailAlts =
                     leftAssocAlts.map {
                         case alt @ Alternative (rhs, _, _) =>
-                            val newRHS = rewrite (replaceIdns (astRule.idndef.name, prevntname)) (rhs.tail)
+                            val newRHS = rewrite (renamer) (rhs.tail)
                             Alternative (newRHS, Nil, TailAction (astRule->typeName, alt->constr))
                     }
 
@@ -257,7 +265,7 @@ class Desugarer (analyser : Analyser) {
         } else {
 
             // The zero-level LHS for this iteration
-            def zerontidn = IdnDef ("%s0".format (astRule->lhs))
+            val zerontidn = IdnDef ("%s0".format (astRule->lhs))
 
             /**
              * The new rule that replaces the non-recursive alternatives of the old rule.
@@ -276,7 +284,8 @@ class Desugarer (analyser : Analyser) {
                       }
 
             // The "topmost" (i.e. lowest precedence) non-terminal for this iteration
-            def topnt = NonTerminal (IdnUse ("%s%d".format (astRule->lhs, top)))
+            val topnt = NonTerminal (NTGen ("%s%d".format (astRule->lhs, top),
+                                            lhsnttype))
 
             // Each group gets translated together to give a list of new iterative rules.
             val precRules = recMap.flatMap (makeIterativeRules)

@@ -20,8 +20,8 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
 
     def translate (flags : Flags, genFile : File, grammar : Grammar) = {
 
-        import analyser.{constr, elemtype, hasSpacing, partitionLiterals,
-            requiresNoAction, transformer, typeName}
+        import analyser.{constr, hasSpacing, ntname, nttype,
+            partitionLiterals, requiresNoAction, transformer, typeName}
         import org.kiama.attribution.Attribution.initTree
 
         // Count of non-terminals on the RHS of an alternative
@@ -204,11 +204,11 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                 }
 
                 elem match {
-                    case NonTerminal (IdnUse (i))  =>
-                        if (elem->elemtype == "Void")
-                            value (i)
+                    case nt : NonTerminal =>
+                        if (nt->nttype == "Void")
+                            text (nt->ntname)
                         else
-                            bind (i)
+                            bind (text (nt->ntname))
 
                     case Not (elem)                => "!" <> parens (toElem (elem))
                     case Opt (elem)                => bind (parens (toElem (elem)) <> "?")

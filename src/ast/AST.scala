@@ -56,13 +56,17 @@ case class Block (name : String, n : Int) extends Element
 case class CharClass (s : String) extends Element
 case class CharLit (s : String) extends Element
 case class Epsilon () extends Element
-case class NonTerminal (idnuse : IdnUse) extends Element
+case class NonTerminal (ntuse : NTUse) extends Element
 case class Not (e : Element) extends Element
 case class Opt (e : Element) extends Element
 case class Rep (zero : Boolean, e : Element) extends Element
 case class Seqn (left : Element, right : Element) extends Element
 case class StringLit (s : String) extends Element
 case class Wildcard () extends Element
+
+sealed abstract class NTUse extends ASTNode
+case class NTName (idnuse : IdnUse) extends NTUse
+case class NTGen (name : String, tipe : String) extends NTUse
 
 sealed abstract class Formatting extends Element
 case class Nest (e : Element) extends Formatting

@@ -183,7 +183,7 @@ Element Primary =
     } /
     Literal Spacing /
     i:IdnUse {
-        yyValue = new NonTerminal (i);
+        yyValue = new NonTerminal (new NTName (i));
     };
 
 // AST elements
@@ -210,7 +210,7 @@ Element ASTPrimary =
         yyValue = new Block (i, Integer.parseInt (d));
     } /
     i:IdnUse {
-        yyValue = new NonTerminal (i);
+        yyValue = new NonTerminal (new NTName (i));
     };
 
 // Formatting
