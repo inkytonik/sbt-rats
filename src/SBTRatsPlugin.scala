@@ -168,7 +168,8 @@ object SBTRatsPlugin extends Plugin {
                     FileFunction.cached (cache / "sbt-rats", FilesInfo.lastModified,
                                          FilesInfo.exists) {
                         (inFiles: Set[File]) =>
-                            runGeneratorsImpl (flags, main, inFiles, tgtDir, smDir, str)
+                            runGeneratorsImpl (flags, main, inFiles, srcDir, tgtDir,
+                                               smDir, str)
                     }
 
                 val inputFiles = (srcDir ** ("*.rats" | "*.syntax")).get.toSet
@@ -181,8 +182,8 @@ object SBTRatsPlugin extends Plugin {
      * Run the generator(s). Use Rats! on either the main Rats! file, or on
      * the translation of all syntax definition files, whichever applies.
      */
-    def runGeneratorsImpl (flags : Flags, main : Option[File], inFiles : Set[File],
-                           tgtDir: File, smDir : File,
+    def runGeneratorsImpl (flags : Flags, optmain : Option[File], inFiles : Set[File],
+                           srcDir : File, tgtDir: File, smDir : File,
                            str : TaskStreams) : Set[File] = {
 
         // Set up output directories
@@ -214,7 +215,8 @@ object SBTRatsPlugin extends Plugin {
                            analyser, generator) match {
                 case Some ((_, mainFile, newFiles)) =>
                     generatedFiles.appendAll (newFiles)
-                    val javaFiles = runRatsImpl (flags, mainFile, false, genDir, outDir, str)
+                    val javaFiles = runRatsImpl (flags, mainFile, false, srcDir,
+                                                 genDir, outDir, str)
                     generatedFiles.appendAll (javaFiles)
                 case None =>
                     // Do nothing
@@ -222,11 +224,13 @@ object SBTRatsPlugin extends Plugin {
         }
 
         // Check for a main Rats! module
-        main match {
+        optmain match {
 
-            case Some (mainFile) =>
+            case Some (main) =>
                 // Got one, just run Rats! on it and we're done.
-                runRatsImpl (flags, mainFile, true, genDir, outDir, str)
+                val newFiles = runRatsImpl (flags, main, true, srcDir, genDir,
+                                            outDir, str)
+                generatedFiles.appendAll (newFiles)
 
             case None =>
                 // Otherwise, we translate all syntax definitions into their
@@ -337,12 +341,23 @@ object SBTRatsPlugin extends Plugin {
      * Run Rats! on the `main` file.
      */
     def runRatsImpl (flags : Flags, main : File, isUserMain : Boolean,
-                     genDir : File, outDir : File, str : TaskStreams) : Set[File] = {
+                     srcDir : File, genDir : File, outDir : File,
+                     str : TaskStreams) : Set[File] = {
 
         // Set up paths and output directories
         val mainPath = main.absolutePath
         val mainDir = main.getParentFile
-        val ratsOutDir = if (isUserMain) genDir else main.getParentFile
+        val ratsOutDir = 
+            if (isUserMain) {
+                val relFile = main.getParent.drop (srcDir.getPath.length)
+                val ratsGenDir = genDir / relFile
+                if (ratsGenDir.exists () || ratsGenDir.mkdir ())
+                    ratsGenDir
+                else
+                    sys.error ("Can't create Rats! output dir %s".format (ratsGenDir))
+            } else
+                main.getParentFile
+
 
         // Actually run Rats!
         str.log.info ("Running Rats! on %s, input from %s and %s, output to %s".format (
