@@ -388,7 +388,7 @@ object SBTRatsPlugin extends Plugin {
                 val relFile = genFile.getPath.drop (genDir.getPath.length)
                 val outFile = outDir / relFile
 
-                if (flags.useScalaLists) {
+                if (flags.useScalaLists || flags.useScalaOptions || flags.useScalaPositions) {
 
                     str.log.info ("Rats! transforming %s for Scala into %s".format (
                                       genFile, outFile))
