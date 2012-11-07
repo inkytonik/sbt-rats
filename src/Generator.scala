@@ -437,27 +437,39 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
 
                     def traverseElem (elem : Element) : Option[Doc] =
                         elem match {
-                            case _ : NonTerminal if elem->elemtype != "Void" =>
-                                varcount = varcount + 1
-                                val args = parens (varName (varcount))
-                                if (elem->elemtype == "String")
-                                    Some ("value" <+> args)
-                                else
-                                    Some ("toDoc" <+> args)
-                            case Opt (innerElem : NonTerminal) if elem->elemtype != "Void" =>
-                                varcount = varcount + 1
-                                val func = if (innerElem->elemtype == "String")
-                                               "toOptionTDoc"
-                                           else
-                                               "toOptionASTNodeDoc"
-                                Some (func <+> parens (varName (varcount)))
-                            case Rep (_, innerElem : NonTerminal) if elem->elemtype != "Void" =>
-                                varcount = varcount + 1
-                                val func = if (innerElem->elemtype == "String")
-                                               "toListTDoc"
-                                           else
-                                               "toListASTNodeDoc"
-                                Some (func <+> parens (varName (varcount)))
+                            case _ : NonTerminal =>
+                                if (elem->elemtype == "Void")
+                                    Some ("empty")
+                                else {
+                                    varcount = varcount + 1
+                                    val args = parens (varName (varcount))
+                                    if (elem->elemtype == "String")
+                                        Some ("value" <+> args)
+                                    else
+                                        Some ("toDoc" <+> args)
+                                }
+                            case Opt (innerElem : NonTerminal) =>
+                                if (elem->elemtype == "Void")
+                                    Some ("empty")
+                                else {
+                                    varcount = varcount + 1
+                                    val func = if (innerElem->elemtype == "String")
+                                                   "toOptionTDoc"
+                                               else
+                                                   "toOptionASTNodeDoc"
+                                    Some (func <+> parens (varName (varcount)))
+                                }
+                            case Rep (_, innerElem : NonTerminal) =>
+                                if (elem->elemtype == "Void")
+                                    Some ("empty")
+                                else {
+                                    varcount = varcount + 1
+                                    val func = if (innerElem->elemtype == "String")
+                                                   "toListTDoc"
+                                               else
+                                                   "toListASTNodeDoc"
+                                    Some (func <+> parens (varName (varcount)))
+                                }
                             case CharLit (s) =>
                                 if (s.length == 1)
                                     Some (squotes (s))
