@@ -161,10 +161,13 @@ class Analyser (flags : Flags) extends Environments {
                 RatsNonTerm (if (tipe == null) i else tipe.name, ratsRule)
         }
 
-    lazy val env =
-        down[ASTNode, Environment] {
+    // FIXME use down decorator once can switch to Kiama 1.4.0
+    lazy val env : ASTNode => Environment =
+        attr {
             case n if n isRoot =>
                 n->preenv
+            case n =>
+                (n.parent[ASTNode])->env
         }
 
     lazy val entity : Identifier => Entity =
