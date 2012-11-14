@@ -160,7 +160,7 @@ object SBTRatsPlugin extends Plugin {
      * have changed or the output doesn't exist.
      */
     def runGenerators =
-        (ratsFlags, ratsMainModule, scalaSource, target, sourceManaged in Compile,
+        (ratsFlags, ratsMainModule, scalaSource in Compile, target, sourceManaged in Compile,
          streams, cacheDirectory) map {
             (flags, main, srcDir, tgtDir, smDir, str, cache) => {
 
