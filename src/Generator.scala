@@ -318,10 +318,8 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
             "trait" <+> name <+> "extends PP with PPP {" <@>
             nest (
                 toPretty <@>
-                toToOptionTDoc <@>
-                toToOptionASTNodeDoc <@>
-                toToListTDoc <@>
-                toToListASTNodeDoc <@>
+                toOptionToDoc <@>
+                toListToDoc <@>
                 toDoc <@>
                 toToParenDoc (toParenDocCases.result)
             ) <@>
@@ -374,37 +372,21 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                     "}"
                 )
 
-        def toToOptionTDoc : Doc =
+        def toOptionToDoc : Doc =
             line <>
-             "def toOptionTDoc[T] (t : Option[T]) : Doc =" <>
-             nest (
-                 line <>
-                 "if (t == None) empty else value (t.get)" 
-             )
-
-        def toToOptionASTNodeDoc : Doc =
+            "def optionToDoc (o : Option[ASTNode]) : Doc =" <>
+            nest (
+                line <>
+                 "o.map (toDoc).getOrElse (empty)"
+            )
+ 
+        def toListToDoc : Doc =
             line <>
-             "def toOptionASTNodeDoc (t : Option[ASTNode]) : Doc =" <>
-             nest (
-                 line <>
-                 "if (t == None) empty else toDoc (t.get)" 
-             )
-
-        def toToListTDoc : Doc =
-            line <>
-             "def toListTDoc[T] (t : List[T]) : Doc =" <>
-             nest (
-                 line <>
-                 "ssep (t map value, empty)"
-             )
-
-        def toToListASTNodeDoc : Doc =
-            line <>
-             "def toListASTNodeDoc (t : List[ASTNode]) : Doc =" <>
-             nest (
-                 line <>
-                 "ssep (t map toDoc, empty)"
-             )
+            "def listToDoc (l : List[ASTNode], sep : Doc = empty) : Doc =" <>
+            nest (
+                line <>
+                 "ssep (l map toDoc, sep)"
+            )
 
         def toToDocCase (rule : Rule) : Doc =
             rule match {
@@ -435,61 +417,68 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                  */
                 def traverseRHS (elems : List[Element]) : List[Doc] = {
 
-                    def traverseElem (elem : Element) : Option[Doc] =
+                    def traverseElem (elem : Element, wrap : Boolean = true) : Doc =
                         elem match {
-                            case _ : NonTerminal =>
-                                if (elem->elemtype == "Void")
-                                    Some ("empty")
-                                else {
-                                    varcount = varcount + 1
-                                    val args = parens (varName (varcount))
-                                    if (elem->elemtype == "String")
-                                        Some ("value" <+> args)
-                                    else
-                                        Some ("toDoc" <+> args)
-                                }
-                            case Opt (innerElem : NonTerminal) =>
-                                if (elem->elemtype == "Void")
-                                    Some ("empty")
-                                else {
-                                    varcount = varcount + 1
-                                    val func = if (innerElem->elemtype == "String")
-                                                   "toOptionTDoc"
-                                               else
-                                                   "toOptionASTNodeDoc"
-                                    Some (func <+> parens (varName (varcount)))
-                                }
-                            case Rep (_, innerElem : NonTerminal) =>
-                                if (elem->elemtype == "Void")
-                                    Some ("empty")
-                                else {
-                                    varcount = varcount + 1
-                                    val func = if (innerElem->elemtype == "String")
-                                                   "toListTDoc"
-                                               else
-                                                   "toListASTNodeDoc"
-                                    Some (func <+> parens (varName (varcount)))
-                                }
+
                             case CharLit (s) =>
                                 if (s.length == 1)
-                                    Some (squotes (s))
+                                    "char" <+> parens (squotes (s))
                                 else
-                                    Some (dquotes (s))
+                                    "text" <+> parens (dquotes (s))
+
+                            case Epsilon () =>
+                                text ("empty")
+
+                            case _ : NonTerminal =>
+                                if (elem->elemtype == "Void")
+                                    text ("empty")
+                                else {
+                                    varcount = varcount + 1
+                                    var varr = varName (varcount)
+                                    if (wrap) {
+                                        val args = parens (varr)
+                                        if (elem->elemtype == "String")
+                                            "value" <+> args
+                                        else
+                                            "toDoc" <+> args
+                                    } else
+                                        varr
+                                }
+
+                            case Opt (innerElem) =>
+                                if (elem->elemtype == "Void")
+                                    text ("empty")
+                                else
+                                    "optionToDoc" <+> parens (traverseElem (innerElem, false))
+
+                            case Rep (zero, innerElem) =>
+                                if (elem->elemtype == "Void")
+                                    text ("empty")
+                                else
+                                    "listToDoc" <+> parens (traverseElem (innerElem, false))
+
+                            case Seqn (l, r) =>
+                                traverseElem (l) <+> "<>" <+> traverseElem (r)
+
                             case StringLit (s) =>
-                                Some (dquotes (s) <+> "<> space")
+                                "text" <+> parens (dquotes (s)) <+> "<> space"
+
+                            // Formatting elements
                             case Nest (e) =>
-                                traverseElem (e).map (
-                                    d => "nest" <+> parens (d)
-                                )
+                                "nest" <+> parens (traverseElem (e))
                             case Newline () =>
-                                Some ("line")
+                                text ("line")
                             case Space () =>
-                                Some ("space")
+                                text ("space")
+
                             case _ =>
-                                None
+                                sys.error ("traverseElem: saw unexpected elem " + elem)
                         }
 
-                    elems.flatMap (traverseElem)
+                    elems match {
+                        case Nil => List (text ("empty"))
+                        case _   => elems.map (e => traverseElem (e))
+                    }
 
                 }
 
