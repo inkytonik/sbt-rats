@@ -38,6 +38,16 @@ body {
             positional.setPos(new LineColPosition(c.line, c.column));
         }
     }
+
+    /** Apply a Scala list of actions */
+    <T> T apply (List<Action<T>> actions, T seed) {
+        while (! actions.isEmpty()) {
+            seed    = actions.head().run(seed);
+            actions = actions.tail();
+        }
+        return seed;
+    }
+
 }
 
 option setOfString (KEYWORDS), withLocation;
