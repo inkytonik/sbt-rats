@@ -31,7 +31,7 @@ object SBTRatsPlugin extends Plugin {
 
     import ast.Grammar
     import parser.Parser
-    import org.kiama.attribution.Attribution.initTree
+    import org.kiama.attribution.Attribution.{initTree, resetMemo}
     import org.kiama.util.IO.filereader
     import org.kiama.util.Messaging.{messagecount, resetmessages, sortedmessages}
     import scala.collection.mutable.ListBuffer
@@ -282,6 +282,7 @@ object SBTRatsPlugin extends Plugin {
 
                 // No errors, go on to desugaring, translation and generation
                 val desugaredGrammar = desugarer.desugar (grammar)
+                resetMemo ()
                 initTree (desugaredGrammar)
 
                 // Make a translator for this run

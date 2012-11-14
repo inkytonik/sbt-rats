@@ -22,7 +22,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
 
         import analyser.{constr, hasSpacing, ntname, nttype,
             partitionLiterals, requiresNoAction, transformer, typeName}
-        import org.kiama.attribution.Attribution.initTree
+        import org.kiama.attribution.Attribution.{initTree, resetMemo}
 
         // Count of non-terminals on the RHS of an alternative
         // FIXME: remove or hide better
@@ -395,6 +395,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
         }
 
         // Initialise the tree so we can perform attribution on it
+        resetMemo ()
         initTree (grammar)
 
         // Convert grammar to a pretty printer document representing the translated

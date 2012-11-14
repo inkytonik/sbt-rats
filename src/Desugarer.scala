@@ -15,7 +15,7 @@ class Desugarer (analyser : Analyser) {
     import analyser.{actionTypeName, associativity, constr, idntype,
         isLeftRecursive, isTransferAlt, lhs, precedence, typeName}
     import ast._
-    import org.kiama.attribution.Attribution.initTree
+    import org.kiama.attribution.Attribution.{initTree, resetMemo}
     import org.kiama.output.{LeftAssoc, NonAssoc, RightAssoc}
     import org.kiama.rewriting.Rewriter.{alltd, rewrite, rule}
     import scala.collection.mutable.ListBuffer
@@ -25,6 +25,7 @@ class Desugarer (analyser : Analyser) {
      */
     def desugar (grammar : Grammar) : Grammar = {
         val grammar1 = fixTransferAlts (grammar)
+        resetMemo ()
         initTree (grammar1)
         removeLeftRecursion (grammar1)
     }

@@ -18,7 +18,7 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
         isParenPP, isTransferAlt, lhs, nameToFieldName, orderOpPrecFixityNonterm,
         requiresNoPPCase, treeAlternatives, typeName}
     import ast._
-    import org.kiama.attribution.Attribution.initTree
+    import org.kiama.attribution.Attribution.{initTree, resetMemo}
     import org.kiama.rewriting.Rewriter.{alltd, rewrite, query}
     import sbt.File
     import sbt.IO.write
@@ -268,6 +268,7 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
         }
 
         // Initialise the tree so we can perform attribution on it
+        resetMemo ()
         initTree (grammar)
 
         // Put together top level code
