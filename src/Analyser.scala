@@ -590,8 +590,8 @@ class Analyser (flags : Flags) extends Environments {
         }
 
     /**
-     * Collected information about an alternative: it's order (unary=1,
-     * binary=2, operator, precedence, fixity and non-terminals. If we can't
+     * Collected information about an alternative: its order (unary=1,
+     * binary=2), operator, precedence, fixity and non-terminals. If we can't
      * tell or it's a case we don't support, return None.
      */
     lazy val orderOpPrecFixityNonterm : Alternative => Option[(Int, String, Int, Fixity, String, String)] =
