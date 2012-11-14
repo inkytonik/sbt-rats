@@ -356,7 +356,12 @@ class Analyser (flags : Flags) extends Environments {
     lazy val isLeftRecursive : Alternative => Boolean =
         attr {
             case alt =>
-                alt.rhs.head == NonTerminal (NTName (IdnUse (alt->astrule->lhs)))
+                alt.rhs match {
+                    case head :: _ =>
+                        head == NonTerminal (NTName (IdnUse (alt->astrule->lhs)))
+                    case _ =>
+                        false
+                }
         }
 
     /**

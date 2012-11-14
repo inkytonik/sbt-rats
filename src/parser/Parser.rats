@@ -138,7 +138,7 @@ Pair<Alternative> ASTAlternatives =
     };
 
 Alternative ASTAlternative =
-    es:ASTElement+ as:AltAnnotations? {
+    es:ASTElement* as:AltAnnotations? {
         yyValue = new Alternative (es, as, new DefaultAction ());
     };
 
