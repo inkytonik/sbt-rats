@@ -12,12 +12,15 @@
  */
 class Desugarer (analyser : Analyser) {
 
-    import analyser.{actionTypeName, associativity, constr, idntype,
-        isLeftRecursive, isTransferAlt, lhs, precedence, typeName}
+    import analyser.{actionTypeName, associativity, constr, elemtype,
+        idntype, isLeftRecursive, isTransferAlt, lhs, pairTypeName,
+        precedence, typeName}
     import ast._
     import org.kiama.attribution.Attribution.{initTree, resetMemo}
+    import org.kiama.attribution.Attributable.deepclone
     import org.kiama.output.{LeftAssoc, NonAssoc, RightAssoc}
-    import org.kiama.rewriting.Rewriter.{alltd, rewrite, rule}
+    import org.kiama.rewriting.Rewriter.{alltd, everywheretd, rewrite,
+        rule}
     import scala.collection.mutable.ListBuffer
 
     /**
@@ -27,11 +30,101 @@ class Desugarer (analyser : Analyser) {
 
         resetMemo ()
         initTree (grammar)
-        val grammar1 = fixTransferAlts (grammar)
+        val grammar1 = removeSeparatorConstructs (grammar)
 
         resetMemo ()
         initTree (grammar1)
-        removeLeftRecursion (grammar1)
+        val grammar2 = fixTransferAlts (grammar1)
+
+        resetMemo ()
+        initTree (grammar2)
+        removeLeftRecursion (grammar2)
+
+    }
+
+    /**
+     * Look for seperator constructs `x ** y` and `x ++ y` (represented by 
+     * `RepSep` nodes) and replace with auxiliary rules which build the 
+     * list value. The following translations are made:
+     *   `x ++ y` turns into `nt = x y nt | x.`
+     *   `x ** y` turns into `nt = nt1 / .` and nt1 defined as in `++` case
+     * where `nt` and `nt1` are fresh non-terminals.
+     */
+    def removeSeparatorConstructs (grammar : Grammar) : Grammar = {
+
+        val newRules = new ListBuffer[ASTRule]
+
+        def makeSeparatorRule (rep : Rep) : NonTerminal = {
+
+            val Rep (zero, elem, sep) = rep
+
+            // The entry point non-terminal
+            val nt = "sep" + elem.pos.line + "x" + elem.pos.column
+
+            // The auxiliary non-terminal (if needed)
+            val nt1 = nt + "Aux"
+
+            // The element type of the list
+            val eltype = elem->elemtype
+
+            // The type of the list
+            val listtype = elem->pairTypeName
+
+            // If we are doing a zero repeition one, generate the optional rule
+            if (zero) {
+
+                // alt: nt1
+                val alt1 = Alternative (List (NonTerminal (NTGen (nt1, listtype))),
+                                        Nil,
+                                        NoAction ())
+
+                // alt: empty
+                val alt2 = Alternative (List (), Nil, NilAction ())
+
+                // Add the rule
+                val alts = List (alt1, alt2)
+                val newRule = ASTRule (IdnDef (nt), IdnUse (listtype), alts)
+                newRules.append (newRule)
+
+            }
+
+            // Get the appropriate RHS non-terminal for this rule
+            val nt2 = if (zero) nt1 else nt
+
+            // alt: elem sep nt
+            val alt1 = Alternative (List (elem, sep, NonTerminal (NTGen (nt2, listtype))),
+                                    Nil,
+                                    ConsAction (eltype))
+
+            // alt: elem
+            val alt2 = Alternative (List (deepclone (elem)),
+                                    Nil,
+                                    SingletonAction (eltype))
+
+            // Add the rule
+            val alts = List (alt1, alt2)
+            val newRule = ASTRule (IdnDef (nt2), IdnUse (listtype), alts)
+            newRules.append (newRule)
+
+            // Return a reference to the new entry point nonterminal
+            NonTerminal (NTGen (nt, listtype))
+
+        }
+
+        val removeSeparatorConstructsStrategy =
+            everywheretd (
+                rule {
+                    case elem @ Rep (_, _, Epsilon ()) =>
+                        elem
+                    case rep : Rep =>
+                        makeSeparatorRule (rep)
+                }
+            )
+
+        // Rewrite to get a transformed grammar and some new rules to add to it
+        val newg = rewrite (removeSeparatorConstructsStrategy) (grammar)
+
+        grammar.copy (rules = newg.rules ++ newRules.result)
 
     }
 
@@ -208,7 +301,7 @@ class Desugarer (analyser : Analyser) {
             // The iteration seed rule has the the form: nt = prevnt tailnt*
             // We only need it if there are left associative alternatives
             if (leftAssocAlts.nonEmpty)
-                baseAlts.append (Alternative (List (prevnt, Rep (true, tailnt)),
+                baseAlts.append (Alternative (List (prevnt, Rep (true, tailnt, Epsilon ())),
                                               Nil,
                                               ApplyAction ()))
 

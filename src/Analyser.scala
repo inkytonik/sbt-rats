@@ -216,7 +216,7 @@ class Analyser (flags : Flags) extends Environments {
                     "Void"
                 else
                     "Option[%s]".format (nt->nttype)
-            case Rep (_, nt : NonTerminal) =>
+            case Rep (_, nt : NonTerminal, _) =>
                 if (nt->nttype == "Void")
                     "Void"
                 else
@@ -276,6 +276,15 @@ class Analyser (flags : Flags) extends Environments {
         attr {
             case astRule =>
                 "Action<" + (astRule->typeName) + ">"
+        }
+
+    /**
+     * The pair type of a list element.
+     */
+    lazy val pairTypeName : Element => String =
+        attr {
+            case elem =>
+                "Pair<" + (elem->elemtype) + ">"
         }
 
     /**
@@ -547,6 +556,25 @@ class Analyser (flags : Flags) extends Environments {
         }
 
     /**
+     * Get the base field name for a particular element.
+     */
+    lazy val baseFieldName : Element => String =
+        attr {
+            case Block (name, _) =>
+                name
+            case nt : NonTerminal =>
+                nt->ntname
+            case Opt (elem) =>
+                "opt" + (elem->baseFieldName)
+            case Rep (false, elem, _) =>
+                elem->baseFieldName + "s"
+            case Rep (true, elem, _) =>
+                "opt" + (elem->baseFieldName) + "s"
+            case elem =>
+                sys.error ("baseFieldName: unexpected element kind " + elem)
+        }
+
+    /**
      * List of Scala keywords used to avoid declaring a field whose name
      * is a keyword.
      */
@@ -560,38 +588,22 @@ class Analyser (flags : Flags) extends Environments {
     )
 
     /**
-     * Convert a non-terminal name to a field name. Prefix is a string that
-     * we want to put on the beginning of the field name, suffix should go
-     * on the end. Additonally, if the final result would clash with a
-     * Scala keyword, add an addition "Field" suffix.
-     */
-    def nameToFieldName (prefix : String, name : String, suffix : String) : String = {
-        val fieldName =
-            if (prefix == "")
-                "%s%s".format (name.toLowerCase, suffix)
-            else
-                "%s%s%s%s".format (prefix, name.head.toUpper, name.tail.toLowerCase,
-                                   suffix)
-        if (scalaKeywords contains fieldName)
-            "%sField".format (fieldName)
-        else
-            fieldName
-    }
-
-    /**
      * Make a name for a field to represent a particular element.
      */
     lazy val fieldName : Element => String =
         attr {
-            case nt : NonTerminal =>
-                nameToFieldName ("", nt->ntname, "")
-            case Opt (nt : NonTerminal) =>
-                nameToFieldName ("opt", nt->ntname, "")
-            case Rep (zero, nt : NonTerminal) =>
-                nameToFieldName (if (zero) "opt" else "", nt->ntname, "s")
             case elem =>
-                // Remove once ASTRule RHS elements are simplified so these are the only cases??
-                sys.error ("fieldName: unexpected element kind " + elem)
+                val basename = elem->baseFieldName
+                val isAllUpper = basename.forall (_.isUpper)
+                val name = 
+                    if (isAllUpper)
+                        basename.toLowerCase
+                    else
+                        (basename (0).toLower) + basename.tail
+                if (scalaKeywords contains name)
+                    "%sField".format (name)
+                else
+                    name
         }
 
     /**

@@ -212,8 +212,11 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
 
                     case Not (elem)                => "!" <> parens (toElem (elem))
                     case Opt (elem)                => bind (parens (toElem (elem)) <> "?")
-                    case Rep (zero, elem)          => bind (parens (toElem (elem)) <>
-                                                                (if (zero) "*" else "+"))
+
+                    case Rep (zero, elem, Epsilon ()) =>
+                        bind (parens (toElem (elem)) <> (if (zero) "*" else "+"))
+                    case _ : Rep =>
+                        sys.error ("toElem: separated list left in for translation")
 
                     case Alt (left, right)         => parens (toElem (left) <> "/" <>
                                                                   toElem (right))
@@ -283,14 +286,20 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                             (alt.action match {
                                 case ApplyAction () =>
                                     "ParserSupport.apply (v2, v1)"
+                                case ConsAction (tipe) =>
+                                    "new Pair<" + tipe + "> (v1, v2)"
                                 case DefaultAction () =>
                                     "new" <+> text (alt->constr) <+> parens (args)
                                 case NoAction () =>
                                     // Not reachable
                                     empty
-                                case TailAction (typeName, constr) =>
-                                    toBraceSection ("new Action<" + typeName + "> ()",
-                                        toBraceSection ("public " + typeName + " run (" + typeName + " left)",
+                                case NilAction () =>
+                                    "Pair.empty ()"
+                                case SingletonAction (tipe) =>
+                                    "new Pair<" + tipe + "> (v1)"
+                                case TailAction (tipe, constr) =>
+                                    toBraceSection ("new Action<" + tipe + "> ()",
+                                        toBraceSection ("public " + tipe + " run (" + tipe + " left)",
                                             "return new" <+> constr <+> "(left, v1);"
                                         ) <> semi
                                     )

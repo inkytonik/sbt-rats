@@ -15,7 +15,7 @@ import org.kiama.output.PrettyPrinter
 class Generator (analyser : Analyser) extends PrettyPrinter {
 
     import analyser.{constr, elemtype, fieldName, fieldTypes, isLinePP,
-        isParenPP, isTransferAlt, lhs, nameToFieldName, orderOpPrecFixityNonterm,
+        isParenPP, isTransferAlt, lhs, orderOpPrecFixityNonterm,
         requiresNoPPCase, treeAlternatives, typeName}
     import ast._
     import org.kiama.attribution.Attribution.{initTree, resetMemo}
@@ -128,6 +128,8 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                 def traverseRHS (elems : List[Element]) {
                     for (elem <- elems)
                         elem match {
+                            case Block (name, _) =>
+                                fields.append (Field (elem->fieldName, "String"))
                             case _ : NonTerminal =>
                                 addField (elem)
                             case Opt (innerElem : NonTerminal) =>
@@ -137,13 +139,10 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                                     else
                                         innerElem
                                 addField (optElem)
-                            case Rep (zero, _ : NonTerminal) =>
+                            case Rep (zero, _ : NonTerminal, _) =>
                                 addField (elem)
                             case Nest (nestedElem) =>
                                 addField (nestedElem)
-                            case Block (name, _) =>
-                                val fieldName = nameToFieldName ("", name, "")
-                                fields.append (Field (fieldName, "String"))
                             case _ =>
                                 // No argument for the rest of the element kinds
                         }
@@ -452,11 +451,13 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                                 else
                                     "optionToDoc" <+> parens (traverseElem (innerElem, false))
 
-                            case Rep (zero, innerElem) =>
+                            case Rep (zero, innerElem, sep) =>
                                 if (elem->elemtype == "Void")
                                     text ("empty")
                                 else
-                                    "listToDoc" <+> parens (traverseElem (innerElem, false))
+                                    "listToDoc" <+> parens (traverseElem (innerElem, false) <>
+                                                            comma <+>
+                                                            traverseElem (sep))
 
                             case Seqn (l, r) =>
                                 traverseElem (l) <+> "<>" <+> traverseElem (r)

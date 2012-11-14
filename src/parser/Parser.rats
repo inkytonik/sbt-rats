@@ -175,11 +175,17 @@ constant Action<Element> SeqnTail =
     };
 
 Element Element2 =
+    e1:Primary void:"**":Symbol e2:Primary {
+        yyValue = new Rep (true, e1, e2);
+    } /
+    e1:Primary void:"++":Symbol e2:Primary {
+        yyValue = new Rep (false, e1, e2);
+    } /
     e:Primary void:"*":Symbol {
-        yyValue = new Rep (true, e);
+        yyValue = new Rep (true, e, new Epsilon ());
     } /
     e:Primary void:"+":Symbol {
-        yyValue = new Rep (false, e);
+        yyValue = new Rep (false, e, new Epsilon ());
     } /
     e:Primary void:"?":Symbol {
         yyValue = new Opt (e);
@@ -203,25 +209,34 @@ Element ASTElement =
     ASTFactor;
 
 Element ASTFactor =
+    e1:ASTPrimary void:"**":Symbol e2:ASTPrimary {
+        yyValue = new Rep (true, e1, e2);
+    } /
+    e1:ASTPrimary void:"++":Symbol e2:ASTPrimary {
+        yyValue = new Rep (false, e1, e2);
+    } /
     e:ASTPrimary void:"*":Symbol {
-        yyValue = new Rep (true, e);
+        yyValue = new Rep (true, e, new Epsilon ());
     } /
     e:ASTPrimary void:"+":Symbol {
-        yyValue = new Rep (false, e);
+        yyValue = new Rep (false, e, new Epsilon ());
     } /
     e:ASTPrimary void:"?":Symbol {
         yyValue = new Opt (e);
     } /
-    Literal Spacing /
     ASTPrimary;
 
 Element ASTPrimary =
+    ASTLiteral /
     i:Identifier void:"[":Symbol d:DecDigits void:"]":Symbol {
         yyValue = new Block (i, Integer.parseInt (d));
     } /
     i:IdnUse {
         yyValue = new NonTerminal (new NTName (i));
     };
+
+Element ASTLiteral =
+    Literal Spacing;      
 
 // Formatting
 
@@ -409,6 +424,7 @@ String Symbol =
     SymbolCharacters Spacing;
 
 transient String SymbolCharacters =
+    "**" / "++" /
     ":" / "=" / "/" / "|" / "{" / "}" / "(" / ")" / "!" / "." / "," /
     "*" / "+" / "?" / "[" / "]" / ";" / "\\n";
 

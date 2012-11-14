@@ -46,8 +46,11 @@ case class Transformation (num : Int, method : List[String], tipe : List[String]
 
 sealed abstract class Action extends ASTNode
 case class ApplyAction () extends Action
+case class ConsAction (tipe : String) extends Action
 case class DefaultAction () extends Action
+case class NilAction () extends Action
 case class NoAction () extends Action
+case class SingletonAction (tipe : String) extends Action
 case class TailAction (tipe : String, constr : String) extends Action
 
 sealed abstract class Element extends ASTNode
@@ -59,7 +62,7 @@ case class Epsilon () extends Element
 case class NonTerminal (ntuse : NTUse) extends Element
 case class Not (e : Element) extends Element
 case class Opt (e : Element) extends Element
-case class Rep (zero : Boolean, e : Element) extends Element
+case class Rep (zero : Boolean, e : Element, sep : Element) extends Element
 case class Seqn (left : Element, right : Element) extends Element
 case class StringLit (s : String) extends Element
 case class Wildcard () extends Element
