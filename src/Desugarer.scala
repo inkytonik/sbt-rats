@@ -24,10 +24,15 @@ class Desugarer (analyser : Analyser) {
      * Desugar the directly left recursive rules.
      */
     def desugar (grammar : Grammar) : Grammar = {
+
+        resetMemo ()
+        initTree (grammar)
         val grammar1 = fixTransferAlts (grammar)
+
         resetMemo ()
         initTree (grammar1)
         removeLeftRecursion (grammar1)
+
     }
 
     /**
