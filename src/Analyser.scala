@@ -259,7 +259,7 @@ class Analyser (flags : Flags) extends Environments {
     /**
      * The name of the type that represents values of a particular rule.
      * Either given explicitly, or if implicit, the same as the LHS of 
-     * the rule. Also works on 
+     * the rule.
      */
     lazy val typeName : ASTRule => String =
         attr {
