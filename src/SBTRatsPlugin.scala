@@ -439,13 +439,13 @@ object SBTRatsPlugin extends Plugin {
                           |import sbtrats.ParserSupport;""".stripMargin,
                     """Pair\.empty\(\)""".r ->
                         """List.empty()""",
-                    """new Pair<[^>]+>\(([^,)]+)\)""".r ->
-                        """Nil$.MODULE$.\$colon\$colon($1)""",
-                    """new Pair(<[^>]+>)""".r ->
+                    """new Pair[^(]+\(([^,)]+)\)""".r ->
+                        """Nil\$.MODULE\$.\$colon\$colon($1)""",
+                    """new Pair([^(]+)""".r ->
                         """new \$colon\$colon$1""",
-                    """Pair<Pair(<[^>]+>)>""".r ->
+                    """Pair<Pair([^(]+)>""".r ->
                         """List<List$1>""",
-                    """Pair(<[^>]+>)""".r ->
+                    """Pair([^(;]+)""".r ->
                         """List$1"""
                 )
             makeReplacements (contents, pairsToLists)
