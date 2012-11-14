@@ -287,7 +287,7 @@ class Analyser (flags : Flags) extends Environments {
             (astRule.anns != null) && (astRule.anns contains (ann))
         else 
             (astRule.tipe)->entity match {
-                case UserNonTerm (_, otherRule) =>
+                case UserNonTerm (_, otherRule) if astRule != otherRule =>
                     hasRuleAnnotation (otherRule, ann)
                 case _ =>
                     false
