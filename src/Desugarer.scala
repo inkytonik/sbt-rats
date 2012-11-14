@@ -33,7 +33,7 @@ class Desugarer (analyser : Analyser) {
      * Detect transfer rules. Find rules that just transfer a semantic
      * value from RHS to LHS and mark them as requiring no action.
      */
-    def fixTransferAlts (grammar : Grammar) = {
+    def fixTransferAlts (grammar : Grammar) : Grammar = {
 
         val fixTransferAltsStrategy =
             alltd (
@@ -104,7 +104,7 @@ class Desugarer (analyser : Analyser) {
      *     };
      * };
      */
-    def removeLeftRecursion (grammar : Grammar) = {
+    def removeLeftRecursion (grammar : Grammar) : Grammar = {
 
         val newRules = new ListBuffer[ASTRule]
 
@@ -147,6 +147,13 @@ class Desugarer (analyser : Analyser) {
                         NTGen (name2, tipe)
                 }
             )
+        /**
+         * Make a name for a non-terminal to represent a particular precedence 
+         * level for this rule.
+         * FIXME: still possibility of clashes with user names
+         */
+        def makePrecName (level : Int) : String =
+            "%sLevel%d".format (astRule->lhs, level)
 
         /**
          * Make iterative rules from a set of alternatives at the same precedence
@@ -158,13 +165,13 @@ class Desugarer (analyser : Analyser) {
             val alts = precalt._2
 
             // Name of for a non-terminal at this level
-            val ntname = "%s%d".format (astRule->lhs, prec)
+            val ntname = makePrecName (prec)
 
             // A non-terminal for this level
             def nt = NonTerminal (NTGen (ntname, lhsnttype))
 
             // Name for the non-terminal for the previous level
-            val prevntname = "%s%d".format (astRule->lhs, prec - 1)
+            val prevntname = makePrecName (prec - 1)
 
             // A non-terminal for the previous level
             def prevnt = NonTerminal (NTGen (prevntname, lhsnttype))
@@ -265,7 +272,7 @@ class Desugarer (analyser : Analyser) {
         } else {
 
             // The zero-level LHS for this iteration
-            val zerontidn = IdnDef ("%s0".format (astRule->lhs))
+            val zerontidn = IdnDef (makePrecName (0))
 
             /**
              * The new rule that replaces the non-recursive alternatives of the old rule.
@@ -284,8 +291,7 @@ class Desugarer (analyser : Analyser) {
                       }
 
             // The "topmost" (i.e. lowest precedence) non-terminal for this iteration
-            val topnt = NonTerminal (NTGen ("%s%d".format (astRule->lhs, top),
-                                            lhsnttype))
+            val topnt = NonTerminal (NTGen (makePrecName (top), lhsnttype))
 
             // Each group gets translated together to give a list of new iterative rules.
             val precRules = recMap.flatMap (makeIterativeRules)
