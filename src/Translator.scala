@@ -234,7 +234,11 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                         parens (toElem (left) <> "/" <> toElem (right))
 
                     case Seqn (left, right) =>
-                        parens (toElem (left) <+> toElem (right))
+                        val inner = parens (toElem (left) <+> toElem (right))
+                        if (elem->elemtype == "Void")
+                            inner
+                        else
+                            bind (inner)
 
                     case CharLit (str) =>
                         toLiteral (str)
