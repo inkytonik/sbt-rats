@@ -47,6 +47,8 @@ class Analyser (flags : Flags) extends Environments {
                         // Do nothing
                 }
 
+            case Rep (_, _, sep) if (sep->elemtype != "Void") && (sep->elemtype != "String") =>
+                message (sep, "list separator must be void or string")
 
             case _ =>
                 // Do nothing by default
@@ -209,20 +211,25 @@ class Analyser (flags : Flags) extends Environments {
 
     lazy val elemtype : Element => String =
         attr {
-            case nt : NonTerminal =>
-                nt->nttype
-            case Opt (nt : NonTerminal) =>
-                if (nt->nttype == "Void")
-                    "Void"
-                else
-                    "Option[%s]".format (nt->nttype)
-            case Rep (_, nt : NonTerminal, _) =>
-                if (nt->nttype == "Void")
-                    "Void"
-                else
-                    "List[%s]".format (nt->nttype)
             case _ : Block =>
                 "String"
+            case nt : NonTerminal =>
+                nt->nttype
+            case Opt (elem) =>
+                if (elem->elemtype == "Void")
+                    "Void"
+                else
+                    "Option[%s]".format (elem->elemtype)
+            case Rep (_, elem, _) =>
+                if (elem->elemtype == "Void")
+                    "Void"
+                else
+                    "List[%s]".format (elem->elemtype)
+            case Seqn (l, r) =>
+                (l->elemtype) match {
+                    case "Void" => r->elemtype
+                    case ltype  => ltype
+                }
             case _ =>
                 "Void"
         }
@@ -570,6 +577,11 @@ class Analyser (flags : Flags) extends Environments {
                 elem->baseFieldName + "s"
             case Rep (true, elem, _) =>
                 "opt" + (elem->baseFieldName) + "s"
+            case Seqn (l, r) =>
+                if (l->elemtype == "Void")
+                    r->baseFieldName
+                else
+                    l->baseFieldName
             case elem =>
                 sys.error ("baseFieldName: unexpected element kind " + elem)
         }

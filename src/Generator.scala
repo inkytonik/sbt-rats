@@ -126,26 +126,34 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                  * Traverse the elements on the RHS of the rule to collect fields. 
                  */
                 def traverseRHS (elems : List[Element]) {
-                    for (elem <- elems)
+
+                    def traverseElem (elem : Element) {
                         elem match {
                             case Block (name, _) =>
                                 fields.append (Field (elem->fieldName, "String"))
                             case _ : NonTerminal =>
                                 addField (elem)
-                            case Opt (innerElem : NonTerminal) =>
+                            case Opt (innerElem) =>
                                 val optElem =
                                     if (flags.useScalaOptions)
                                         elem
                                     else
                                         innerElem
                                 addField (optElem)
-                            case Rep (zero, _ : NonTerminal, _) =>
-                                addField (elem)
                             case Nest (nestedElem) =>
                                 addField (nestedElem)
+                            case _ : Rep =>
+                                addField (elem)
+                            case Seqn (l, r) =>
+                                traverseElem (l)
+                                traverseElem (r)
                             case _ =>
                                 // No argument for the rest of the element kinds
                         }
+                    }
+
+                    elems.map (traverseElem)
+
                 }
 
                 // Traverse the RHS elememts to collect field information
@@ -319,7 +327,6 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
             nest (
                 toPretty <@>
                 toOptionToDoc <@>
-                toListToDoc <@>
                 toDoc <@>
                 toToParenDoc (toParenDocCases.result)
             ) <@>
@@ -380,14 +387,6 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                  "o.map (toDoc).getOrElse (empty)"
             )
  
-        def toListToDoc : Doc =
-            line <>
-            "def listToDoc (l : List[ASTNode], sep : Doc = empty) : Doc =" <>
-            nest (
-                line <>
-                 "ssep (l map toDoc, sep)"
-            )
-
         def toToDocCase (rule : Rule) : Doc =
             rule match {
                 case r : ASTRule => toASTRuleToDocCase (r)
@@ -411,11 +410,29 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                 def varName (count : Int) =
                     text ("v%d".format (count))
 
+
                 /**
                  * Traverse the elements on the RHS of the rule to collect pattern
                  * variables and the Doc expression.
                  */
                 def traverseRHS (elems : List[Element]) : List[Doc] = {
+
+                    /**
+                     * Create pretty-printing code for a repeated element.
+                     */
+                    def traverseRep (rep : Rep) : Doc = {
+                        val Rep (_, innerElem, sep) = rep
+                        val doOne = traverseElem (innerElem)
+                        val varr = varName (varcount)
+                        val mapper =
+                            innerElem match {
+                                case _ : Seqn =>
+                                    varr <> ".map" <+> parens (varr <+> "=>" <+> doOne)
+                                case _ =>
+                                    varr <> ".map" <+> parens ("toDoc")
+                            }
+                        "ssep" <+> parens (mapper <> comma <+> traverseElem (sep))
+                    }
 
                     def traverseElem (elem : Element, wrap : Boolean = true) : Doc =
                         elem match {
@@ -451,13 +468,11 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                                 else
                                     "optionToDoc" <+> parens (traverseElem (innerElem, false))
 
-                            case Rep (zero, innerElem, sep) =>
+                            case rep : Rep =>
                                 if (elem->elemtype == "Void")
                                     text ("empty")
                                 else
-                                    "listToDoc" <+> parens (traverseElem (innerElem, false) <>
-                                                            comma <+>
-                                                            traverseElem (sep))
+                                    traverseRep (rep)
 
                             case Seqn (l, r) =>
                                 traverseElem (l) <+> "<>" <+> traverseElem (r)

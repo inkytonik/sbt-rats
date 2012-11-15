@@ -227,12 +227,41 @@ Element ASTFactor =
     ASTPrimary;
 
 Element ASTPrimary =
+    void:"(":Symbol ASTAtMostOneNonterm void:")":Symbol /
     ASTLiteral /
+    ASTNonterm;
+
+Element ASTNonterm =
     i:Identifier void:"[":Symbol d:DecDigits void:"]":Symbol {
         yyValue = new Block (i, Integer.parseInt (d));
     } /
     i:IdnUse {
         yyValue = new NonTerminal (new NTName (i));
+    };
+
+Element ASTAtMostOneNonterm =
+    i:ASTNonterm ls:ASTLiterals {
+        yyValue = new Seqn (i, ls);
+    } /
+    l:ASTLiteral es:ASTAtMostOneNonterm {
+        yyValue = new Seqn (l, es);
+    } /
+    ASTLiteral /
+    ASTNonterm;
+
+Element ASTLiterals =
+    seed:ASTLiteral actions:ASTLiteralsTail+ {
+        yyValue = apply (actions, seed);
+    } /
+    ASTLiteral;
+
+constant Action<Element> ASTLiteralsTail =
+    right:ASTLiteral {
+        yyValue = new Action<Element> () {
+            public Element run (Element left) {
+                return new Seqn (left, right);
+            }
+        };
     };
 
 Element ASTLiteral =
