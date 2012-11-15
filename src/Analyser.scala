@@ -515,10 +515,8 @@ class Analyser (flags : Flags) extends Environments {
         attr {
             case alt =>
                 alt.rhs.filterNot {
-                    case _ : Formatting | _ : CharLit | _ : StringLit =>
-                        true
-                    case _ =>
-                        false
+                    case elem =>
+                        elem->elemtype == "Void"
                 }
         }
 
