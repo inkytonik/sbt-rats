@@ -281,19 +281,30 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
 
             def toAction (alt : Alternative) : Doc = {
 
+                // Get the syntax elements of this alternative
+                val elements = alt->syntaxElements
+
                 // The arguments are v1 .. vn. Normally these are passed straight through
                 // to the constructor. However, if there is an annotation of the form 
                 // n:m then the value passed through for argument n is the result of
-                // passing the original value to the method m.
+                // passing the original value to the method m. If an argument is an option
+                // and we are using Scala options, then we translate from the nullable 
+                // representation to the Scala option value as we pass the argument.
                 val argList =
                     (1 to ntcount).map {
                         case n =>
                             val argName = "v" <> value (n)
+                            val argExp =
+                                if ((flags.useScalaOptions) &&
+                                       ((elements (n - 1)->elemtype).startsWith ("Option")))
+                                    "Option.apply" <+> parens (argName)
+                                else
+                                    argName
                             (alt->transformer (n) match {
                                 case Some (method) =>
-                                    method <+> parens (argName)
+                                    method <+> parens (argExp)
                                 case None =>
-                                    argName
+                                    argExp
                              })
                     }
 
@@ -320,7 +331,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                                 case SingletonAction (tipe) =>
                                     "new Pair<" + tipe + "> (v1)"
                                 case TailAction (tipe, constr) =>
-                                    val num = (alt->syntaxElements).length
+                                    val num = elements.length
                                     val args = (1 to num).map ("v" + _).mkString (", ", ", ", "")
                                     toBraceSection ("new Action<" + tipe + "> ()",
                                         toBraceSection ("public " + tipe + " run (" + tipe + " left)",

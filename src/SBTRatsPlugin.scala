@@ -456,15 +456,7 @@ object SBTRatsPlugin extends Plugin {
                 List (
                     """import xtc\.util\.Pair;""".r ->
                         """import xtc.util.Pair;
-                          |import scala.Option;""".stripMargin,
-                    """(\s+)(\w+)\s+(yyOpValue[0-9]+);""".r ->
-                        """$1Option<$2> $3;""",
-                    """(yyOpValue[0-9]+) = (v[^;]+);""".r ->
-                        """$1 = Option.apply ($2);""",
-                    """(yyOpValue[0-9]+) = null;""".r ->
-                        """$1 = Option.empty();""",
-                    """(\w+) (v[0-9]+) = (yyOpValue[0-9]+);""".r ->
-                        """Option<$1> $2 = $3;"""
+                          |import scala.Option;""".stripMargin
                 )
             makeReplacements (contents, nullablesToOptions)
         }
