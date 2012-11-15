@@ -20,7 +20,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
 
     def translate (flags : Flags, genFile : File, grammar : Grammar) = {
 
-        import analyser.{constr, hasSpacing, ntname, nttype,
+        import analyser.{constr, elemtype, hasSpacing, ntname, nttype,
             partitionLiterals, requiresNoAction, transformer, typeName}
         import org.kiama.attribution.Attribution.{initTree, resetMemo}
 
@@ -210,31 +210,52 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                         else
                             bind (text (nt->ntname))
 
-                    case Not (elem)                => "!" <> parens (toElem (elem))
-                    case Opt (elem)                => bind (parens (toElem (elem)) <> "?")
+                    case Not (elem) =>
+                        "!" <> parens (toElem (elem))
+
+                    case Opt (elem) =>
+                        val inner = parens (toElem (elem) <> "?")
+                        if (elem->elemtype == "Void")
+                            inner
+                        else
+                            bind (inner)
 
                     case Rep (zero, elem, Epsilon ()) =>
-                        bind (parens (toElem (elem)) <> (if (zero) "*" else "+"))
+                        val inner = parens (toElem (elem)) <> (if (zero) "*" else "+")
+                        if (elem->elemtype == "Void")
+                            inner
+                        else
+                            bind (inner)
                     case _ : Rep =>
                         sys.error ("toElem: separated list left in for translation")
 
-                    case Alt (left, right)         => parens (toElem (left) <> "/" <>
-                                                                  toElem (right))
-                    case Seqn (left, right)        => toElem (left) <+> toElem (right)
+                    case Alt (left, right) =>
+                        parens (toElem (left) <> "/" <> toElem (right))
 
-                    case CharLit (str)             => toLiteral (str)
-                    case StringLit (str)           => toLiteral (str)
+                    case Seqn (left, right) =>
+                        parens (toElem (left) <+> toElem (right))
 
-                    case CharClass (str)           => brackets (str)
+                    case CharLit (str) =>
+                        toLiteral (str)
+                    case StringLit (str) =>
+                        toLiteral (str)
 
-                    case Epsilon ()                => "/* empty */"
-                    case Wildcard ()               => "_"
+                    case CharClass (str) =>
+                        brackets (str)
 
-                    case Nest (elem)               => toElem (elem, doBindings)
+                    case Epsilon () =>
+                        "/* empty */"
+                    case Wildcard () =>
+                        "_"
 
-                    case Block (_, n)              => toBlock (n)
+                    case Nest (elem) =>
+                        toElem (elem, doBindings)
 
-                    case _                         => empty
+                    case Block (_, n) =>
+                        toBlock (n)
+
+                    case _ =>
+                        empty
                 }
 
             }
