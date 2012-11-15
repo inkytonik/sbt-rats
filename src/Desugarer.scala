@@ -154,9 +154,9 @@ class Desugarer (analyser : Analyser) {
      * Example to illustrate the transformation that is performed:
      * 
      * Exp Exp =
-     *         Exp Op1 Exp   {C1, left, 1}
-     *      /  Exp Op2 Exp   {C2, left, 2}
-     *      /  Foo           {C3}.
+     *         Exp Op1 Exp      {C1, left, 1}
+     *      /  Exp Op2 Id Exp   {C2, left, 2}
+     *      /  Foo              {C3}.
      * 
      * becomes
      *     
@@ -168,10 +168,10 @@ class Desugarer (analyser : Analyser) {
      * };
      * 
      * constant Action<Exp> Exp1Tail =
-     *     Op1 right:Exp {
+     *     Op1 v1:Exp {
      *         yyValue = new Action<Exp> () {
      *             public Exp run (Exp left) {
-     *                 return new C1 (left, right);
+     *                 return new C1 (left, v1);
      *             }
      *         };
      *     };
@@ -181,27 +181,14 @@ class Desugarer (analyser : Analyser) {
      * };
      * 
      * constant Action<Exp> Exp2Tail =
-     *     Op2 right:Exp1 {
+     *     Op2 v1:Id v2:Exp1 {
      *         yyValue = new Action<Exp> () {
      *             public Exp run (Exp left) {
-     *                 return new C2 (left, right);
+     *                 return new C2 (left, v1, v2);
      *             }
      *         };
      *     };
      *
-     * The actions for the base rules and the tails are encoded as follows:
-     *
-     * ApplyAction == {
-     *     yyValue = apply (actions, seed)
-     * };
-     *
-     * TailAction (t, c) ==  {
-     *     yyValue = new Action<Exp> () {
-     *         public t run (t left) {
-     *             return new c (left, right);
-     *         }
-     *     };
-     * };
      */
     def removeLeftRecursion (grammar : Grammar) : Grammar = {
 

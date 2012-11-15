@@ -21,7 +21,8 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
     def translate (flags : Flags, genFile : File, grammar : Grammar) = {
 
         import analyser.{constr, elemtype, hasSpacing, ntname, nttype,
-            partitionLiterals, requiresNoAction, transformer, typeName}
+            partitionLiterals, requiresNoAction, syntaxElements,
+            transformer, typeName}
         import org.kiama.attribution.Attribution.{initTree, resetMemo}
 
         // Count of non-terminals on the RHS of an alternative
@@ -319,9 +320,11 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                                 case SingletonAction (tipe) =>
                                     "new Pair<" + tipe + "> (v1)"
                                 case TailAction (tipe, constr) =>
+                                    val num = (alt->syntaxElements).length
+                                    val args = (1 to num).map ("v" + _).mkString (", ", ", ", "")
                                     toBraceSection ("new Action<" + tipe + "> ()",
                                         toBraceSection ("public " + tipe + " run (" + tipe + " left)",
-                                            "return new" <+> constr <+> "(left, v1);"
+                                            "return new" <+> constr <+> "(left" + args + ");"
                                         ) <> semi
                                     )
                              }) <> semi
