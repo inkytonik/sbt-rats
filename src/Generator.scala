@@ -326,7 +326,6 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
             "trait" <+> name <+> "extends PP with PPP {" <@>
             nest (
                 toPretty <@>
-                toOptionToDoc <@>
                 toDoc <@>
                 toToParenDoc (toParenDocCases.result)
             ) <@>
@@ -378,14 +377,6 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                     ) <@>
                     "}"
                 )
-
-        def toOptionToDoc : Doc =
-            line <>
-            "def optionToDoc (o : Option[ASTNode]) : Doc =" <>
-            nest (
-                line <>
-                 "o.map (toDoc).getOrElse (empty)"
-            )
  
         def toToDocCase (rule : Rule) : Doc =
             rule match {
@@ -418,10 +409,10 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                 def traverseRHS (elems : List[Element]) : List[Doc] = {
 
                     /**
-                     * Create pretty-printing code for a repeated element.
+                     * Create pretty-printing code for an element that needs to
+                     * be mapped.
                      */
-                    def traverseRep (rep : Rep) : Doc = {
-                        val Rep (_, innerElem, sep) = rep
+                    def traverseMap (innerElem : Element, optSep : Option[Element] = None) : Doc = {
                         val doOne = traverseElem (innerElem)
                         val varr = varName (varcount)
                         val mapper =
@@ -429,9 +420,19 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                                 case _ : Seqn =>
                                     varr <> ".map" <+> parens (varr <+> "=>" <+> doOne)
                                 case _ =>
-                                    varr <> ".map" <+> parens ("toDoc")
+                                    val func =
+                                        if (innerElem->elemtype == "String")
+                                            "text"
+                                        else
+                                            "toDoc"
+                                    varr <> ".map" <+> parens (func)
                             }
-                        "ssep" <+> parens (mapper <> comma <+> traverseElem (sep))
+                        optSep match {
+                            case Some (sep) =>
+                                "ssep" <+> parens (mapper <> comma <+> traverseElem (sep))
+                            case None =>
+                                mapper <> ".getOrElse (empty)"
+                        }
                     }
 
                     def traverseElem (elem : Element, wrap : Boolean = true) : Doc =
@@ -465,14 +466,14 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                             case Opt (innerElem) =>
                                 if (elem->elemtype == "Void")
                                     text ("empty")
-                                else
-                                    "optionToDoc" <+> parens (traverseElem (innerElem, false))
+                                else 
+                                    traverseMap (innerElem)
 
-                            case rep : Rep =>
+                            case Rep (_, innerElem, sep) =>
                                 if (elem->elemtype == "Void")
                                     text ("empty")
                                 else
-                                    traverseRep (rep)
+                                    traverseMap (innerElem, Some (sep))
 
                             case Seqn (l, r) =>
                                 traverseElem (l) <+> "<>" <+> traverseElem (r)
