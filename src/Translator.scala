@@ -89,8 +89,13 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
             val bodyParts =
                 possibleBodyParts.filter (_._1).map (_._2)
 
-            line <>
-            toBraceSection ("body", vsep (bodyParts))
+            bodyParts match {
+                case Nil =>
+                    empty
+                case _ =>
+                    line <>
+                    toBraceSection ("body", vsep (bodyParts))
+            }
 
         }
 
