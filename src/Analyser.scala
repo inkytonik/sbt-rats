@@ -127,9 +127,58 @@ class Analyser (flags : Flags) extends Environments {
         case _ : Grammar => Set ()
     }
 
+    /**
+     * Split a literal string into its constituent character components.
+     * Only legal literals need to be dealt with since the input has 
+     * already been parsed.
+     */
+    def parseLiteral (s : String) : List[Char] =
+        if (s == "")
+            Nil
+        else {
+            val (first, len) =
+                s (0) match {
+                    case '\\' =>
+                        s (1) match {
+                            case 'b'  => ('\b', 2)
+                            case 't'  => ('\t', 2)
+                            case 'n'  => ('\n', 2)
+                            case 'f'  => ('\f', 2)
+                            case 'r'  => ('\r', 2)
+                            case '['  => ('[',  2)
+                            case ']'  => (']',  2)
+                            case '\\' => ('\\', 2)
+                            case '\'' => ('\'', 2)
+                            case '\"' => ('\"', 2)
+                            case '-'  => ('-',  2)
+                            case 'u' =>
+                                val codePoint = Integer.parseInt (s.drop (2).take (4), 16)
+                                (Character.toChars (codePoint) (0), 6)
+                            case c if (c >= '0') && (c <= '9') =>
+                                val len = 
+                                    if ((c >= '0') && (c <= '3'))
+                                        4
+                                    else if ((s (2) >= '0') && (s (2) <= '7'))
+                                        3
+                                    else
+                                        2
+                                val codePoint = Integer.parseInt (s.drop (2).take (4), 8)
+                                (Character.toChars (codePoint) (0), len)
+                        }
+                    case c =>
+                        (c, 1)
+                }
+            first :: parseLiteral (s.drop (len))
+        }
+
+    def isNotWhitespace (s : String) : Boolean =
+        !(parseLiteral (s).forall (_.isWhitespace))
+
     def literalsout (out : ASTNode => Set[String]) : ASTNode ==> Set[String] = {
-        case n @ CharLit (s)   => (n->out) + s
-        case n @ StringLit (s) => (n->out) + s
+        case n @ CharLit (s) if isNotWhitespace (s) =>
+            (n->out) + s
+        case n @ StringLit (s) if isNotWhitespace (s) =>
+            (n->out) + s
     }
 
     // Name analysis
