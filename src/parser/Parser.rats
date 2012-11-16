@@ -83,7 +83,7 @@ String CodeBlockText =
 // Options
 
 Pair<RatsOption> Options =
-    void:"option":Word h:Option tl:(void:",":Symbol Option)* {
+    void:"option":Word h:Option tl:(void:",":Symbol Option)* void:";":Symbol {
         yyValue = SList.create (h, tl);
     };
 
