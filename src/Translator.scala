@@ -220,7 +220,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                         "!" <> parens (toElem (elem))
 
                     case Opt (elem) =>
-                        val inner = parens (toElem (elem) <> "?")
+                        val inner = parens (toElem (elem)) <> "?"
                         if (elem->elemtype == "Void")
                             inner
                         else
