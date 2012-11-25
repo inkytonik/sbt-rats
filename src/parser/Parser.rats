@@ -27,7 +27,7 @@ body {
         add (KEYWORDS, new String[] {
             "body", "header", "left", "line", "module", "nest",
             "none", "option", "paren", "rats", "right", "setOfString",
-            "sp", "String", "verbose"
+            "sp", "String", "verbose", "Void"
         });
     }
 
