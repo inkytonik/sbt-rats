@@ -1,6 +1,6 @@
 /*
  * This file is part of the sbt-rats plugin.
- * Copyright (c) 2012 Anthony M Sloane, Macquarie University.
+ * Copyright (c) 2012-2013 Anthony M Sloane, Macquarie University.
  * All rights reserved.
  * Distributed under the New BSD license.
  * See file LICENSE at top of distribution.

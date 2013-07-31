@@ -1,6 +1,6 @@
 /*
  * This file is part of the sbt-rats plugin.
- * Copyright (c) 2012 Anthony M Sloane, Macquarie University.
+ * Copyright (c) 2012-2013 Anthony M Sloane, Macquarie University.
  * All rights reserved.
  * Distributed under the New BSD license.
  * See file LICENSE at top of distribution.
@@ -13,7 +13,7 @@ import org.kiama.output.PrettyPrinter
  * analyser to use.
  */
 class Translator (analyser : Analyser) extends PrettyPrinter {
-    
+
     import ast._
     import sbt.File
     import sbt.IO.write
@@ -180,7 +180,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                         "v" <> value (ntcount) <> colon <> doc
                     } else
                         doc
-    
+
                 def action (d : Doc) : Doc =
                     "^" <> braces (nest (line <> d) <> line)
 
@@ -294,10 +294,10 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                 val elements = alt->syntaxElements
 
                 // The arguments are v1 .. vn. Normally these are passed straight through
-                // to the constructor. However, if there is an annotation of the form 
+                // to the constructor. However, if there is an annotation of the form
                 // n:m then the value passed through for argument n is the result of
                 // passing the original value to the method m. If an argument is an option
-                // and we are using Scala options, then we translate from the nullable 
+                // and we are using Scala options, then we translate from the nullable
                 // representation to the Scala option value as we pass the argument.
                 val argList =
                     (1 to ntcount).map {
@@ -324,7 +324,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                     empty
                 else
                     braces (nest (line <>
-                        "yyValue" <+> equal <+> 
+                        "yyValue" <+> equal <+>
                             (alt.action match {
                                 case ApplyAction () =>
                                     "ParserSupport.apply (v2, v1)"
@@ -392,23 +392,23 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
 
         /**
          * Generate default implementations of various aspects, depending on the
-         * flag settings. 
+         * flag settings.
          */
         def toDefaults : Doc = {
 
-            val layoutSpec = 
+            val layoutSpec =
                 if (flags.useDefaultLayout)
                     """
                     |// Default layout specification
                     |transient void Spacing   = (Space / Comment)*;
                     |transient void Space     = ' ' / '\t' / '\f' / EOL;
                     |transient void EOL       = '\r' '\n' / '\r' / '\n';
-                    |transient void EOF       = !_;    
+                    |transient void EOF       = !_;
                     |""".stripMargin
                 else
                     ""
 
-            val commentSpec = 
+            val commentSpec =
                 if (flags.useDefaultComments)
                     """
                     |// Default comment specification

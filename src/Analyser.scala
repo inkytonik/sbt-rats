@@ -1,6 +1,6 @@
 /*
  * This file is part of the sbt-rats plugin.
- * Copyright (c) 2012 Anthony M Sloane, Macquarie University.
+ * Copyright (c) 2012-2013 Anthony M Sloane, Macquarie University.
  * All rights reserved.
  * Distributed under the New BSD license.
  * See file LICENSE at top of distribution.
@@ -97,8 +97,8 @@ class Analyser (flags : Flags) extends Environments {
     case class Type () extends Entity
 
     /**
-     * The default environment, containing the grammar symbols that are 
-     * either provided by the plugin or are expected to be defined by 
+     * The default environment, containing the grammar symbols that are
+     * either provided by the plugin or are expected to be defined by
      * the user.
      */
     def defenv : Environment = {
@@ -129,7 +129,7 @@ class Analyser (flags : Flags) extends Environments {
 
     /**
      * Split a literal string into its constituent character components.
-     * Only legal literals need to be dealt with since the input has 
+     * Only legal literals need to be dealt with since the input has
      * already been parsed.
      */
     def parseLiteral (s : String) : List[Char] =
@@ -155,7 +155,7 @@ class Analyser (flags : Flags) extends Environments {
                                 val codePoint = Integer.parseInt (s.drop (2).take (4), 16)
                                 (Character.toChars (codePoint) (0), 6)
                             case c if (c >= '0') && (c <= '9') =>
-                                val len = 
+                                val len =
                                     if ((c >= '0') && (c <= '3'))
                                         4
                                     else if ((s (2) >= '0') && (s (2) <= '7'))
@@ -194,7 +194,7 @@ class Analyser (flags : Flags) extends Environments {
         case n @ IdnDef (i) =>
             define (n->out, i,
                     if (isDefinedInScope (n->(preenv.in), i))
-                        MultipleEntity
+                        MultipleEntity ()
                     else
                         entityFromDecl (n, i))
     }
@@ -224,7 +224,7 @@ class Analyser (flags : Flags) extends Environments {
     lazy val entity : Identifier => Entity =
         attr {
             case n =>
-                lookup (n->env, n.name, UnknownEntity)
+                lookup (n->env, n.name, UnknownEntity ())
         }
 
     lazy val ntname : NonTerminal => String =
@@ -316,7 +316,7 @@ class Analyser (flags : Flags) extends Environments {
 
     /**
      * The name of the type that represents values of a particular rule.
-     * Either given explicitly, or if implicit, the same as the LHS of 
+     * Either given explicitly, or if implicit, the same as the LHS of
      * the rule.
      */
     lazy val typeName : ASTRule => String =
@@ -352,7 +352,7 @@ class Analyser (flags : Flags) extends Environments {
     def hasRuleAnnotation (astRule : ASTRule, ann : RuleAnnotation) : Boolean =
         if (astRule.tipe == null)
             (astRule.anns != null) && (astRule.anns contains (ann))
-        else 
+        else
             (astRule.tipe)->entity match {
                 case UserNonTerm (_, otherRule) if astRule != otherRule =>
                     hasRuleAnnotation (otherRule, ann)
@@ -379,7 +379,7 @@ class Analyser (flags : Flags) extends Environments {
         }
 
     /**
-     * Is spacing turned on for this rule? I.e., does it not have a 
+     * Is spacing turned on for this rule? I.e., does it not have a
      * `nospacing` annotation?
      */
     lazy val hasSpacing : ASTRule => Boolean =
@@ -491,7 +491,7 @@ class Analyser (flags : Flags) extends Environments {
 
     /**
      * The consructor for an alternative. If there are constructor
-     * annotations, take the first one. Otherwise, use the left-hand 
+     * annotations, take the first one. Otherwise, use the left-hand
      * side of the enclosing rule.
      */
     lazy val constr : Alternative => String =
@@ -574,7 +574,7 @@ class Analyser (flags : Flags) extends Environments {
     /**
      * Whether or not the alternative needs a pretty-printing clause:
      * if it has no action, if it's part of a parenthesized rule and
-     * and features the recursive symbols, or if it's a transfer 
+     * and features the recursive symbols, or if it's a transfer
      * alternative. In the second case it will be handled by the paren
      * pretty printer.
      */
@@ -591,7 +591,7 @@ class Analyser (flags : Flags) extends Environments {
      */
     lazy val treeAlternatives : ASTRule => List[Alternative] =
         attr {
-            case astRule => 
+            case astRule =>
                 astRule.alts.filter (alt => (alt.anns != null) && (alt.anns.length > 0))
         }
 
@@ -656,7 +656,7 @@ class Analyser (flags : Flags) extends Environments {
             case elem =>
                 val basename = elem->baseFieldName
                 val isAllUpper = basename.forall (_.isUpper)
-                val name = 
+                val name =
                     if (isAllUpper)
                         basename.toLowerCase
                     else

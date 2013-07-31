@@ -1,6 +1,6 @@
 /*
  * This file is part of the sbt-rats plugin.
- * Copyright (c) 2012 Anthony M Sloane, Macquarie University.
+ * Copyright (c) 2012-2013 Anthony M Sloane, Macquarie University.
  * All rights reserved.
  * Distributed under the New BSD license.
  * See file LICENSE at top of distribution.
@@ -43,8 +43,8 @@ class Desugarer (analyser : Analyser) {
     }
 
     /**
-     * Look for seperator constructs `x ** y` and `x ++ y` (represented by 
-     * `RepSep` nodes) and replace with auxiliary rules which build the 
+     * Look for seperator constructs `x ** y` and `x ++ y` (represented by
+     * `RepSep` nodes) and replace with auxiliary rules which build the
      * list value. The following translations are made:
      *   `x ++ y` turns into `nt = x y nt | x.`
      *   `x ** y` turns into `nt = nt1 / .` and nt1 defined as in `++` case
@@ -152,21 +152,21 @@ class Desugarer (analyser : Analyser) {
      * semantic value.
      *
      * Example to illustrate the transformation that is performed:
-     * 
+     *
      * Exp Exp =
      *         Exp Op1 Exp      {C1, left, 1}
      *      /  Exp Op2 Id Exp   {C2, left, 2}
      *      /  Foo              {C3}.
-     * 
+     *
      * becomes
-     *     
+     *
      * Exp Exp0 =
      *     Foo {C3}.
-     * 
+     *
      * Exp Exp1 ::= seed:Exp0 actions:Exp1Tail* {
      *     yyValue = apply (actions, seed)
      * };
-     * 
+     *
      * constant Action<Exp> Exp1Tail =
      *     Op1 v1:Exp {
      *         yyValue = new Action<Exp> () {
@@ -175,11 +175,11 @@ class Desugarer (analyser : Analyser) {
      *             }
      *         };
      *     };
-     * 
+     *
      * Exp Exp2 ::= seed:Exp1 actions:Exp2Tail* {
      *     yyValue = apply (actions, seed)
      * };
-     * 
+     *
      * constant Action<Exp> Exp2Tail =
      *     Op2 v1:Id v2:Exp1 {
      *         yyValue = new Action<Exp> () {
@@ -214,7 +214,7 @@ class Desugarer (analyser : Analyser) {
 
     /**
      * Rewrite a single grammar rule to remove left recursion from it. Returns
-     * the new version of the rule `r`, plus a list of new rules that are to 
+     * the new version of the rule `r`, plus a list of new rules that are to
      * be added to the grammar.
      */
     def removeLeftRecursiveAlternatives (astRule : ASTRule) : (ASTRule, Iterable[ASTRule]) = {
@@ -234,7 +234,7 @@ class Desugarer (analyser : Analyser) {
                 }
             )
         /**
-         * Make a name for a non-terminal to represent a particular precedence 
+         * Make a name for a non-terminal to represent a particular precedence
          * level for this rule.
          * FIXME: still possibility of clashes with user names
          */
@@ -362,7 +362,7 @@ class Desugarer (analyser : Analyser) {
 
             /**
              * The new rule that replaces the non-recursive alternatives of the old rule.
-             * It defines the base level non-terminal and the type is given by the type 
+             * It defines the base level non-terminal and the type is given by the type
              * of the old non-terminal.
              */
             val newr = ASTRule (zerontidn, IdnUse (astRule->typeName), nonRecursiveAlts)

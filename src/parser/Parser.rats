@@ -88,7 +88,7 @@ Pair<RatsOption> Options =
     };
 
 RatsOption Option =
-    void:"setOfString":Word void:"(":Symbol n:Word void:")":Symbol { 
+    void:"setOfString":Word void:"(":Symbol n:Word void:")":Symbol {
         yyValue = new SetOfString (n);
     } /
     void:"verbose":Word {
@@ -265,7 +265,7 @@ constant Action<Element> ASTLiteralsTail =
     };
 
 Element ASTLiteral =
-    Literal Spacing;      
+    Literal Spacing;
 
 // Formatting
 
@@ -393,7 +393,7 @@ Element Literal =
     } /
     ['] s:CharLiteral ['] {
         yyValue = new CharLit (s);
-    } / 
+    } /
     '[' s:CharClassContents ']' {
         yyValue = new CharClass (s);
     };
@@ -432,7 +432,7 @@ String OctalEscape =
 String OctDigit =
     [0-7];
 
-String DecDigit =    
+String DecDigit =
     [0-9];
 
 // Words
@@ -463,4 +463,4 @@ transient void Space     = ' ' / '\t' / '\f' / EOL;
 transient void SLComment = "//" (![\n\r] _)* EOL;
 transient void MLComment = "/*" (MLComment / !"*/" _)* "*/";
 transient void EOL       = '\r' '\n' / '\r' / '\n';
-transient void EOF       = !_;    
+transient void EOF       = !_;

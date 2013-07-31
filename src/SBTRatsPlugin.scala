@@ -1,6 +1,6 @@
 /*
  * This file is part of the sbt-rats plugin.
- * Copyright (c) 2012 Anthony M Sloane, Macquarie University.
+ * Copyright (c) 2012-2013 Anthony M Sloane, Macquarie University.
  * All rights reserved.
  * Distributed under the New BSD license.
  * See file LICENSE at top of distribution.
@@ -67,7 +67,7 @@ object SBTRatsPlugin extends Plugin {
     )
 
     /**
-     * Set the locations of Scala Positional semantic values instead of 
+     * Set the locations of Scala Positional semantic values instead of
      * Rats! locations. Requires the Rats! option `withLocation` to have
      * any effect.
      */
@@ -105,7 +105,7 @@ object SBTRatsPlugin extends Plugin {
     )
 
     /**
-     * If a syntax definition is being used, generate definitions for 
+     * If a syntax definition is being used, generate definitions for
      * compatible abstract syntax trees as Scala case classes.
      */
     val ratsDefineASTClasses = SettingKey[Boolean] (
@@ -251,7 +251,7 @@ object SBTRatsPlugin extends Plugin {
 
     /**
      * Convert a syntax definition into Rats! file and other supporting Scala
-     * sources. Returns None if something went wrong, otherwise returns a 
+     * sources. Returns None if something went wrong, otherwise returns a
      * pair of the generated Rats! specification file and a list of other
      * files that were generated.
      */
@@ -348,7 +348,7 @@ object SBTRatsPlugin extends Plugin {
         // Set up paths and output directories
         val mainPath = main.absolutePath
         val mainDir = main.getParentFile
-        val ratsOutDir = 
+        val ratsOutDir =
             if (isUserMain) {
                 val relFile = main.getParent.drop (srcDir.getPath.length)
                 val ratsGenDir = genDir / relFile
@@ -518,13 +518,13 @@ object SBTRatsPlugin extends Plugin {
 
         val contents = IO.read (genFile)
 
-        val contents1 = 
+        val contents1 =
             if (flags.useScalaLists)
                 transformPairsToLists (contents)
             else
                 contents
 
-        val contents2 = 
+        val contents2 =
             if (flags.useScalaOptions)
                 transformNullablesToOptions (contents1)
             else

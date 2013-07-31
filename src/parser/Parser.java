@@ -359,7 +359,7 @@ public final class Parser extends ParserBase {
   private Result pCodeBlock(final int yyStart) throws IOException {
     ParserColumn yyColumn = (ParserColumn)column(yyStart);
     if (null == yyColumn.chunk1) yyColumn.chunk1 = new Chunk1();
-    if (null == yyColumn.chunk1.fCodeBlock) 
+    if (null == yyColumn.chunk1.fCodeBlock)
       yyColumn.chunk1.fCodeBlock = pCodeBlock$1(yyStart);
     return yyColumn.chunk1.fCodeBlock;
   }
@@ -414,7 +414,7 @@ public final class Parser extends ParserBase {
   private Result pCodeBlockText(final int yyStart) throws IOException {
     ParserColumn yyColumn = (ParserColumn)column(yyStart);
     if (null == yyColumn.chunk1) yyColumn.chunk1 = new Chunk1();
-    if (null == yyColumn.chunk1.fCodeBlockText) 
+    if (null == yyColumn.chunk1.fCodeBlockText)
       yyColumn.chunk1.fCodeBlockText = pCodeBlockText$1(yyStart);
     return yyColumn.chunk1.fCodeBlockText;
   }
@@ -570,7 +570,7 @@ public final class Parser extends ParserBase {
   private Result pOption(final int yyStart) throws IOException {
     ParserColumn yyColumn = (ParserColumn)column(yyStart);
     if (null == yyColumn.chunk1) yyColumn.chunk1 = new Chunk1();
-    if (null == yyColumn.chunk1.fOption) 
+    if (null == yyColumn.chunk1.fOption)
       yyColumn.chunk1.fOption = pOption$1(yyStart);
     return yyColumn.chunk1.fOption;
   }
@@ -864,7 +864,7 @@ public final class Parser extends ParserBase {
   private Result pStringType(final int yyStart) throws IOException {
     ParserColumn yyColumn = (ParserColumn)column(yyStart);
     if (null == yyColumn.chunk1) yyColumn.chunk1 = new Chunk1();
-    if (null == yyColumn.chunk1.fStringType) 
+    if (null == yyColumn.chunk1.fStringType)
       yyColumn.chunk1.fStringType = pStringType$1(yyStart);
     return yyColumn.chunk1.fStringType;
   }
@@ -910,7 +910,7 @@ public final class Parser extends ParserBase {
   private Result pType(final int yyStart) throws IOException {
     ParserColumn yyColumn = (ParserColumn)column(yyStart);
     if (null == yyColumn.chunk1) yyColumn.chunk1 = new Chunk1();
-    if (null == yyColumn.chunk1.fType) 
+    if (null == yyColumn.chunk1.fType)
       yyColumn.chunk1.fType = pType$1(yyStart);
     return yyColumn.chunk1.fType;
   }
@@ -952,7 +952,7 @@ public final class Parser extends ParserBase {
   private Result pStringAlternatives(final int yyStart) throws IOException {
     ParserColumn yyColumn = (ParserColumn)column(yyStart);
     if (null == yyColumn.chunk1) yyColumn.chunk1 = new Chunk1();
-    if (null == yyColumn.chunk1.fStringAlternatives) 
+    if (null == yyColumn.chunk1.fStringAlternatives)
       yyColumn.chunk1.fStringAlternatives = pStringAlternatives$1(yyStart);
     return yyColumn.chunk1.fStringAlternatives;
   }
@@ -994,18 +994,18 @@ public final class Parser extends ParserBase {
    * @return The result.
    * @throws IOException Signals an I/O error.
    */
-  private Result pStringAlternatives$$Star1(final int yyStart) 
+  private Result pStringAlternatives$$Star1(final int yyStart)
     throws IOException {
 
     ParserColumn yyColumn = (ParserColumn)column(yyStart);
     if (null == yyColumn.chunk1) yyColumn.chunk1 = new Chunk1();
-    if (null == yyColumn.chunk1.fStringAlternatives$$Star1) 
+    if (null == yyColumn.chunk1.fStringAlternatives$$Star1)
       yyColumn.chunk1.fStringAlternatives$$Star1 = pStringAlternatives$$Star1$1(yyStart);
     return yyColumn.chunk1.fStringAlternatives$$Star1;
   }
 
   /** Actually parse parser.Parser.StringAlternatives$$Star1. */
-  private Result pStringAlternatives$$Star1$1(final int yyStart) 
+  private Result pStringAlternatives$$Star1$1(final int yyStart)
     throws IOException {
 
     Result        yyResult;
@@ -1112,7 +1112,7 @@ public final class Parser extends ParserBase {
   private Result pASTAlternative(final int yyStart) throws IOException {
     ParserColumn yyColumn = (ParserColumn)column(yyStart);
     if (null == yyColumn.chunk1) yyColumn.chunk1 = new Chunk1();
-    if (null == yyColumn.chunk1.fASTAlternative) 
+    if (null == yyColumn.chunk1.fASTAlternative)
       yyColumn.chunk1.fASTAlternative = pASTAlternative$1(yyStart);
     return yyColumn.chunk1.fASTAlternative;
   }
@@ -1168,18 +1168,18 @@ public final class Parser extends ParserBase {
    * @return The result.
    * @throws IOException Signals an I/O error.
    */
-  private Result pASTAlternative$$Star1(final int yyStart) 
+  private Result pASTAlternative$$Star1(final int yyStart)
     throws IOException {
 
     ParserColumn yyColumn = (ParserColumn)column(yyStart);
     if (null == yyColumn.chunk1) yyColumn.chunk1 = new Chunk1();
-    if (null == yyColumn.chunk1.fASTAlternative$$Star1) 
+    if (null == yyColumn.chunk1.fASTAlternative$$Star1)
       yyColumn.chunk1.fASTAlternative$$Star1 = pASTAlternative$$Star1$1(yyStart);
     return yyColumn.chunk1.fASTAlternative$$Star1;
   }
 
   /** Actually parse parser.Parser.ASTAlternative$$Star1. */
-  private Result pASTAlternative$$Star1$1(final int yyStart) 
+  private Result pASTAlternative$$Star1$1(final int yyStart)
     throws IOException {
 
     Result        yyResult;
@@ -1223,7 +1223,7 @@ public final class Parser extends ParserBase {
   private Result pElement(final int yyStart) throws IOException {
     ParserColumn yyColumn = (ParserColumn)column(yyStart);
     if (null == yyColumn.chunk1) yyColumn.chunk1 = new Chunk1();
-    if (null == yyColumn.chunk1.fElement) 
+    if (null == yyColumn.chunk1.fElement)
       yyColumn.chunk1.fElement = pElement$1(yyStart);
     return yyColumn.chunk1.fElement;
   }
@@ -1281,7 +1281,7 @@ public final class Parser extends ParserBase {
   private Result pElement$$Plus1(final int yyStart) throws IOException {
     ParserColumn yyColumn = (ParserColumn)column(yyStart);
     if (null == yyColumn.chunk2) yyColumn.chunk2 = new Chunk2();
-    if (null == yyColumn.chunk2.fElement$$Plus1) 
+    if (null == yyColumn.chunk2.fElement$$Plus1)
       yyColumn.chunk2.fElement$$Plus1 = pElement$$Plus1$1(yyStart);
     return yyColumn.chunk2.fElement$$Plus1;
   }
@@ -1375,7 +1375,7 @@ public final class Parser extends ParserBase {
   private Result pElement1(final int yyStart) throws IOException {
     ParserColumn yyColumn = (ParserColumn)column(yyStart);
     if (null == yyColumn.chunk2) yyColumn.chunk2 = new Chunk2();
-    if (null == yyColumn.chunk2.fElement1) 
+    if (null == yyColumn.chunk2.fElement1)
       yyColumn.chunk2.fElement1 = pElement1$1(yyStart);
     return yyColumn.chunk2.fElement1;
   }
@@ -1433,7 +1433,7 @@ public final class Parser extends ParserBase {
   private Result pElement1$$Plus1(final int yyStart) throws IOException {
     ParserColumn yyColumn = (ParserColumn)column(yyStart);
     if (null == yyColumn.chunk2) yyColumn.chunk2 = new Chunk2();
-    if (null == yyColumn.chunk2.fElement1$$Plus1) 
+    if (null == yyColumn.chunk2.fElement1$$Plus1)
       yyColumn.chunk2.fElement1$$Plus1 = pElement1$$Plus1$1(yyStart);
     return yyColumn.chunk2.fElement1$$Plus1;
   }
@@ -1522,7 +1522,7 @@ public final class Parser extends ParserBase {
   private Result pElement2(final int yyStart) throws IOException {
     ParserColumn yyColumn = (ParserColumn)column(yyStart);
     if (null == yyColumn.chunk2) yyColumn.chunk2 = new Chunk2();
-    if (null == yyColumn.chunk2.fElement2) 
+    if (null == yyColumn.chunk2.fElement2)
       yyColumn.chunk2.fElement2 = pElement2$1(yyStart);
     return yyColumn.chunk2.fElement2;
   }
@@ -1672,7 +1672,7 @@ public final class Parser extends ParserBase {
   private Result pPrimary(final int yyStart) throws IOException {
     ParserColumn yyColumn = (ParserColumn)column(yyStart);
     if (null == yyColumn.chunk2) yyColumn.chunk2 = new Chunk2();
-    if (null == yyColumn.chunk2.fPrimary) 
+    if (null == yyColumn.chunk2.fPrimary)
       yyColumn.chunk2.fPrimary = pPrimary$1(yyStart);
     return yyColumn.chunk2.fPrimary;
   }
@@ -1809,7 +1809,7 @@ public final class Parser extends ParserBase {
   private Result pASTFactor(final int yyStart) throws IOException {
     ParserColumn yyColumn = (ParserColumn)column(yyStart);
     if (null == yyColumn.chunk2) yyColumn.chunk2 = new Chunk2();
-    if (null == yyColumn.chunk2.fASTFactor) 
+    if (null == yyColumn.chunk2.fASTFactor)
       yyColumn.chunk2.fASTFactor = pASTFactor$1(yyStart);
     return yyColumn.chunk2.fASTFactor;
   }
@@ -1959,7 +1959,7 @@ public final class Parser extends ParserBase {
   private Result pASTPrimary(final int yyStart) throws IOException {
     ParserColumn yyColumn = (ParserColumn)column(yyStart);
     if (null == yyColumn.chunk2) yyColumn.chunk2 = new Chunk2();
-    if (null == yyColumn.chunk2.fASTPrimary) 
+    if (null == yyColumn.chunk2.fASTPrimary)
       yyColumn.chunk2.fASTPrimary = pASTPrimary$1(yyStart);
     return yyColumn.chunk2.fASTPrimary;
   }
@@ -2029,7 +2029,7 @@ public final class Parser extends ParserBase {
   private Result pASTNonterm(final int yyStart) throws IOException {
     ParserColumn yyColumn = (ParserColumn)column(yyStart);
     if (null == yyColumn.chunk2) yyColumn.chunk2 = new Chunk2();
-    if (null == yyColumn.chunk2.fASTNonterm) 
+    if (null == yyColumn.chunk2.fASTNonterm)
       yyColumn.chunk2.fASTNonterm = pASTNonterm$1(yyStart);
     return yyColumn.chunk2.fASTNonterm;
   }
@@ -2107,13 +2107,13 @@ public final class Parser extends ParserBase {
   private Result pASTAtMostOneNonterm(final int yyStart) throws IOException {
     ParserColumn yyColumn = (ParserColumn)column(yyStart);
     if (null == yyColumn.chunk2) yyColumn.chunk2 = new Chunk2();
-    if (null == yyColumn.chunk2.fASTAtMostOneNonterm) 
+    if (null == yyColumn.chunk2.fASTAtMostOneNonterm)
       yyColumn.chunk2.fASTAtMostOneNonterm = pASTAtMostOneNonterm$1(yyStart);
     return yyColumn.chunk2.fASTAtMostOneNonterm;
   }
 
   /** Actually parse parser.Parser.ASTAtMostOneNonterm. */
-  private Result pASTAtMostOneNonterm$1(final int yyStart) 
+  private Result pASTAtMostOneNonterm$1(final int yyStart)
     throws IOException {
 
     Result     yyResult;
@@ -2300,7 +2300,7 @@ public final class Parser extends ParserBase {
   private Result pASTLiteral(final int yyStart) throws IOException {
     ParserColumn yyColumn = (ParserColumn)column(yyStart);
     if (null == yyColumn.chunk2) yyColumn.chunk2 = new Chunk2();
-    if (null == yyColumn.chunk2.fASTLiteral) 
+    if (null == yyColumn.chunk2.fASTLiteral)
       yyColumn.chunk2.fASTLiteral = pASTLiteral$1(yyStart);
     return yyColumn.chunk2.fASTLiteral;
   }
@@ -2521,7 +2521,7 @@ public final class Parser extends ParserBase {
   private Result pRuleAnnotation(final int yyStart) throws IOException {
     ParserColumn yyColumn = (ParserColumn)column(yyStart);
     if (null == yyColumn.chunk3) yyColumn.chunk3 = new Chunk3();
-    if (null == yyColumn.chunk3.fRuleAnnotation) 
+    if (null == yyColumn.chunk3.fRuleAnnotation)
       yyColumn.chunk3.fRuleAnnotation = pRuleAnnotation$1(yyStart);
     return yyColumn.chunk3.fRuleAnnotation;
   }
@@ -2688,7 +2688,7 @@ public final class Parser extends ParserBase {
   private Result pAltAnnotation(final int yyStart) throws IOException {
     ParserColumn yyColumn = (ParserColumn)column(yyStart);
     if (null == yyColumn.chunk3) yyColumn.chunk3 = new Chunk3();
-    if (null == yyColumn.chunk3.fAltAnnotation) 
+    if (null == yyColumn.chunk3.fAltAnnotation)
       yyColumn.chunk3.fAltAnnotation = pAltAnnotation$1(yyStart);
     return yyColumn.chunk3.fAltAnnotation;
   }
@@ -2825,7 +2825,7 @@ public final class Parser extends ParserBase {
   private Result pDecDigits(final int yyStart) throws IOException {
     ParserColumn yyColumn = (ParserColumn)column(yyStart);
     if (null == yyColumn.chunk3) yyColumn.chunk3 = new Chunk3();
-    if (null == yyColumn.chunk3.fDecDigits) 
+    if (null == yyColumn.chunk3.fDecDigits)
       yyColumn.chunk3.fDecDigits = pDecDigits$1(yyStart);
     return yyColumn.chunk3.fDecDigits;
   }
@@ -3109,7 +3109,7 @@ public final class Parser extends ParserBase {
   private Result pIdnUse(final int yyStart) throws IOException {
     ParserColumn yyColumn = (ParserColumn)column(yyStart);
     if (null == yyColumn.chunk3) yyColumn.chunk3 = new Chunk3();
-    if (null == yyColumn.chunk3.fIdnUse) 
+    if (null == yyColumn.chunk3.fIdnUse)
       yyColumn.chunk3.fIdnUse = pIdnUse$1(yyStart);
     return yyColumn.chunk3.fIdnUse;
   }
@@ -3151,7 +3151,7 @@ public final class Parser extends ParserBase {
   private Result pIdnDef(final int yyStart) throws IOException {
     ParserColumn yyColumn = (ParserColumn)column(yyStart);
     if (null == yyColumn.chunk3) yyColumn.chunk3 = new Chunk3();
-    if (null == yyColumn.chunk3.fIdnDef) 
+    if (null == yyColumn.chunk3.fIdnDef)
       yyColumn.chunk3.fIdnDef = pIdnDef$1(yyStart);
     return yyColumn.chunk3.fIdnDef;
   }
@@ -3193,7 +3193,7 @@ public final class Parser extends ParserBase {
   private Result pQualIdentifier(final int yyStart) throws IOException {
     ParserColumn yyColumn = (ParserColumn)column(yyStart);
     if (null == yyColumn.chunk3) yyColumn.chunk3 = new Chunk3();
-    if (null == yyColumn.chunk3.fQualIdentifier) 
+    if (null == yyColumn.chunk3.fQualIdentifier)
       yyColumn.chunk3.fQualIdentifier = pQualIdentifier$1(yyStart);
     return yyColumn.chunk3.fQualIdentifier;
   }
@@ -3235,18 +3235,18 @@ public final class Parser extends ParserBase {
    * @return The result.
    * @throws IOException Signals an I/O error.
    */
-  private Result pQualIdentifier$$Star1(final int yyStart) 
+  private Result pQualIdentifier$$Star1(final int yyStart)
     throws IOException {
 
     ParserColumn yyColumn = (ParserColumn)column(yyStart);
     if (null == yyColumn.chunk3) yyColumn.chunk3 = new Chunk3();
-    if (null == yyColumn.chunk3.fQualIdentifier$$Star1) 
+    if (null == yyColumn.chunk3.fQualIdentifier$$Star1)
       yyColumn.chunk3.fQualIdentifier$$Star1 = pQualIdentifier$$Star1$1(yyStart);
     return yyColumn.chunk3.fQualIdentifier$$Star1;
   }
 
   /** Actually parse parser.Parser.QualIdentifier$$Star1. */
-  private Result pQualIdentifier$$Star1$1(final int yyStart) 
+  private Result pQualIdentifier$$Star1$1(final int yyStart)
     throws IOException {
 
     Result       yyResult;
@@ -3294,7 +3294,7 @@ public final class Parser extends ParserBase {
   private Result pIdentifier(final int yyStart) throws IOException {
     ParserColumn yyColumn = (ParserColumn)column(yyStart);
     if (null == yyColumn.chunk3) yyColumn.chunk3 = new Chunk3();
-    if (null == yyColumn.chunk3.fIdentifier) 
+    if (null == yyColumn.chunk3.fIdentifier)
       yyColumn.chunk3.fIdentifier = pIdentifier$1(yyStart);
     return yyColumn.chunk3.fIdentifier;
   }
@@ -3335,7 +3335,7 @@ public final class Parser extends ParserBase {
   private Result pLiteral(final int yyStart) throws IOException {
     ParserColumn yyColumn = (ParserColumn)column(yyStart);
     if (null == yyColumn.chunk3) yyColumn.chunk3 = new Chunk3();
-    if (null == yyColumn.chunk3.fLiteral) 
+    if (null == yyColumn.chunk3.fLiteral)
       yyColumn.chunk3.fLiteral = pLiteral$1(yyStart);
     return yyColumn.chunk3.fLiteral;
   }
@@ -3646,7 +3646,7 @@ public final class Parser extends ParserBase {
   private Result pCharClassCharacter(final int yyStart) throws IOException {
     ParserColumn yyColumn = (ParserColumn)column(yyStart);
     if (null == yyColumn.chunk3) yyColumn.chunk3 = new Chunk3();
-    if (null == yyColumn.chunk3.fCharClassCharacter) 
+    if (null == yyColumn.chunk3.fCharClassCharacter)
       yyColumn.chunk3.fCharClassCharacter = pCharClassCharacter$1(yyStart);
     return yyColumn.chunk3.fCharClassCharacter;
   }
@@ -3709,7 +3709,7 @@ public final class Parser extends ParserBase {
   private Result pEscape(final int yyStart) throws IOException {
     ParserColumn yyColumn = (ParserColumn)column(yyStart);
     if (null == yyColumn.chunk4) yyColumn.chunk4 = new Chunk4();
-    if (null == yyColumn.chunk4.fEscape) 
+    if (null == yyColumn.chunk4.fEscape)
       yyColumn.chunk4.fEscape = pEscape$1(yyStart);
     return yyColumn.chunk4.fEscape;
   }
@@ -4083,7 +4083,7 @@ public final class Parser extends ParserBase {
   private Result pWord(final int yyStart) throws IOException {
     ParserColumn yyColumn = (ParserColumn)column(yyStart);
     if (null == yyColumn.chunk4) yyColumn.chunk4 = new Chunk4();
-    if (null == yyColumn.chunk4.fWord) 
+    if (null == yyColumn.chunk4.fWord)
       yyColumn.chunk4.fWord = pWord$1(yyStart);
     return yyColumn.chunk4.fWord;
   }
@@ -4178,7 +4178,7 @@ public final class Parser extends ParserBase {
   private Result pSymbol(final int yyStart) throws IOException {
     ParserColumn yyColumn = (ParserColumn)column(yyStart);
     if (null == yyColumn.chunk4) yyColumn.chunk4 = new Chunk4();
-    if (null == yyColumn.chunk4.fSymbol) 
+    if (null == yyColumn.chunk4.fSymbol)
       yyColumn.chunk4.fSymbol = pSymbol$1(yyStart);
     return yyColumn.chunk4.fSymbol;
   }
@@ -4757,7 +4757,7 @@ public final class Parser extends ParserBase {
       "sp", "String", "verbose", "Void"
     });
   }
-  
+
   /** Set position of a Positional */
   void setLocation(final Positional positional, final int index) {
     if (null != positional) {
@@ -4765,7 +4765,7 @@ public final class Parser extends ParserBase {
       positional.setPos(new LineColPosition(c.line, c.column));
     }
   }
-  
+
   /** Apply a Scala list of actions */
   <T> T apply (List<Action<T>> actions, T seed) {
     while (! actions.isEmpty()) {
