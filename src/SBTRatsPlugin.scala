@@ -70,7 +70,7 @@ object SBTRatsPlugin extends Plugin {
     )
 
     /**
-     * Set the locations of Scala Positional semantic values instead of 
+     * Set the locations of Scala Positional semantic values instead of
      * Rats! locations. Requires the Rats! option `withLocation` to have
      * any effect.
      */
@@ -108,7 +108,7 @@ object SBTRatsPlugin extends Plugin {
     )
 
     /**
-     * If a syntax definition is being used, generate definitions for 
+     * If a syntax definition is being used, generate definitions for
      * compatible abstract syntax trees as Scala case classes.
      */
     val ratsDefineASTClasses = SettingKey[Boolean] (
@@ -135,7 +135,7 @@ object SBTRatsPlugin extends Plugin {
     )
 
     /**
-     * If a syntax definition is being used, add the `verbose` option to the 
+     * If a syntax definition is being used, add the `verbose` option to the
      * Rats! specification so that debugging output is produced when parsing.
      */
     val ratsVerboseOutput = SettingKey[Boolean] (
@@ -156,8 +156,10 @@ object SBTRatsPlugin extends Plugin {
      */
     def runGenerators =
         (ratsFlags, ratsMainModule, scalaSource, target, sourceManaged in Compile,
-         streams, cacheDirectory) map {
-            (flags, main, srcDir, tgtDir, smDir, str, cache) => {
+         streams) map {
+            (flags, main, srcDir, tgtDir, smDir, str) => {
+
+                val cache = str.cacheDirectory
 
                 val cachedFun =
                     FileFunction.cached (cache / "sbt-rats", FilesInfo.lastModified,
@@ -199,7 +201,7 @@ object SBTRatsPlugin extends Plugin {
 
     /**
      * Convert a syntax definition into Rats! file and other supporting Scala
-     * sources. Returns None if something went wrong, otherwise returns a 
+     * sources. Returns None if something went wrong, otherwise returns a
      * pair of the generated Rats! specification file and a list of other
      * files that were generated.
      */
@@ -448,13 +450,13 @@ object SBTRatsPlugin extends Plugin {
 
         val contents = IO.read (genFile)
 
-        val contents1 = 
+        val contents1 =
             if (flags.useScalaLists)
                 transformPairsToLists (contents)
             else
                 contents
 
-        val contents2 = 
+        val contents2 =
             if (flags.useScalaOptions)
                 transformNullablesToOptions (contents1)
             else

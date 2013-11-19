@@ -8,22 +8,22 @@ organization := "com.googlecode.sbt-rats"
 
 // Scala compiler settings
 
-scalaVersion := "2.9.2"
+scalaVersion := "2.10.3"
 
-scalacOptions ++= Seq ("-deprecation", "-unchecked")
+scalacOptions ++= Seq ("-deprecation", "-feature", "-unchecked")
 
 // Interactive settings
 
 logLevel := Level.Info
 
-shellPrompt <<= (name, version) { (n, v) => 
+shellPrompt <<= (name, version) { (n, v) =>
      _ => n + " " + v + "> "
 }
 
 // Dependencies
 
 libraryDependencies ++= Seq (
-    "com.googlecode.kiama" % "kiama_2.9.2" % "1.3.0",
+    "com.googlecode.kiama" % "kiama_2.10" % "1.5.1",
     "xtc" % "rats" % "2.3.1"
 )
 

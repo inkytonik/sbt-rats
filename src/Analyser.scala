@@ -21,11 +21,11 @@ object Analyser extends Environments {
 
     def check (n : ASTNode) {
         n match {
-            case d @ IdnDef (i) if d->entity == MultipleEntity =>
+            case d @ IdnDef (i) if d->entity == MultipleEntity () =>
                 message (d, i + " is declared more than once")
 
             case u @ IdnUse (i) =>
-                if (u->entity == UnknownEntity)
+                if (u->entity == UnknownEntity ())
                     message (u, i + " is not declared")
                 else if ((u.parent.isInstanceOf[NonTerminal]) && (u->entity == Type ()))
                     message (u, "type " + i + " found where non-terminal expected")
@@ -91,8 +91,8 @@ object Analyser extends Environments {
     case class Type () extends Entity
 
     /**
-     * The default environment, containing the grammar symbols that are 
-     * either provided by the plugin or are expected to be defined by 
+     * The default environment, containing the grammar symbols that are
+     * either provided by the plugin or are expected to be defined by
      * the user.
      */
     def defenv : Environment =
@@ -128,7 +128,7 @@ object Analyser extends Environments {
         case n @ IdnDef (i) =>
             define (n->out, i,
                     if (isDefinedInScope (n->(preenv.in), i))
-                        MultipleEntity
+                        MultipleEntity ()
                     else
                         entityFromDecl (n, i))
     }
@@ -145,14 +145,14 @@ object Analyser extends Environments {
 
     lazy val env =
         down[ASTNode, Environment] {
-            case n if n isRoot =>
+            case n if n.isRoot =>
                 n->preenv
         }
 
     lazy val entity : Identifier => Entity =
         attr {
             case n =>
-                lookup (n->env, n.name, UnknownEntity)
+                lookup (n->env, n.name, UnknownEntity ())
         }
 
     // Type analysis
@@ -208,8 +208,8 @@ object Analyser extends Environments {
 
     /**
      * The name of the type that represents values of a particular rule.
-     * Either given explicitly, or if implicit, the same as the LHS of 
-     * the rule. Also works on 
+     * Either given explicitly, or if implicit, the same as the LHS of
+     * the rule. Also works on
      */
     lazy val typeName : ASTRule => String =
         attr {
@@ -235,7 +235,7 @@ object Analyser extends Environments {
     def hasRuleAnnotation (astRule : ASTRule, ann : RuleAnnotation) : Boolean =
         if (astRule.tipe == null)
             (astRule.anns != null) && (astRule.anns contains (ann))
-        else 
+        else
             (astRule.tipe)->entity match {
                 case UserNonTerm (_, otherRule) =>
                     hasRuleAnnotation (otherRule, ann)
@@ -262,7 +262,7 @@ object Analyser extends Environments {
         }
 
     /**
-     * Is spacing turned on for this rule? I.e., does it not have a 
+     * Is spacing turned on for this rule? I.e., does it not have a
      * `nospacing` annotation?
      */
     lazy val hasSpacing : ASTRule => Boolean =
@@ -369,7 +369,7 @@ object Analyser extends Environments {
 
     /**
      * The consructor for an alternative. If there are constructor
-     * annotations, take the first one. Otherwise, use the left-hand 
+     * annotations, take the first one. Otherwise, use the left-hand
      * side of the enclosing rule.
      */
     lazy val constr : Alternative => String =
@@ -454,7 +454,7 @@ object Analyser extends Environments {
     /**
      * Whether or not the alternative needs a pretty-printing clause:
      * if it has no action, if it's part of a parenthesized rule and
-     * and features the recursive symbols, or if it's a transfer 
+     * and features the recursive symbols, or if it's a transfer
      * alternative. In the second case it will be handled by the paren
      * pretty printer.
      */
@@ -471,7 +471,7 @@ object Analyser extends Environments {
      */
     lazy val treeAlternatives : ASTRule => List[Alternative] =
         attr {
-            case astRule => 
+            case astRule =>
                 astRule.alts.filter (alt => (alt.anns != null) && (alt.anns.length > 0))
         }
 
