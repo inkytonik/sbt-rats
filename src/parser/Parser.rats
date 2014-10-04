@@ -14,11 +14,10 @@ header {
     import org.kiama.output.LeftAssoc$;
     import org.kiama.output.NonAssoc$;
     import org.kiama.output.RightAssoc$;
+    import org.kiama.util.Positions;
     import scala.collection.immutable.List;
     import scala.collection.immutable.Nil$;
     import scala.collection.immutable.$colon$colon;
-    import scala.util.parsing.input.Positional;
-    import scala.util.parsing.input.Position;
     import xtc.util.Action;
 }
 
@@ -31,11 +30,11 @@ body {
         });
     }
 
-    /** Set position of a Positional */
-    void setLocation(final Positional positional, final int index) {
-        if (null != positional) {
+    /** Set position of an Object using Kiama's Positions module */
+    void setLocation(final Object object, final int index) {
+        if (null != object) {
             Column c = column(index);
-            positional.setPos(new LineColPosition(c.line, c.column));
+            Positions.setStart(object, new LineColPosition(c.line, c.column, index));
         }
     }
 

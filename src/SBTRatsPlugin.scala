@@ -30,12 +30,14 @@ case class Flags (
 object SBTRatsPlugin extends Plugin {
 
     import ast.Grammar
-    import parser.Parser
+    import parser.{LineColPosition, Parser}
     import org.kiama.attribution.Attribution.{initTree, resetMemo}
     import org.kiama.util.IO.filereader
+    import org.kiama.util.Message
     import org.kiama.util.Messaging.sortmessages
     import scala.collection.mutable.ListBuffer
     import scala.util.matching.Regex
+    import xtc.parser.ParseError
 
     /**
      * The file that contains the main Rats! module or main syntax
@@ -323,21 +325,60 @@ object SBTRatsPlugin extends Plugin {
 
             } else {
 
-                // str.log.error ("Syntax semantic analysis of %s failed".format (main))
-                for (record <- sortmessages (messages))
-                    str.log.error (record.toString)
-                sys.error ("Syntax semantic analysis of %s failed".format (filename))
-                None
+                for (message <- sortmessages (messages))
+                    str.log.error (formatSemanticError (p, filename, message))
+                sys.error ("Syntax semantic analysis of %s failed".format (main))
 
             }
 
         } else {
 
-            str.log.info ("Syntax parsing %s failed".format (main))
-            sys.error (p.format (pr.parseError))
-            None
+            str.log.error (formatParseError (p, pr.parseError))
+            sys.error ("Syntax parsing %s failed".format (main))
 
         }
+    }
+
+    /**
+     * Format a Rats! parser error message according to Scala compiler
+     * conventions for better compatibility with error processors (e.g.,
+     * editors).  Very similar to `p.format` but omits the column
+     * number from the first line since the pointer carries that
+     * information, and omits the word "error".
+     */
+    def formatParseError (p : Parser, error : ParseError) : String = {
+        val buf = new StringBuilder
+
+        if (error.index == -1)
+            buf.append (error.msg)
+        else {
+            val loc = p.location (error.index)
+            buf.append (loc.file)
+            buf.append (':')
+            buf.append (loc.line)
+            buf.append (": ")
+
+            buf.append (error.msg)
+            buf.append ('\n')
+
+            val line = p.lineAt (error.index)
+            buf.append (line)
+            buf.append ('\n')
+            buf.append (" " * (loc.column - 1))
+            buf.append ("^\n")
+        }
+
+        buf.result ()
+    }
+
+    /**
+     * Format a semantc error according to Scala compiler conventions.
+     */
+    def formatSemanticError (p : Parser, filename : String, message : Message) : String = {
+        val pos = message.pos.asInstanceOf[LineColPosition]
+        filename + ":" + pos.line + ": " + message.label + "\n" +
+            p.lineAt (pos.index) + "\n" +
+            (" " * (pos.column - 1)) + "^"
     }
 
     /**

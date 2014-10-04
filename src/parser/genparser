@@ -15,6 +15,6 @@ sed -E -i .orig \
     -e 's/Pair([^(;]+)/List\1/' \
  \
     -e '/import xtc\.tree\.Locatable;/d' \
-    -e 's/Locatable/Positional/' \
+    -e 's/Locatable/Object/' \
  \
     Parser.java

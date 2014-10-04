@@ -10,7 +10,7 @@ package parser
 
 import scala.util.parsing.input.{Position, Positional}
 
-class LineColPosition (val line : Int, val column : Int) extends Position {
+class LineColPosition (val line : Int, val column : Int, val index : Int) extends Position {
 
     override def < (that : Position) : Boolean =
         line < that.line ||

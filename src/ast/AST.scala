@@ -10,9 +10,8 @@ package ast
 
 import org.kiama.attribution.Attributable
 import org.kiama.output.Side
-import scala.util.parsing.input.Positional
 
-abstract class ASTNode extends Attributable with Positional
+abstract class ASTNode extends Attributable
 
 case class Grammar (module : List[String], header : String, body : String,
                     options : List[RatsOption], rules : List[Rule]) extends ASTNode

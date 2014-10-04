@@ -21,6 +21,7 @@ class Desugarer (analyser : Analyser) {
     import org.kiama.output.{LeftAssoc, NonAssoc, RightAssoc}
     import org.kiama.rewriting.Rewriter.{alltd, everywheretd, rewrite,
         rule}
+    import org.kiama.util.Positions
     import scala.collection.mutable.ListBuffer
 
     /**
@@ -59,7 +60,8 @@ class Desugarer (analyser : Analyser) {
             val Rep (zero, elem, sep) = rep
 
             // The entry point non-terminal
-            val nt = "sep" + elem.pos.line + "x" + elem.pos.column
+            val ntpos = Positions.getStart (elem)
+            val nt = "sep" + ntpos.line + "x" + ntpos.column
 
             // The auxiliary non-terminal (if needed)
             val nt1 = nt + "Aux"
