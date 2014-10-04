@@ -8,9 +8,9 @@ organization := "com.googlecode.sbt-rats"
 
 // Scala compiler settings
 
-scalaVersion := "2.9.2"
+scalaVersion := "2.10.3"
 
-scalacOptions ++= Seq ("-deprecation", "-unchecked")
+scalacOptions ++= Seq ("-deprecation", "-feature", "-unchecked")
 
 // Interactive settings
 
@@ -23,7 +23,7 @@ shellPrompt <<= (name, version) { (n, v) =>
 // Dependencies
 
 libraryDependencies ++= Seq (
-    "com.googlecode.kiama" %% "kiama" % "1.4.0",
+    "com.googlecode.kiama" % "kiama_2.10" % "1.7.0",
     "xtc" % "rats" % "2.3.1"
 )
 

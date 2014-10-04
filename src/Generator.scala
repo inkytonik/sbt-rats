@@ -1,6 +1,6 @@
 /*
  * This file is part of the sbt-rats plugin.
- * Copyright (c) 2012-2013 Anthony M Sloane, Macquarie University.
+ * Copyright (c) 2012-2014 Anthony M Sloane, Macquarie University.
  * All rights reserved.
  * Distributed under the New BSD license.
  * See file LICENSE at top of distribution.
@@ -62,9 +62,7 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
             includeImportWhen ("org.kiama.output.{PrettyBinaryExpression, PrettyExpression, PrettyUnaryExpression}",
                                flags.definePrettyPrinter) <>
             includeImportWhen ("scala.util.parsing.input.Positional",
-                               flags.useScalaPositions && !flags.useKiama) <>
-            includeImportWhen ("org.kiama.util.Positioned",
-                               flags.useScalaPositions && flags.useKiama)
+                               flags.useScalaPositions && !flags.useKiama)
 
         def toSyntax : Doc =
             line <>
@@ -77,8 +75,8 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
 
         def toSuperClass : Doc = {
             val superTraits = List (
-                if (flags.useScalaPositions)
-                    List (if (flags.useKiama) "Positioned" else "Positional")
+                if (flags.useScalaPositions && !flags.useKiama)
+                    List ("Positional")
                 else
                     Nil,
                 if (flags.useKiama)
@@ -584,6 +582,14 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
             |        result
             |    }
             |
+            |}
+            |
+            |object SList {
+            |    type L[T] = scala.collection.immutable.List[T]
+            |    def empty[T] : L[T] = Nil
+            |    def create[T] (hd : T) : L[T] = hd :: Nil
+            |    def create[T] (hd : T, nxt : T) : L[T] = hd :: nxt :: Nil
+            |    def create[T] (hd : T, tl : L[T]) : L[T] = hd :: tl
             |}
             |""".stripMargin
 

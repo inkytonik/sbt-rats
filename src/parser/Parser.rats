@@ -1,6 +1,6 @@
 /*
  * This file is part of the sbt-rats plugin.
- * Copyright (c) 2012 Anthony M Sloane, Macquarie University.
+ * Copyright (c) 2012-2014 Anthony M Sloane, Macquarie University.
  * All rights reserved.
  * Distributed under the New BSD license.
  * See file LICENSE at top of distribution.
@@ -43,7 +43,7 @@ body {
     <T> T apply (List<Action<T>> actions, T seed) {
         while (! actions.isEmpty()) {
             seed    = actions.head().run(seed);
-            actions = actions.tail();
+            actions = actions.drop(1);
         }
         return seed;
     }

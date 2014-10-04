@@ -1,6 +1,6 @@
 /*
  * This file is part of the sbt-rats plugin.
- * Copyright (c) 2012-2013 Anthony M Sloane, Macquarie University.
+ * Copyright (c) 2012-2014 Anthony M Sloane, Macquarie University.
  * All rights reserved.
  * Distributed under the New BSD license.
  * See file LICENSE at top of distribution.
@@ -17,7 +17,7 @@ class Desugarer (analyser : Analyser) {
         precedence, typeName}
     import ast._
     import org.kiama.attribution.Attribution.{initTree, resetMemo}
-    import org.kiama.attribution.Attributable.deepclone
+    import org.kiama.attribution.AttributableSupport.deepclone
     import org.kiama.output.{LeftAssoc, NonAssoc, RightAssoc}
     import org.kiama.rewriting.Rewriter.{alltd, everywheretd, rewrite,
         rule}
@@ -113,7 +113,7 @@ class Desugarer (analyser : Analyser) {
 
         val removeSeparatorConstructsStrategy =
             everywheretd (
-                rule {
+                rule[Element] {
                     case elem @ Rep (_, _, Epsilon ()) =>
                         elem
                     case rep : Rep =>
@@ -136,7 +136,7 @@ class Desugarer (analyser : Analyser) {
 
         val fixTransferAltsStrategy =
             alltd (
-                rule {
+                rule[Alternative] {
                     case alt @ Alternative (rhs, anns, _) if alt->isTransferAlt =>
                         Alternative (rhs, anns, NoAction ())
                 }
@@ -196,7 +196,7 @@ class Desugarer (analyser : Analyser) {
 
         val removeLeftRecursionStrategy =
             alltd (
-                rule {
+                rule[ASTRule] {
                     case r : ASTRule =>
                         // Rewrite r and save the new rules for adding in later
                         val (newr, rules) = removeLeftRecursiveAlternatives (r)
@@ -228,7 +228,7 @@ class Desugarer (analyser : Analyser) {
          */
         def replaceIdns (name1 : String, name2 : String, tipe : String) =
             alltd (
-                rule {
+                rule[NTUse] {
                     case NTName (IdnUse (`name1`)) =>
                         NTGen (name2, tipe)
                 }

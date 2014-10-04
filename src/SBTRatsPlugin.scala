@@ -1,6 +1,6 @@
 /*
  * This file is part of the sbt-rats plugin.
- * Copyright (c) 2012-2013 Anthony M Sloane, Macquarie University.
+ * Copyright (c) 2012-2014 Anthony M Sloane, Macquarie University.
  * All rights reserved.
  * Distributed under the New BSD license.
  * See file LICENSE at top of distribution.
@@ -33,7 +33,7 @@ object SBTRatsPlugin extends Plugin {
     import parser.Parser
     import org.kiama.attribution.Attribution.{initTree, resetMemo}
     import org.kiama.util.IO.filereader
-    import org.kiama.util.Messaging.{messagecount, resetmessages, sortedmessages}
+    import org.kiama.util.Messaging.sortmessages
     import scala.collection.mutable.ListBuffer
     import scala.util.matching.Regex
 
@@ -161,8 +161,10 @@ object SBTRatsPlugin extends Plugin {
      */
     def runGenerators =
         (ratsFlags, ratsMainModule, scalaSource in Compile, target, sourceManaged in Compile,
-         streams, cacheDirectory) map {
-            (flags, main, srcDir, tgtDir, smDir, str, cache) => {
+         streams) map {
+            (flags, main, srcDir, tgtDir, smDir, str) => {
+
+                val cache = str.cacheDirectory
 
                 val cachedFun =
                     FileFunction.cached (cache / "sbt-rats", FilesInfo.lastModified,
@@ -227,6 +229,7 @@ object SBTRatsPlugin extends Plugin {
         optmain match {
 
             case Some (main) =>
+                str.log.info ("Rats! got a .rats file %s".format (main))
                 // Got one, just run Rats! on it and we're done.
                 val newFiles = runRatsImpl (flags, main, true, srcDir, genDir,
                                             outDir, str)
@@ -272,10 +275,9 @@ object SBTRatsPlugin extends Plugin {
 
             // Check AST for semantic errors
             initTree (grammar)
-            resetmessages
-            analyser.check (grammar)
+            val messages = analyser.errors (grammar)
 
-            if (messagecount == 0) {
+            if (messages.length == 0) {
 
                 // Make a desugarer for this run
                 val desugarer = new Desugarer (analyser)
@@ -322,7 +324,7 @@ object SBTRatsPlugin extends Plugin {
             } else {
 
                 // str.log.error ("Syntax semantic analysis of %s failed".format (main))
-                for (record <- sortedmessages)
+                for (record <- sortmessages (messages))
                     str.log.error (record.toString)
                 sys.error ("Syntax semantic analysis of %s failed".format (filename))
                 None
@@ -434,15 +436,14 @@ object SBTRatsPlugin extends Plugin {
                     """import xtc\.util\.Pair;""".r ->
                         """import xtc.util.Pair;
                           |import scala.collection.immutable.List;
-                          |import scala.collection.immutable.Nil\$;
-                          |import scala.collection.immutable.\$colon\$colon;
-                          |import sbtrats.ParserSupport;""".stripMargin,
+                          |import sbtrats.ParserSupport;
+                          |import sbtrats.SList;""".stripMargin,
                     """Pair\.empty\(\)""".r ->
-                        """List.empty()""",
-                    """new Pair[^(]+\(([^,)]+)\)""".r ->
-                        """Nil\$.MODULE\$.\$colon\$colon($1)""",
+                        """SList.empty()""",
+                    // """new Pair[^(]+\(([^,)]+)\)""".r ->
+                    //     """SList.create($1)""",
                     """new Pair([^(]+)""".r ->
-                        """new \$colon\$colon$1""",
+                        """SList.create""",
                     """Pair<Pair([^(]+)>""".r ->
                         """List<List$1>""",
                     """Pair([^(;]+)""".r ->
@@ -488,22 +489,22 @@ object SBTRatsPlugin extends Plugin {
             val locatablesToPositionsKiama =
                 List (
                     """import xtc\.tree\.Locatable;""".r ->
-                        """import org.kiama.util.Positioned;
+                        """import org.kiama.util.Positions;
                           |import scala.util.parsing.input.Position;
                           |import sbtrats.LineColPosition;""".stripMargin,
                     """Locatable""".r ->
-                        """Positioned""",
+                        """Object""",
                     """public final class (\w+) extends ParserBase \{""".r ->
                         """
                         |public final class $1 extends ParserBase {
                         |
-                        |  /** Set position of a Positioned */
-                        |  void setLocation(final Positioned positional, final int start) {
-                        |    if (null != positional) {
+                        |  /** Set position of an Object */
+                        |  void setLocation(final Object object, final int start) {
+                        |    if (null != object) {
                         |      Column s = column(start);
-                        |      positional.setStart(new LineColPosition(s.line, s.column));
+                        |      Positions.setStart(object, new LineColPosition(s.line, s.column));
                         |      Column f = column(yyCount == 0 ? 0 : yyCount - 1);
-                        |      positional.setFinish(new LineColPosition(f.line, f.column));
+                        |      Positions.setFinish(object, new LineColPosition(f.line, f.column));
                         |    }
                         |  }
                         |""".stripMargin

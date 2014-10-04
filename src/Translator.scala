@@ -1,6 +1,6 @@
 /*
  * This file is part of the sbt-rats plugin.
- * Copyright (c) 2012-2013 Anthony M Sloane, Macquarie University.
+ * Copyright (c) 2012-2014 Anthony M Sloane, Macquarie University.
  * All rights reserved.
  * Distributed under the New BSD license.
  * See file LICENSE at top of distribution.
@@ -105,7 +105,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
         def toKeywords (keywords : Set[String]) : Doc =
             "add" <+> parens (
                 toBraceSection ("KEYWORDS, new String[]",
-                    fillsep (keywords.toSeq.sorted map (s => dquotes (text (s))), comma)
+                    fillsep (keywords.toVector.sorted map (s => dquotes (text (s))), comma)
                 )
             ) <> semi
 
@@ -136,7 +136,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                 empty
             else {
                 // Sort in reverse order of length so that earlier ones take priority
-                val sortedSymbols = symbols.toSeq.sortBy (- _.length)
+                val sortedSymbols = symbols.toVector.sortBy (- _.length)
 
                 line <>
                 "String Symbol =" <>

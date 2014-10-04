@@ -1,6 +1,6 @@
 /*
  * This file is part of the sbt-rats plugin.
- * Copyright (c) 2012-2013 Anthony M Sloane, Macquarie University.
+ * Copyright (c) 2012-2014 Anthony M Sloane, Macquarie University.
  * All rights reserved.
  * Distributed under the New BSD license.
  * See file LICENSE at top of distribution.
@@ -17,45 +17,41 @@ class Analyser (flags : Flags) extends Environments {
     import ast._
     import org.kiama.==>
     import org.kiama.attribution.Attribution.{attr, paramAttr}
-    import org.kiama.attribution.Decorators.{chain, Chain, down}
+    import org.kiama.attribution.Decorators.{atRoot, chain, Chain}
     import org.kiama.output.{Fixity, Infix, LeftAssoc, NonAssoc, Postfix, Prefix,
         RightAssoc, Side}
-    import org.kiama.util.Messaging.message
+    import org.kiama.rewriting.Rewriter.collectall
+    import org.kiama.util.{Entity, MultipleEntity, UnknownEntity}
+    import org.kiama.util.Messaging.{check, message, Messages}
     import org.kiama.util.Patterns.HasParent
 
-    def check (n : ASTNode) {
-        n match {
-            case d @ IdnDef (i) if d->entity == MultipleEntity =>
+    val errors =
+        attr (collectall {
+            case d @ IdnDef (i) if d->entity == MultipleEntity () =>
                 message (d, i + " is declared more than once")
 
-            case u @ IdnUse (i) =>
-                if (u->entity == UnknownEntity)
-                    message (u, i + " is not declared")
-                else if ((u.parent.isInstanceOf[NonTerminal]) && (u->entity == Type ()))
-                    message (u, "type " + i + " found where non-terminal expected")
+            case u @ IdnUse (i) if u->entity == UnknownEntity () =>
+                message (u, i + " is not declared")
+
+            case u @ IdnUse (i) if (u.parent.isInstanceOf[NonTerminal]) && (u->entity == Type ()) =>
+                message (u, "type " + i + " found where non-terminal expected")
+
+            case b @ Block (_, n) if (b.index + 1 == n) =>
+                check (b.parent) {
+                    case alt : Alternative =>
+                        message (b, "block non-terminal can't refer to itself")
+                }
 
             case b @ Block (_, n) =>
-                b.parent match {
-                    case alt : Alternative =>
-                        val numalts = alt.rhs.length
-                        if (b.index + 1 == n)
-                            message (b, "block non-terminal can't refer to itself")
-                        else if ((n < 1) || (n > numalts))
-                            message (b, "block non-terminal reference " + n +
-                                        " out of range 1.." + numalts)
-                    case _ =>
-                        // Do nothing
+                check (b.parent) {
+                    case alt : Alternative if ((n < 1) || (n > alt.rhs.length)) =>
+                        message (b, "block non-terminal reference " + n +
+                                    " out of range 1.." + alt.rhs.length)
                 }
 
             case Rep (_, _, sep) if (sep->elemtype != "Void") && (sep->elemtype != "String") =>
                 message (sep, "list separator must be void or string")
-
-            case _ =>
-                // Do nothing by default
-        }
-        for (child <- n.children)
-            check (child.asInstanceOf[ASTNode])
-    }
+        })
 
     /**
      * Return a pair consisting of the set of keywords used in the grammar
@@ -212,14 +208,8 @@ class Analyser (flags : Flags) extends Environments {
                 RatsNonTerm (if (tipe == null) i else tipe.name, ratsRule)
         }
 
-    // FIXME use down decorator once can switch to Kiama 1.4.0
-    lazy val env : ASTNode => Environment =
-        attr {
-            case n if n isRoot =>
-                n->preenv
-            case n =>
-                (n.parent[ASTNode])->env
-        }
+    lazy val env =
+        atRoot[ASTNode, Environment] (preenv)
 
     lazy val entity : Identifier => Entity =
         attr {
