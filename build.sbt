@@ -8,7 +8,7 @@ organization := "com.googlecode.sbt-rats"
 
 // Scala compiler settings
 
-scalaVersion := "2.10.3"
+scalaVersion := "2.10.4"
 
 scalacOptions ++= Seq ("-deprecation", "-feature", "-unchecked")
 
