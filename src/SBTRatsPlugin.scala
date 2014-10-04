@@ -9,6 +9,8 @@
 import sbt._
 import Keys._
 import xtc.parser.Rats
+import xtc.tree.Node
+import xtc.util.Runtime
 
 /**
  * A structure to hold the flag values so we can pass them around together.
@@ -36,6 +38,7 @@ object SBTRatsPlugin extends Plugin {
     import org.kiama.util.Message
     import org.kiama.util.Messaging.sortmessages
     import scala.collection.mutable.ListBuffer
+    import scala.language.existentials
     import scala.util.matching.Regex
     import xtc.parser.ParseError
 
@@ -402,11 +405,63 @@ object SBTRatsPlugin extends Plugin {
             } else
                 main.getParentFile
 
+        /**
+         * Version of Rats! runtime so we can customise the error message reporting
+         * to be in stanard Scala style.
+         */
+        class RatsRuntime extends Runtime {
+
+            def loc (n : Node) : String = {
+                val loc = n.getLocation
+                loc.file + ":" + loc.line + ": "
+            }
+
+            override def error (msg : String) {
+                str.log.error (msg)
+                errors = errors + 1
+            }
+
+            override def error (msg : String, n : Node) {
+                error (loc (n) + msg)
+            }
+
+            override def warning (msg : String) {
+                str.log.warn (msg)
+                warnings = warnings + 1
+            }
+
+            override def warning (msg : String, n : Node) {
+                warning (loc (n) + msg)
+            }
+
+        }
+
+        /**
+         * The runtime field of Rats! tool can't be overridden because it's
+         * protectted final. So hack in there using reflection so we can
+         * customise it.
+         */
+        def overrideRuntime (rats : RatsRunner) : RatsRunner = {
+            val toolClass = rats.getClass.getSuperclass.getSuperclass
+            val runtimeField = toolClass.getDeclaredField ("runtime")
+            runtimeField.setAccessible (true)
+            runtimeField.set (rats, new RatsRuntime)
+            rats
+        }
+
+        /**
+         * Helper class to enable access to the protected runtime field.
+         */
+        class RatsRunner extends Rats {
+            def getRuntime = runtime
+        }
+
+        // Make a customised Rats! runner
+        val rats = overrideRuntime (new RatsRunner)
 
         // Actually run Rats!
         str.log.info ("Running Rats! on %s, input from %s and %s, output to %s".format (
                           mainPath, mainDir, genDir, ratsOutDir))
-        val rats = new RatsRunner ()
         rats.run (Array ("-silent", "-no-exit",
                          "-in", mainDir.absolutePath,
                          "-in", genDir.absolutePath,
@@ -634,15 +689,5 @@ object SBTRatsPlugin extends Plugin {
         }
 
     )
-
-}
-
-/**
- * Helper class to expose the Rats! runtime which is protected.
- */
-class RatsRunner extends Rats {
-
-    def getRuntime =
-        runtime
 
 }
