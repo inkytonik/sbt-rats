@@ -1,0 +1,24 @@
+This is a release of the sbt-rats plugin containing the following main
+changes:
+
+* More than one syntax file can now be included in a project.
+
+* A body section can be included as in Rats! specifications.
+
+* Non-terminals can have type `Void` which means they are parsed as
+for `String` non-terminals but the resulting value is discarded.
+
+* New separated list constructs `**` and `++`. E.g., `a ** b` parses
+a sequence of zero or more `a`'s separated by `b`'s. The plus form
+requires at least one `a`.
+
+* The ratsVerboseOutput plugin option has been removed in favour of new
+support for including Rats! options in syntax files (just verbose and
+setOfString options for now).
+
+* New ratsIncludeKeywordTable option (default true) and
+ratsIncludeBinarySupport option (default false).
+
+* Moved to sbt 0.13.6 and target Scala 2.11.2 and Kiama 1.7.0.
+
+* A number of other bug fixes and improvements to generated code.
