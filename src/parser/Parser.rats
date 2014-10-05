@@ -52,7 +52,7 @@ body {
 option setOfString (KEYWORDS), withLocation;
 
 public Grammar Grammar =
-    m:ModuleDecl h:HeaderSection? b:BodySection? o:Options? rs:Rule* EOF {
+    Spacing m:ModuleDecl h:HeaderSection? b:BodySection? o:Options? rs:Rule* EOF {
         yyValue = new Grammar (m, h, b, o, rs);
     };
 
