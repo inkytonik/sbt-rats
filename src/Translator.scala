@@ -434,10 +434,10 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                 if (flags.useDefaultLayout)
                     """
                     |// Default layout specification
-                    |transient void Spacing   = (Space / Comment)*;
-                    |transient void Space     = ' ' / '\t' / '\f' / EOL;
-                    |transient void EOL       = '\r' '\n' / '\r' / '\n';
-                    |transient void EOF       = !_;
+                    |public transient void Spacing   = (Space / Comment)*;
+                    |public transient void Space     = ' ' / '\t' / '\f' / EOL;
+                    |public transient void EOL       = '\r' '\n' / '\r' / '\n';
+                    |public transient void EOF       = !_;
                     |""".stripMargin
                 else
                     ""
@@ -446,9 +446,9 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                 if (flags.useDefaultComments)
                     """
                     |// Default comment specification
-                    |transient void Comment   = SLComment / MLComment;
-                    |transient void SLComment = "//" (!EOL _)* EOL;
-                    |transient void MLComment = "/*" (MLComment / !"*/" _)* "*/";
+                    |public transient void Comment   = SLComment / MLComment;
+                    |public transient void SLComment = "//" (!EOL _)* EOL;
+                    |public transient void MLComment = "/*" (MLComment / !"*/" _)* "*/";
                     |""".stripMargin
                 else
                     ""
@@ -457,15 +457,15 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                 if (flags.useDefaultWords)
                     """
                     |// Default word specification
-                    |String Identifier =
+                    |public String Identifier =
                     |    Word &{
                     |        ! contains (KEYWORDS, yyValue)
                     |    };
                     |
-                    |String Word =
+                    |public String Word =
                     |    WordCharacters Spacing;
                     |
-                    |transient String WordCharacters =
+                    |public transient String WordCharacters =
                     |    h:_ &{
                     |        Character.isJavaIdentifierStart (h)
                     |    } (t:_ &{
