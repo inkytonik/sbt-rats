@@ -43,11 +43,44 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
         def toHeader (header : String) : Doc =
             line <>
             toBraceSection ("header",
-                "import sbtrats.Action;",
+                "import sbtrats.Action;" <@>
+                "import xtc.tree.Location;",
                 if (header == null) empty else string (header)
             )
 
         def toBody (userBody : String, keywords : Set[String]) : Doc = {
+
+            lazy val fixedBody =
+                """
+                |/**
+                | * Format a Rats! parser error message according to Scala compiler
+                | * conventions for better compatibility with error processors.
+                | */
+                |String formatParseError (ParseError error) throws IOException {
+                |    StringBuilder buf = new StringBuilder ();
+                |
+                |    if (error.index == -1)
+                |        buf.append (error.msg);
+                |    else {
+                |        Location loc = location (error.index);
+                |        buf.append (loc.file);
+                |        buf.append (':');
+                |        buf.append (loc.line);
+                |        buf.append (": ");
+                |
+                |        buf.append (error.msg);
+                |        buf.append ('\n');
+                |
+                |        String line = lineAt (error.index);
+                |        buf.append (line);
+                |        buf.append ('\n');
+                |        for (int i = 1; i < loc.column; i++) buf.append (' ');
+                |        buf.append ("^\n");
+                |    }
+                |
+                |    return buf.toString ();
+                |}
+                """.stripMargin
 
             lazy val binarySupport =
                 """
@@ -82,7 +115,8 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                 )
 
             val possibleBodyParts =
-                List ((userBody != null)         -> text (userBody),
+                List (true                       -> text (fixedBody),
+                      (userBody != null)         -> text (userBody),
                       flags.includeBinarySupport -> text (binarySupport),
                       flags.includeKeywordTable  -> keywordTable)
 
