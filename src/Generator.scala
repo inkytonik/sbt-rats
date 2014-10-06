@@ -74,16 +74,16 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
             "}"
 
         def toSuperClass : Doc = {
-            val superTraits = List (
-                if (flags.useScalaPositions && !flags.useKiama)
+            val superTraits =
+                List ("Product") ++
+                (if (flags.useScalaPositions && !flags.useKiama)
                     List ("Positional")
                 else
-                    Nil,
-                if (flags.useKiama)
+                    Nil) ++
+                (if (flags.useKiama)
                     List ("Attributable")
                 else
-                    Nil
-            ).flatten
+                    Nil)
 
             line <>
             "abstract class ASTNode extends" <+> hsep (superTraits map text, " with")
