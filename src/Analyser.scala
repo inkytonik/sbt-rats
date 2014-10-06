@@ -99,14 +99,14 @@ class Analyser (flags : Flags) extends Environments {
      */
     def defenv : Environment = {
         val possibleBindings =
-            List (flags.useDefaultComments -> ("Comment" -> PreNonTerm ("void")),
-                  flags.useDefaultLayout   -> ("EOF" -> PreNonTerm ("void")),
-                  flags.useDefaultLayout   -> ("EOL" -> PreNonTerm ("void")),
+            List (flags.useDefaultComments -> ("Comment" -> PreNonTerm ("Void")),
+                  flags.useDefaultLayout   -> ("EOF" -> PreNonTerm ("Void")),
+                  flags.useDefaultLayout   -> ("EOL" -> PreNonTerm ("Void")),
                   flags.useDefaultWords    -> ("Identifier" -> PreNonTerm ("String")),
                   flags.useDefaultComments -> ("SLComment" -> PreNonTerm ("void")),
                   flags.useDefaultComments -> ("MLComment" -> PreNonTerm ("void")),
-                  flags.useDefaultLayout   -> ("Space" -> PreNonTerm ("void")),
-                  flags.useDefaultLayout   -> ("Spacing" -> PreNonTerm ("void")),
+                  flags.useDefaultLayout   -> ("Space" -> PreNonTerm ("Void")),
+                  flags.useDefaultLayout   -> ("Spacing" -> PreNonTerm ("Void")),
                   true                     -> ("String" -> Type ()),
                   true                     -> ("Void" -> Type ()),
                   flags.useDefaultWords    -> ("Word" -> PreNonTerm ("String")),
