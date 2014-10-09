@@ -56,13 +56,13 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
         def toImports : Doc =
             line <>
             includeImportWhen ("org.kiama.attribution.Attributable",
-                               flags.useKiama) <>
+                               flags.useKiama == 1) <>
             includeImportWhen ("org.kiama.output.{Infix, LeftAssoc, NonAssoc, Prefix, RightAssoc}",
                                flags.definePrettyPrinter) <>
             includeImportWhen ("org.kiama.output.{PrettyBinaryExpression, PrettyExpression, PrettyUnaryExpression}",
                                flags.definePrettyPrinter) <>
             includeImportWhen ("scala.util.parsing.input.Positional",
-                               flags.useScalaPositions && !flags.useKiama)
+                               flags.useScalaPositions && (flags.useKiama == 0))
 
         def toSyntax : Doc =
             line <>
@@ -76,11 +76,11 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
         def toSuperClass : Doc = {
             val superTraits =
                 List ("Product") ++
-                (if (flags.useScalaPositions && !flags.useKiama)
+                (if (flags.useScalaPositions && (flags.useKiama == 0))
                     List ("Positional")
                 else
                     Nil) ++
-                (if (flags.useKiama)
+                (if (flags.useKiama == 1)
                     List ("Attributable")
                 else
                     Nil)

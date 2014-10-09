@@ -26,7 +26,7 @@ case class Flags (
     definePrettyPrinter : Boolean,
     includeKeywordTable : Boolean,
     includeBinarySupport : Boolean,
-    useKiama : Boolean
+    useKiama : Int
 )
 
 object SBTRatsPlugin extends Plugin {
@@ -128,12 +128,20 @@ object SBTRatsPlugin extends Plugin {
     )
 
     /**
-     * Include support in generated components to make it easy to use them
-     * with Kiama.
+     * If non-zero, include support in generated components to make it easy to use
+     * them with Kiama. Value is the major Kiama version that is being used.
      */
-    val ratsUseKiama = SettingKey[Boolean] (
+    val ratsUseKiama = SettingKey[Int] (
         "rats-use-kiama",
-            "Add extra support for using Kiama with generated components"
+            "Major version of Kiama that should be used (default 0 means don't use Kiama)"
+    )
+
+    /**
+     * If Kiama is being used, which major version is it?
+     */
+    val ratsKiamaVersion = SettingKey[Int] (
+        "rats-kiama-version",
+            "The major version of Kiama that is being used"
     )
 
     /**
@@ -606,7 +614,7 @@ object SBTRatsPlugin extends Plugin {
                         |""".stripMargin
                 )
 
-            makeReplacements (contents, if (flags.useKiama)
+            makeReplacements (contents, if (flags.useKiama > 0)
                                             locatablesToPositionsKiama
                                         else
                                             locatablesToPositionsScala)
@@ -674,7 +682,7 @@ object SBTRatsPlugin extends Plugin {
 
         ratsIncludeBinarySupport := false,
 
-        ratsUseKiama := false,
+        ratsUseKiama := 0,
 
         ratsFlags <<= (ratsUseScalaLists, ratsUseScalaPositions,
                        ratsUseScalaPositions, ratsUseDefaultComments,
