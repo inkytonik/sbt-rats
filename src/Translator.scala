@@ -449,7 +449,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                     """
                     |// Default comment specification
                     |public transient void Comment   = SLComment / MLComment;
-                    |public transient void SLComment = "//" (!EOL _)* EOL;
+                    |public transient void SLComment = "//" (!EOL _)* (EOL / EOF);
                     |public transient void MLComment = "/*" (MLComment / !"*/" _)* "*/";
                     |""".stripMargin
                 else
