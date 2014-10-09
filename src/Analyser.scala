@@ -410,12 +410,21 @@ class Analyser (flags : Flags) extends Environments {
         }
 
     /**
-     * The LHS side symbol of a rule.
+     * The LHS side name of a rule.
      */
     lazy val lhs : ASTRule => String =
         attr {
             case astRule =>
                 astRule.idndef.name
+        }
+
+    /**
+     * The LHS side symbol of the rule of an alternative.
+     */
+    lazy val altlhssymb : Alternative => NonTerminal =
+        attr {
+            case alt =>
+                NonTerminal (NTName (IdnUse (alt->astrule->lhs)))
         }
 
     /**
@@ -427,8 +436,23 @@ class Analyser (flags : Flags) extends Environments {
             case alt =>
                 alt.rhs match {
                     case head :: _ =>
-                        head == NonTerminal (NTName (IdnUse (alt->astrule->lhs)))
+                        head == alt->altlhssymb
                     case _ =>
+                        false
+                }
+        }
+
+    /**
+     * Whether an alternative is right-recursive: a sequence of more
+     * than one element on the RHS and the last one is the LHS.
+     */
+    lazy val isRightRecursive : Alternative => Boolean =
+        attr {
+            case alt =>
+                alt.rhs.lastOption match {
+                    case Some (last) =>
+                        last == alt->altlhssymb
+                    case None =>
                         false
                 }
         }

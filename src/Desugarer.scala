@@ -13,8 +13,8 @@
 class Desugarer (analyser : Analyser) {
 
     import analyser.{actionTypeName, associativity, constr, elemtype,
-        idntype, isLeftRecursive, isTransferAlt, lhs, pairTypeName,
-        precedence, typeName}
+        idntype, isLeftRecursive, isRightRecursive, isTransferAlt, lhs,
+        pairTypeName, precedence, typeName}
     import ast._
     import org.kiama.attribution.Attribution.{initTree, resetMemo}
     import org.kiama.attribution.AttributableSupport.deepclone
@@ -156,14 +156,16 @@ class Desugarer (analyser : Analyser) {
      * Example to illustrate the transformation that is performed:
      *
      * Exp Exp =
-     *         Exp Op1 Exp      {C1, left, 1}
-     *      /  Exp Op2 Id Exp   {C2, left, 2}
+     *         Exp Op2 Id Exp   {C2, left, 2}
+     *      /  Exp Op1 Exp      {C1, left, 1}
+     *      /  Op3 Exp          {C4, 0}
      *      /  Foo              {C3}.
      *
      * becomes
      *
      * Exp Exp0 =
-     *     Foo {C3}.
+     *       Op3 Exp0 {C4}
+     *     / Foo {C3}.
      *
      * Exp Exp1 ::= seed:Exp0 actions:Exp1Tail* {
      *     yyValue = apply (actions, seed)
@@ -349,11 +351,23 @@ class Desugarer (analyser : Analyser) {
 
         }
 
+        /**
+         * Fix a right recursive zero-level alternative to recurse at zero level.
+         */
+        def flattenRightRecursion (alt : Alternative) : Alternative =
+            if (alt->isRightRecursive) {
+                val rhslen = alt.rhs.length
+                val zerolevelnt = NonTerminal (NTGen (makePrecName (0), lhsnttype))
+                val newrhs = alt.rhs.init :+ zerolevelnt
+                Alternative (newrhs, alt.anns, alt.action)
+            } else
+                alt
+
         // Partition the alternatives into recursive ones and non-recursive ones
-        val (recursiveAlts, nonRecursiveAlts) = astRule.alts.partition (isLeftRecursive)
+        val (leftRecursiveAlts, nonLeftRecursiveAlts) = astRule.alts.partition (isLeftRecursive)
 
         // If there are no recursive alternatives, don't change the rule
-        if (recursiveAlts.isEmpty) {
+        if (leftRecursiveAlts.isEmpty) {
 
             (astRule, Nil)
 
@@ -362,19 +376,26 @@ class Desugarer (analyser : Analyser) {
             // The zero-level LHS for this iteration
             val zerontidn = IdnDef (makePrecName (0))
 
-            /**
+            /*
+             * Any non-left-recursive alternatives that are right recursive need to
+             * recurse on the zero-level LHS not on the top LHS, since these operators
+             * should have highest precedence. Transform any such alternatives.
+             */
+            val newNonLeftRecursiveAlts = nonLeftRecursiveAlts.map (flattenRightRecursion)
+
+            /*
              * The new rule that replaces the non-recursive alternatives of the old rule.
              * It defines the base level non-terminal and the type is given by the type
              * of the old non-terminal.
              */
-            val newr = ASTRule (zerontidn, IdnUse (astRule->typeName), nonRecursiveAlts)
+            val newr = ASTRule (zerontidn, IdnUse (astRule->typeName), newNonLeftRecursiveAlts)
 
             // Group the recursive alternatives by precedence level
-            val recMap = recursiveAlts.groupBy (precedence)
+            val recMap = leftRecursiveAlts.groupBy (precedence)
 
             // Calculate top precedence level
             // FIXME: avoid this extra pass over recursive alternatives
-            val top = recursiveAlts.foldLeft (0) {
+            val top = leftRecursiveAlts.foldLeft (0) {
                           case (p, alt) => p.max (precedence (alt))
                       }
 
