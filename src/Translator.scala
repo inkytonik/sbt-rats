@@ -292,7 +292,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                     case Wildcard () =>
                         "_"
 
-                    case Nest (elem) =>
+                    case Nest (elem, _) =>
                         toElem (elem, doBindings)
 
                     case Block (_, n) =>

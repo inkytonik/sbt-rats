@@ -71,7 +71,7 @@ case class NTName (idnuse : IdnUse) extends NTUse
 case class NTGen (name : String, tipe : String) extends NTUse
 
 sealed abstract class Formatting extends Element
-case class Nest (e : Element) extends Formatting
+case class Nest (e : Element, newline : Boolean) extends Formatting
 case class Newline () extends Formatting
 case class Space () extends Formatting
 

@@ -273,7 +273,10 @@ Element Formatting =
         yyValue = new Newline ();
       }
     / void:"nest":Word void:"(":Symbol e:ASTFactor void:")":Symbol {
-        yyValue = new Nest (e);
+        yyValue = new Nest (e, false);
+    }
+    / void:"nestnl":Word void:"(":Symbol e:ASTFactor void:")":Symbol {
+        yyValue = new Nest (e, true);
     }
     / void:"sp":Word {
         yyValue = new Space ();

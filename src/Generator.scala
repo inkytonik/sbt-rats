@@ -138,7 +138,7 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                                     else
                                         innerElem
                                 addField (optElem)
-                            case Nest (nestedElem) =>
+                            case Nest (nestedElem, _) =>
                                 addField (nestedElem)
                             case _ : Rep =>
                                 addField (elem)
@@ -478,8 +478,14 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                                 "text" <+> parens (dquotes (s)) <+> "<> space"
 
                             // Formatting elements
-                            case Nest (e) =>
-                                "nest" <+> parens (traverseElem (e))
+                            case Nest (e, newline) =>
+                                val body =
+                                    (if (newline)
+                                        text ("line <> ")
+                                     else
+                                        empty) <>
+                                    traverseElem (e)
+                                "nest" <+> parens (body)
                             case Newline () =>
                                 text ("line")
                             case Space () =>

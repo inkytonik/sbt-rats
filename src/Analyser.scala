@@ -269,7 +269,7 @@ class Analyser (flags : Flags) extends Environments {
                     case "Void" => r->elemtype
                     case ltype  => ltype
                 }
-            case Nest (elem) =>
+            case Nest (elem, _) =>
                 elem->elemtype
             case _ =>
                 "Void"
