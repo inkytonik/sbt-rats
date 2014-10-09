@@ -56,20 +56,22 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                 | * Format a Rats! parser error message according to Scala compiler
                 | * conventions for better compatibility with error processors.
                 | */
-                |public String formatParseError (ParseError error) throws IOException {
+                |public String formatParseError (ParseError error, Boolean showCoord) throws IOException {
                 |    StringBuilder buf = new StringBuilder ();
                 |
                 |    if (error.index == -1)
                 |        buf.append (error.msg);
                 |    else {
                 |        Location loc = location (error.index);
-                |        buf.append (loc.file);
-                |        buf.append (':');
-                |        buf.append (loc.line);
-                |        buf.append (": ");
+                |        if (showCoord) {
+                |            buf.append (loc.file);
+                |            buf.append (':');
+                |            buf.append (loc.line);
+                |            buf.append (": ");
+                |        }
                 |
                 |        buf.append (error.msg);
-                |        buf.append ('\n');
+                |        buf.append ("\n\n");
                 |
                 |        String line = lineAt (error.index);
                 |        buf.append (line);
