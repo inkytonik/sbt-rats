@@ -398,6 +398,18 @@ class Analyser (flags : Flags) extends Environments {
         }
 
     /**
+     * Does this alternative have a precedence level annotation.
+     */
+    lazy val hasPrecedenceLevel : Alternative => Boolean =
+        attr {
+            case alt =>
+                if (alt.anns == null)
+                    false
+                else
+                    alt.anns.exists (_.isInstanceOf[Precedence])
+        }
+
+    /**
      * The LHS side symbol of a rule.
      */
     lazy val lhs : ASTRule => String =
@@ -562,17 +574,18 @@ class Analyser (flags : Flags) extends Environments {
         }
 
     /**
-     * Whether or not the alternative needs a pretty-printing clause:
-     * if it has no action, if it's part of a parenthesized rule and
-     * and features the recursive symbols, or if it's a transfer
-     * alternative. In the second case it will be handled by the paren
-     * pretty printer.
+     * Does the alternative require no pretty-printing clause? Cases are:
+     * a) if it has no action, b) if it's part of a parenthesized rule,
+     * features the recursive symbols and has a precedence level, or c)
+     * or if it's a transfer alternative. In the second case it will be
+     * handled by the paren pretty printer.
      */
     lazy val requiresNoPPCase : Alternative => Boolean =
         attr {
             case alt =>
                 (alt->requiresNoAction) ||
-                ((alt->astrule->isParenPP) && (alt->isRecursive)) ||
+                ((alt->astrule->isParenPP) && (alt->isRecursive) &&
+                    (alt->hasPrecedenceLevel)) ||
                 (alt->isTransferAlt)
         }
 
