@@ -350,8 +350,7 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                 line <>
                 "astNode match {" <>
                 nest (
-                    hsep (grammar.rules map toToDocCase) <@>
-                    "case _ => empty"
+                    hsep (grammar.rules map toToDocCase)
                 ) <@>
                 "}"
             )
@@ -398,7 +397,6 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                  */
                 def varName (count : Int) =
                     text ("v%d".format (count))
-
 
                 /**
                  * Traverse the elements on the RHS of the rule to collect pattern
