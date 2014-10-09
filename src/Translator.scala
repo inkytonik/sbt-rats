@@ -56,7 +56,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                 | * Format a Rats! parser error message according to Scala compiler
                 | * conventions for better compatibility with error processors.
                 | */
-                |String formatParseError (ParseError error) throws IOException {
+                |public String formatParseError (ParseError error) throws IOException {
                 |    StringBuilder buf = new StringBuilder ();
                 |
                 |    if (error.index == -1)
