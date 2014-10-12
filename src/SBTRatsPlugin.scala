@@ -327,7 +327,7 @@ object SBTRatsPlugin extends Plugin {
                 // If requested, generate the AST classes
                 if (flags.defineASTClasses && flags.definePrettyPrinter) {
                     val ppFile = outSubDir / (basename + "PrettyPrinter.scala")
-                    str.log.info ("Syntax AST pretty-printer %s".format (ppFile))
+                    str.log.info ("Syntax generating pretty-printer %s".format (ppFile))
                     generator.generatePrettyPrinter (flags, ppFile, grammar)
                     extraFiles.append (ppFile)
                 }
