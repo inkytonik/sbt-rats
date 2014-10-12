@@ -77,7 +77,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                 |        buf.append (line);
                 |        buf.append ('\n');
                 |        for (int i = 1; i < loc.column; i++) buf.append (' ');
-                |        buf.append ("^\n");
+                |        buf.append ("^");
                 |    }
                 |
                 |    return buf.toString ();
