@@ -584,7 +584,7 @@ object SBTRatsPlugin extends Plugin {
                         |  void setLocation(final Positional positional, final int index) {
                         |    if (null != positional) {
                         |      Column c = column(index);
-                        |      positional.setPos(new LineColPosition(c.line, c.column));
+                        |      positional.setPos(new LineColPosition(this, index, c.line, c.column));
                         |    }
                         |  }
                         |""".stripMargin
@@ -606,9 +606,10 @@ object SBTRatsPlugin extends Plugin {
                         |  void setLocation(final Object object, final int start) {
                         |    if (null != object) {
                         |      Column s = column(start);
-                        |      Positions.setStart(object, new LineColPosition(s.line, s.column));
-                        |      Column f = column(yyCount == 0 ? 0 : yyCount - 1);
-                        |      Positions.setFinish(object, new LineColPosition(f.line, f.column));
+                        |      Positions.setStart(object, new LineColPosition(this, start, s.line, s.column));
+                        |      int finish = yyCount == 0 ? 0 : yyCount - 1;
+                        |      Column f = column(finish);
+                        |      Positions.setFinish(object, new LineColPosition(this, finish, f.line, f.column));
                         |    }
                         |  }
                         |""".stripMargin
