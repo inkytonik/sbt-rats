@@ -24,7 +24,7 @@ shellPrompt <<= (name, version) { (n, v) =>
 
 libraryDependencies ++= Seq (
     "com.googlecode.kiama" % "kiama_2.10" % "1.7.0",
-    "xtc" % "rats" % "2.3.1"
+    "xtc" % "rats" % "2.4.0"
 )
 
 // Source code locations
