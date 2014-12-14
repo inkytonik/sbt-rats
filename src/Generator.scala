@@ -616,7 +616,7 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                 |        p.lineAt (index)
                 |
                 |    override def toString () : String =
-                |        "" + line + "." + column
+                |        s"${line}.${column}"
                 |
                 |}
                 |""".stripMargin
