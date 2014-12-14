@@ -9,18 +9,16 @@
 package parser
 
 import scala.util.parsing.input.{Position, Positional}
+import xtc.parser.ParserBase
 
-class LineColPosition (val line : Int, val column : Int, val index : Int) extends Position {
+class LineColPosition (val p : ParserBase, val index : Int, val line : Int, val column : Int) extends Position {
 
     override def < (that : Position) : Boolean =
         line < that.line ||
             line == that.line && column < that.column
 
     override def lineContents : String =
-        throw new RuntimeException ("LineColPosition.lineContents not implemented")
-
-    override def longString : String =
-        throw new RuntimeException ("LineColPosition.longString not implemented")
+        p.lineAt (index)
 
     override def toString () : String =
         s"$line.$column"
