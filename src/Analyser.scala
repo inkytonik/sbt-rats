@@ -28,13 +28,13 @@ class Analyser (flags : Flags) extends Environments {
     val errors =
         attr (collectall {
             case d @ IdnDef (i) if d->entity == MultipleEntity () =>
-                message (d, i + " is declared more than once")
+                message (d, s"'$i' is declared more than once")
 
             case u @ IdnUse (i) if u->entity == UnknownEntity () =>
-                message (u, i + " is not declared")
+                message (u, s"'$i' is not declared")
 
             case u @ IdnUse (i) if (u.parent.isInstanceOf[NonTerminal]) && (u->entity == Type ()) =>
-                message (u, "type " + i + " found where non-terminal expected")
+                message (u, s"type '$i' found where non-terminal expected")
 
             case b @ Block (_, n) if (b.index + 1 == n) =>
                 check (b.parent) {
@@ -45,8 +45,7 @@ class Analyser (flags : Flags) extends Environments {
             case b @ Block (_, n) =>
                 check (b.parent) {
                     case alt : Alternative if ((n < 1) || (n > alt.rhs.length)) =>
-                        message (b, "block non-terminal reference " + n +
-                                    " out of range 1.." + alt.rhs.length)
+                        message (b, s"block non-terminal reference $n out of range 1..${alt.rhs.length}")
                 }
 
             case Rep (_, _, sep) if (sep->elemtype != "Void") && (sep->elemtype != "String") =>
@@ -234,8 +233,7 @@ class Analyser (flags : Flags) extends Environments {
                     case nt : NonTerm =>
                         nt.tipe
                     case e =>
-                        sys.error ("idntype: non-NonTerm entity " + e +
-                                   " for identifier " + idn)
+                        sys.error (s"idntype: non-NonTerm entity $e for identifier $idn")
                 }
 
         }
@@ -323,7 +321,7 @@ class Analyser (flags : Flags) extends Environments {
     lazy val actionTypeName : ASTRule => String =
         attr {
             case astRule =>
-                "Action<" + (astRule->typeName) + ">"
+                s"Action<${astRule->typeName}>"
         }
 
     /**
@@ -332,7 +330,7 @@ class Analyser (flags : Flags) extends Environments {
     lazy val pairTypeName : Element => String =
         attr {
             case elem =>
-                "Pair<" + (elem->elemtype) + ">"
+                s"Pair<${elem->elemtype}>"
         }
 
     /**
@@ -648,18 +646,18 @@ class Analyser (flags : Flags) extends Environments {
             case nt : NonTerminal =>
                 nt->ntname
             case Opt (elem) =>
-                "opt" + (elem->baseFieldName)
+                s"opt${elem->baseFieldName}"
             case Rep (false, elem, _) =>
-                elem->baseFieldName + "s"
+                s"${elem->baseFieldName}s"
             case Rep (true, elem, _) =>
-                "opt" + (elem->baseFieldName) + "s"
+                s"opt${elem->baseFieldName}s"
             case Seqn (l, r) =>
                 if (l->elemtype == "Void")
                     r->baseFieldName
                 else
                     l->baseFieldName
             case elem =>
-                sys.error ("baseFieldName: unexpected element kind " + elem)
+                sys.error (s"baseFieldName: unexpected element kind $elem")
         }
 
     /**

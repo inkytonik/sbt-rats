@@ -61,10 +61,10 @@ class Desugarer (analyser : Analyser) {
 
             // The entry point non-terminal
             val ntpos = Positions.getStart (elem)
-            val nt = "sep" + ntpos.line + "x" + ntpos.column
+            val nt = s"sep${ntpos.line}x${ntpos.column}"
 
             // The auxiliary non-terminal (if needed)
-            val nt1 = nt + "Aux"
+            val nt1 = s"${nt}Aux"
 
             // The element type of the list
             val eltype = elem->elemtype
@@ -267,7 +267,7 @@ class Desugarer (analyser : Analyser) {
             def prevnt = NonTerminal (NTGen (prevntname, lhsnttype))
 
             // Name for the non-terminal for the tail
-            val tailntname = ntname + "Tail"
+            val tailntname = s"${ntname}Tail"
 
             // A non-terminal for the tail
             def tailnt = NonTerminal (NTGen (tailntname, lhsnttype))

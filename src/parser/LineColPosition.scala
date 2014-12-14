@@ -23,6 +23,6 @@ class LineColPosition (val line : Int, val column : Int, val index : Int) extend
         throw new RuntimeException ("LineColPosition.longString not implemented")
 
     override def toString () : String =
-        "" + line + "." + column
+        s"$line.$column"
 
 }

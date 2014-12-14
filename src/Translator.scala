@@ -152,7 +152,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                 else
                     options.map {
                         case Verbose ()      => "verbose"
-                        case SetOfString (n) => "setOfString (" + n + ")"
+                        case SetOfString (n) => s"setOfString ($n)"
                     }
             val possibleOptions =
                 List (flags.includeKeywordTable -> "setOfString (KEYWORDS)",
@@ -365,7 +365,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                                 case ApplyAction () =>
                                     "ParserSupport.apply (v2, v1)"
                                 case ConsAction (tipe) =>
-                                    "new Pair<" + tipe + "> (v1, v2)"
+                                    s"new Pair<$tipe> (v1, v2)"
                                 case DefaultAction () =>
                                     "new" <+> text (alt->constr) <+> parens (args)
                                 case NoAction () =>
@@ -374,13 +374,13 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                                 case NilAction () =>
                                     "Pair.empty ()"
                                 case SingletonAction (tipe) =>
-                                    "new Pair<" + tipe + "> (v1)"
+                                    s"new Pair<$tipe> (v1)"
                                 case TailAction (tipe, constr) =>
                                     val num = elements.length
                                     val args = (1 to num).map ("v" + _).mkString (", ", ", ", "")
-                                    toBraceSection ("new Action<" + tipe + "> ()",
-                                        toBraceSection ("public " + tipe + " run (" + tipe + " left)",
-                                            "return new" <+> constr <+> "(left" + args + ");"
+                                    toBraceSection (s"new Action<$tipe> ()",
+                                        toBraceSection (s"public $tipe run ($tipe left)",
+                                            "return new" <+> constr <+> parens ("left" <> args) <> semi
                                         ) <> semi
                                     )
                              }) <> semi

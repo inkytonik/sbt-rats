@@ -309,7 +309,7 @@ object SBTRatsPlugin extends Plugin {
                 val outSubDir = grammar.module.init.foldLeft (outDir) (_ / _)
 
                 // Generate the Rats! specification
-                val genFile = genSubDir / (basename + ".rats")
+                val genFile = genSubDir / s"${basename}.rats"
                 str.log.info ("Syntax generating Rats! file %s".format (genFile))
                 translator.translate (flags, genFile, desugaredGrammar)
 
@@ -318,7 +318,7 @@ object SBTRatsPlugin extends Plugin {
 
                 // If requested, generate the AST classes
                 if (flags.defineASTClasses) {
-                    val astFile = outSubDir / (basename + "Syntax.scala")
+                    val astFile = outSubDir / s"${basename}Syntax.scala"
                     str.log.info ("Syntax generating AST classes %s".format (astFile))
                     generator.generateASTClasses (flags, astFile, grammar)
                     extraFiles.append (astFile)
@@ -326,7 +326,7 @@ object SBTRatsPlugin extends Plugin {
 
                 // If requested, generate the AST classes
                 if (flags.defineASTClasses && flags.definePrettyPrinter) {
-                    val ppFile = outSubDir / (basename + "PrettyPrinter.scala")
+                    val ppFile = outSubDir / s"${basename}PrettyPrinter.scala"
                     str.log.info ("Syntax generating pretty-printer %s".format (ppFile))
                     generator.generatePrettyPrinter (flags, ppFile, grammar)
                     extraFiles.append (ppFile)
@@ -387,9 +387,7 @@ object SBTRatsPlugin extends Plugin {
      */
     def formatSemanticError (p : Parser, filename : String, message : Message) : String = {
         val pos = message.pos.asInstanceOf[LineColPosition]
-        filename + ":" + pos.line + ": " + message.label + "\n" +
-            p.lineAt (pos.index) + "\n" +
-            (" " * (pos.column - 1)) + "^"
+        s"$filename:${pos.line}: ${message.label}\n${p.lineAt (pos.index)}\n${(" " * (pos.column - 1))}^"
     }
 
     /**
@@ -421,7 +419,7 @@ object SBTRatsPlugin extends Plugin {
 
             def loc (n : Node) : String = {
                 val loc = n.getLocation
-                loc.file + ":" + loc.line + ": "
+                s"${loc.file}:${loc.line}: "
             }
 
             override def error (msg : String) {
@@ -485,7 +483,7 @@ object SBTRatsPlugin extends Plugin {
         } else {
             // Get the expected generated file
             val basename = main.getName.takeWhile (_ != '.')
-            val basenameext = basename + ".java"
+            val basenameext = s"${basename}.java"
             val genFile = ratsOutDir / basenameext
 
             // If we've got it, process it further
