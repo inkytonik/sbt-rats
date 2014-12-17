@@ -542,8 +542,6 @@ object SBTRatsPlugin extends Plugin {
                           |import sbtrats.SList;""".stripMargin,
                     """Pair\.empty\(\)""".r ->
                         """SList.empty()""",
-                    // """new Pair[^(]+\(([^,)]+)\)""".r ->
-                    //     """SList.create($1)""",
                     """new Pair([^(]+)""".r ->
                         """SList.create""",
                     """Pair<Pair([^(]+)>""".r ->
