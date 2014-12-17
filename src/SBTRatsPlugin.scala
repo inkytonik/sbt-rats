@@ -610,6 +610,17 @@ object SBTRatsPlugin extends Plugin {
                         |      Positions.setFinish(object, new LineColPosition(this, finish, f.line, f.column));
                         |    }
                         |  }
+                        |
+                        |  /** Text corresponding to a positioned value. */
+                        |  String textOf(final Object object) {
+                        |    if (null == object)
+                        |      return null;
+                        |    else {
+                        |      LineColPosition start = (LineColPosition)Positions.getStart (object);
+                        |      LineColPosition finish = (LineColPosition)Positions.getFinish (object);
+                        |      return difference(start.index(), finish.index());
+                        |    }
+                        |  }
                         |""".stripMargin
                 )
 
