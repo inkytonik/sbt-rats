@@ -59,9 +59,9 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                 |public String formatParseError (ParseError error, Boolean showCoord) throws IOException {
                 |    StringBuilder buf = new StringBuilder ();
                 |
-                |    if (error.index == -1)
+                |    if (error.index == -1) {
                 |        buf.append (error.msg);
-                |    else {
+                |    } else {
                 |        Location loc = location (error.index);
                 |        if (showCoord) {
                 |            buf.append (loc.file);
