@@ -72,7 +72,7 @@ class Desugarer (analyser : Analyser) {
             // The type of the list
             val listtype = elem->pairTypeName
 
-            // If we are doing a zero repeition one, generate the optional rule
+            // If we are doing a zero repetition one, generate the optional rule
             if (zero) {
 
                 // alt: nt1
