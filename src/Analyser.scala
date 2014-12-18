@@ -87,6 +87,11 @@ class Analyser (flags : Flags) extends Environments {
     case class PreNonTerm (tipe : String) extends NonTerm
 
     /**
+     * A user-defined constructor.
+     */
+    case class Cons () extends Entity
+
+    /**
      * A type.
      */
     case class Type () extends Entity
@@ -198,13 +203,15 @@ class Analyser (flags : Flags) extends Environments {
         n.parent match {
             case astRule @ ASTRule (_, tipe, _, _, _) =>
                 UserNonTerm (if (tipe == null) i else tipe.name, astRule)
+            case Constructor (_) =>
+                Cons ()
+            case ratsRule @ RatsRule (_, tipe, _) =>
+                RatsNonTerm (if (tipe == null) i else tipe.name, ratsRule)
             case StringRule (_, _, save) =>
                 if (save)
                     PreNonTerm ("String")
                 else
                     PreNonTerm ("Void")
-            case ratsRule @ RatsRule (_, tipe, _) =>
-                RatsNonTerm (if (tipe == null) i else tipe.name, ratsRule)
         }
 
     lazy val env =
@@ -504,12 +511,9 @@ class Analyser (flags : Flags) extends Environments {
                 if (alt.anns == null)
                     None
                 else
-                    alt.anns.collect {
-                        case Constructor (name) =>
+                    alt.anns.collectFirst {
+                        case Constructor (IdnDef (name)) =>
                             name
-                    } match {
-                        case name :: _ => Some (name)
-                        case _         => None
                     }
         }
 

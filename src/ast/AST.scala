@@ -39,7 +39,7 @@ case class Parenthesized () extends RuleAnnotation
 
 sealed abstract class AltAnnotation extends ASTNode
 case class Associativity (side : Side) extends AltAnnotation
-case class Constructor (name : String) extends AltAnnotation
+case class Constructor (idndef : IdnDef) extends AltAnnotation
 case class Precedence (level : Int) extends AltAnnotation
 case class Transformation (num : Int, method : List[String], tipe : List[String]) extends AltAnnotation
 

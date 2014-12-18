@@ -326,7 +326,7 @@ AltAnnotation AltAnnotation =
     void:"right":Word {
         yyValue = new Associativity (RightAssoc$.MODULE$);
     } /
-    i:Identifier {
+    i:IdnDef {
         yyValue = new Constructor (i);
     } /
     d:DecDigits void:":":Symbol m:QualIdentifier void:":":Symbol t:QualIdentifier {
