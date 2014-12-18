@@ -31,13 +31,13 @@ body {
     }
 
     /** Set position of an Object using Kiama's Positions module */
-    void setLocation(final Object object, final int index) {
+    void setLocation(final Object object, final int start) {
         if (null != object) {
             Column s = column (start);
             Positions.setStart (object, new LineColPosition (this, start, s.line, s.column));
             int finish = yyCount == 0 ? 0 : yyCount - 1;
             Column f = column (finish);
-            Positions.setFinish (object, new LineColPosition (this, finish, f.line, f.column))
+            Positions.setFinish (object, new LineColPosition (this, finish, f.line, f.column));
         }
     }
 
