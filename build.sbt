@@ -23,7 +23,7 @@ shellPrompt <<= (name, version) { (n, v) =>
 // Dependencies
 
 libraryDependencies ++= Seq (
-    "com.googlecode.kiama" % "kiama_2.10" % "1.7.0",
+    "com.googlecode.kiama" % "kiama_2.10" % "1.8.0",
     "xtc" % "rats" % "2.4.0"
 )
 
