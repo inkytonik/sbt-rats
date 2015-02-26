@@ -363,22 +363,22 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                         "yyValue" <+> equal <+>
                             (alt.action match {
                                 case ApplyAction () =>
-                                    "ParserSupport.apply (v2, v1)"
+                                    "ParserSupport.apply(v2, v1)"
                                 case ConsAction (tipe) =>
-                                    s"new Pair<$tipe> (v1, v2)"
+                                    s"new Pair<$tipe>(v1, v2)"
                                 case DefaultAction () =>
                                     "new" <+> text (alt->constr) <+> parens (args)
                                 case NoAction () =>
                                     // Not reachable
                                     empty
                                 case NilAction () =>
-                                    "Pair.empty ()"
+                                    "Pair.empty()"
                                 case SingletonAction (tipe) =>
-                                    s"new Pair<$tipe> (v1)"
+                                    s"new Pair<$tipe>(v1)"
                                 case TailAction (tipe, constr) =>
                                     val num = elements.length
                                     val args = (1 to num).map ("v" + _).mkString (", ", ", ", "")
-                                    toBraceSection (s"new Action<$tipe> ()",
+                                    toBraceSection (s"new Action<$tipe>()",
                                         toBraceSection (s"public $tipe run ($tipe left)",
                                             "return new" <+> constr <+> parens ("left" <> args) <> semi
                                         ) <> semi
