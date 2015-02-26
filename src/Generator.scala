@@ -310,6 +310,10 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
             line <>
             "import" <+> pkg <> "." <> module <> "Syntax._" <@>
             "import org.kiama.output.{PrettyExpression, PrettyPrinter => PP, ParenPrettyPrinter => PPP}" <@>
+            (if (flags.useKiama == 2)
+                "import org.kiama.output.PrettyPrinterTypes.{Document, Width}"
+             else
+                 empty) <@>
             toPrettyPrinter <>
             line
 
@@ -337,10 +341,16 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
 
         def toPretty : Doc =
             line <>
-            "def pretty (astNode : ASTNode) : String =" <>
+            (if (flags.useKiama == 1)
+                "def pretty (astNode : ASTNode, w : Width = defaultWidth) : String ="
+             else
+                "def format (astNode : ASTNode, w : Width = defaultWidth) : Document =") <>
             nest (
                 line <>
-                "super.pretty (group (toDoc (astNode)))"
+                (if (flags.useKiama == 1)
+                    "super.pretty"
+                 else
+                    "pretty") <+> "(group (toDoc (astNode)), w)"
             )
 
         def toToDoc : Doc =
