@@ -253,18 +253,25 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
 
             val ASTRule (lhs, tipe, alts, _, _) = astRule
 
+            val baseClass = "sealed abstract class" <+> lhs.name <+> superClass
+
             line <>
-            (if (alts.length == 1)
-                if (alts.head->isTransferAlt)
-                    "sealed abstract class" <+> lhs.name <+> superClass
+            (if (alts.length == 1) {
+                val alt = alts.head
+                if (alt->isTransferAlt)
+                    baseClass
                 else
                     if (astRule.tipe == null)
-                        "case class" <+> lhs.name <+> toFields (alts.head) <+> superClass
+                        if (lhs.name == alt->constr)
+                            "case class" <+> text (alt->constr) <+> toFields (alt) <+> superClass
+                        else
+                            baseClass <@>
+                            toConcreteClass (lhs.name) (alt)
                     else
-                        toConcreteClass (tipe.name) (alts.head)
-             else
+                        toConcreteClass (tipe.name) (alt)
+             } else
                 if (astRule.tipe == null)
-                    "sealed abstract class" <+> lhs.name <+> superClass <@>
+                    baseClass <@>
                     vsep (treeAlts map (toConcreteClass (lhs.name)))
                 else
                     vsep (treeAlts map (toConcreteClass (tipe.name)))) <>
