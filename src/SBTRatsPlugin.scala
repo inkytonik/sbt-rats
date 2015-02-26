@@ -621,6 +621,15 @@ object SBTRatsPlugin extends Plugin {
 
         }
 
+        def transformMessages (contents : String) : String = {
+            val removeLevel0InMessage =
+                List (
+                    " level0 expected\"".r ->
+                        " expected\""
+                )
+            makeReplacements (contents, removeLevel0InMessage)
+        }
+
         val contents = IO.read (genFile)
 
         val contents1 =
@@ -641,7 +650,10 @@ object SBTRatsPlugin extends Plugin {
             } else
                 contents2
 
-        IO.write (outFile, contents3)
+        val contents4 =
+            transformMessages (contents3)
+
+        IO.write (outFile, contents4)
 
     }
 
