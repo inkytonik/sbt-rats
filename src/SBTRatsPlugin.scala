@@ -137,14 +137,6 @@ object SBTRatsPlugin extends Plugin {
     )
 
     /**
-     * If Kiama is being used, which major version is it?
-     */
-    val ratsKiamaVersion = SettingKey[Int] (
-        "rats-kiama-version",
-            "The major version of Kiama that is being used"
-    )
-
-    /**
      * Include support for keyword handling by building a table of all of the
      * keywords from the specification.
      */
