@@ -341,19 +341,21 @@ class Analyser (flags : Flags) extends Environments {
         }
 
     /**
-     * Look for a particular annotation on a rule or, if it's a typed rule,
+     * Look for a particular annotation on a rule and, if it's a typed rule,
      * on the rule that defines its type.
      */
-    def hasRuleAnnotation (astRule : ASTRule, ann : RuleAnnotation) : Boolean =
+    def hasRuleAnnotation (astRule : ASTRule, ann : RuleAnnotation) : Boolean = {
+        val res = (astRule.anns != null) && (astRule.anns contains (ann))
         if (astRule.tipe == null)
-            (astRule.anns != null) && (astRule.anns contains (ann))
+            res
         else
-            (astRule.tipe)->entity match {
+            res || ((astRule.tipe)->entity match {
                 case UserNonTerm (_, otherRule) if astRule != otherRule =>
                     hasRuleAnnotation (otherRule, ann)
                 case _ =>
                     false
-            }
+            })
+    }
 
     /**
      * Is this rule to be prefixed by line breaks when pretty-printing?
