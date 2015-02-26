@@ -299,6 +299,9 @@ RuleAnnotation RuleAnnotation =
     void:"line":Word {
         yyValue = new Line ();
     } /
+    void:"nested":Word {
+        yyValue = new Nested ();
+    } /
     void:"paren":Word {
         yyValue = new Parenthesized ();
     } /

@@ -34,6 +34,7 @@ case class Alternative (rhs : List[Element], anns: List[AltAnnotation],
 
 sealed abstract class RuleAnnotation extends ASTNode
 case class Line () extends RuleAnnotation
+case class Nested () extends RuleAnnotation
 case class NoSpacing () extends RuleAnnotation
 case class Parenthesized () extends RuleAnnotation
 

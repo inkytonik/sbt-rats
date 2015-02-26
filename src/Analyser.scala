@@ -367,6 +367,15 @@ class Analyser (flags : Flags) extends Environments {
         }
 
     /**
+     * Is this rule to have its RHSes nested when pretty-printing?
+     */
+    lazy val isNestedPP : ASTRule => Boolean =
+        attr {
+            case astRule =>
+                hasRuleAnnotation (astRule, Nested ())
+        }
+
+    /**
      * Is this rule to be parenthesized when pretty-printing?
      */
     lazy val isParenPP : ASTRule => Boolean =

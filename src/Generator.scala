@@ -15,7 +15,7 @@ import org.kiama.output.PrettyPrinter
 class Generator (analyser : Analyser) extends PrettyPrinter {
 
     import analyser.{constr, elemtype, fieldName, fieldTypes, isLinePP,
-        isParenPP, isTransferAlt, lhs, orderOpPrecFixityNonterm,
+        isNestedPP, isParenPP, isTransferAlt, lhs, orderOpPrecFixityNonterm,
         requiresNoPPCase, treeAlternatives, typeName}
     import ast._
     import org.kiama.attribution.Attribution.{initTree, resetMemo}
@@ -525,10 +525,16 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                         (alt->constr) <+> parens (hsep (vars, comma))
                     }
 
+                    val rhs =
+                        (if (astRule->isLinePP) text ("line <> ") else empty) <>
+                        ssep (exps, " <> ")
+
                     val body =
                         line <>
-                        (if (astRule->isLinePP) "line <> " else empty) <>
-                            ssep (exps, " <> ")
+                        (if (astRule->isNestedPP)
+                            "nest" <+> parens (rhs)
+                         else
+                             rhs)
 
                     val newCase =
                         line <>
