@@ -86,7 +86,7 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                     Nil)
 
             line <>
-            "abstract class ASTNode extends" <+> hsep (superTraits map text, " with")
+            "sealed abstract class ASTNode extends" <+> hsep (superTraits map text, " with")
         }
 
         def toRuleClasses (rule : Rule) : Doc =
