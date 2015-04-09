@@ -201,9 +201,14 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
 
         def toRHS (elem : Element, isASTRule : Boolean, useSpacing : Boolean) : Doc = {
 
+            def isWord (s : String) : Boolean =
+                (s == "") ||
+                  (Character.isJavaIdentifierStart (s.head) &&
+                   s.tail.forall (Character.isJavaIdentifierPart))
+
             def toLiteral (s : String) : Doc = {
                 val prefix : Doc = if (isASTRule) "void" <> colon else ""
-                val form = if (s.forall (_.isLetter)) "Word" else "Symbol"
+                val form = if (isWord (s)) "Word" else "Symbol"
                 val suffix = if (useSpacing) colon <> form else empty
                 prefix <> escapedDquotes (s) <> suffix
             }
