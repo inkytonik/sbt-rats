@@ -55,10 +55,16 @@ class Analyser (flags : Flags) extends Environments {
     /**
      * Return a pair consisting of the set of keywords used in the grammar
      * and the set of non-keywords used. Keywords are defined to be literals
-     * that containing only letters.
+     * that containing only letters andu nderscores.
      */
     def partitionLiterals (g : Grammar) : (Set[String],Set[String]) =
-        (g->literals).partition (_.forall (_.isLetter))
+        (g->literals).partition (_.forall (isKeywordChar))
+
+    /**
+     * Can the given character be part of a keyword?
+     */
+    def isKeywordChar (c : Char) : Boolean =
+        c.isLetter || c == '_'
 
     // Entities
 
