@@ -33,8 +33,8 @@ class Analyser (flags : Flags) extends Environments {
             case u @ IdnUse (i) if u->entity == UnknownEntity () =>
                 message (u, s"'$i' is not declared")
 
-            case u @ IdnUse (i) if (u.parent.isInstanceOf[NonTerminal]) && (u->entity == Type ()) =>
-                message (u, s"type '$i' found where non-terminal expected")
+            case u @ IdnUse (i) if !(u->idntypeok) =>
+                message (u, s"a ${u->idntypedesc} can't be used here")
 
             case b @ Block (_, n) if (b.index + 1 == n) =>
                 check (b.parent) {
@@ -243,12 +243,39 @@ class Analyser (flags : Flags) extends Environments {
         attr {
             case idn =>
                 (idn->entity) match {
+                    case _ : Cons =>
+                        "Constructor"
                     case nt : NonTerm =>
                         nt.tipe
-                    case e =>
-                        sys.error (s"idntype: non-NonTerm entity $e for identifier $idn")
+                    case _ : Type =>
+                        "Type"
                 }
 
+        }
+
+    lazy val idntypedesc : Identifier => String =
+        attr {
+            case idn =>
+                (idn->entity) match {
+                    case _ : NonTerm =>
+                        "NonTerminal"
+                    case _ =>
+                        idn->idntype
+                }
+
+        }
+
+    lazy val idntypeok : Identifier => Boolean =
+        attr {
+            case idn =>
+                (idn->entity) match {
+                    case _ : Cons =>
+                        false
+                    case _ : Type =>
+                        idn.parent.isInstanceOf[ASTRule] || idn.parent.isInstanceOf[RatsRule]
+                    case _ =>
+                        true
+                }
         }
 
     lazy val nttype : NonTerminal => String =
