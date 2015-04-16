@@ -49,7 +49,7 @@ class Analyser (flags : Flags) extends Environments {
                 }
 
             case Rep (_, _, sep) if (sep->elemtype != "Void") && (sep->elemtype != "String") =>
-                message (sep, "list separator must be void or string")
+                message (sep, "list separator must be Void or String")
         })
 
     /**
