@@ -534,12 +534,12 @@ object SBTRatsPlugin extends Plugin {
                           |import sbtrats.SList;""".stripMargin,
                     """Pair\.empty\(\)""".r ->
                         """SList.empty()""",
-                    """new Pair([^(]+)""".r ->
-                        """SList.create""",
-                    """Pair<Pair([^(]+)>""".r ->
+                    """new Pair<.*>\(""".r ->
+                        """SList.create(""",
+                    """Pair<Pair(<[^>]+>)>""".r ->
                         """List<List$1>""",
-                    """Pair([^(;]+)""".r ->
-                        """List$1"""
+                    """Pair(<[^>]+>)""".r ->
+                       """List$1"""
                 )
             makeReplacements (contents, pairsToLists)
         }
