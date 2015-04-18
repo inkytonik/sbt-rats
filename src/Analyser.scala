@@ -118,6 +118,7 @@ class Analyser (flags : Flags) extends Environments {
                   flags.useDefaultLayout   -> ("Space" -> PreNonTerm ("Void")),
                   flags.useDefaultLayout   -> ("Spacing" -> PreNonTerm ("Void")),
                   true                     -> ("String" -> Type ()),
+                  true                     -> ("Token" -> Type ()),
                   true                     -> ("Void" -> Type ()),
                   flags.useDefaultWords    -> ("Word" -> PreNonTerm ("String")),
                   flags.useDefaultWords    -> ("WordCharacters" -> PreNonTerm ("String")))
@@ -213,11 +214,8 @@ class Analyser (flags : Flags) extends Environments {
                 Cons ()
             case ratsRule @ RatsRule (_, tipe, _) =>
                 RatsNonTerm (if (tipe == null) i else tipe.name, ratsRule)
-            case StringRule (_, _, save) =>
-                if (save)
-                    PreNonTerm ("String")
-                else
-                    PreNonTerm ("Void")
+            case StringRule (_, IdnUse (tipeStr), _) =>
+                PreNonTerm (tipeStr)
         }
 
     lazy val env =
@@ -246,7 +244,10 @@ class Analyser (flags : Flags) extends Environments {
                     case _ : Cons =>
                         "Constructor"
                     case nt : NonTerm =>
-                        nt.tipe
+                        if (nt.tipe == "Token")
+                            "String"
+                        else
+                            nt.tipe
                     case _ : Type =>
                         "Type"
                 }
@@ -272,7 +273,9 @@ class Analyser (flags : Flags) extends Environments {
                     case _ : Cons =>
                         false
                     case _ : Type =>
-                        idn.parent.isInstanceOf[ASTRule] || idn.parent.isInstanceOf[RatsRule]
+                        idn.parent.isInstanceOf[ASTRule] ||
+                            idn.parent.isInstanceOf[RatsRule] ||
+                            idn.parent.isInstanceOf[StringRule]
                     case _ =>
                         true
                 }

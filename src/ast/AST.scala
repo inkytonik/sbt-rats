@@ -23,7 +23,7 @@ case class SetOfString (name : String) extends RatsOption
 sealed abstract class Rule extends ASTNode
 case class ASTRule (idndef : IdnDef, tipe : IdnUse, alts : List[Alternative],
                     isConst : Boolean = false, anns: List[RuleAnnotation] = Nil) extends Rule
-case class StringRule (idndef : IdnDef, alts : List[Element], save : Boolean) extends Rule
+case class StringRule (idndef : IdnDef, tipe : IdnUse, alts : List[Element]) extends Rule
 
 sealed abstract class RatsSection extends Rule
 case class RatsBlock (code : String) extends RatsSection

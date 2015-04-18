@@ -468,7 +468,8 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                                     var varr = varName (varcount)
                                     if (wrap) {
                                         val args = parens (varr)
-                                        if (elem->elemtype == "String")
+                                        if ((elem->elemtype == "String") ||
+                                            (elem->elemtype == "Token"))
                                             "value" <+> args
                                         else
                                             "toDoc" <+> args

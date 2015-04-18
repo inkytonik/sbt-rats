@@ -26,7 +26,7 @@ body {
         add (KEYWORDS, new String[] {
             "body", "header", "left", "line", "module", "nest",
             "none", "option", "paren", "rats", "right", "setOfString",
-            "sp", "String", "verbose", "Void"
+            "sp", "String", "Token", "verbose", "Void"
         });
     }
 
@@ -106,11 +106,8 @@ Rule Rule =
 // Grammar rules
 
 Rule GrammarRule =
-    i:IdnDef VoidType void:"=":Symbol alts:StringAlternatives {
-        yyValue = new StringRule (i, alts, false);
-    } /
-    i:IdnDef StringType void:"=":Symbol alts:StringAlternatives {
-        yyValue = new StringRule (i, alts, true);
+    i:IdnDef void:":":Symbol t:StringRuleType void:"=":Symbol alts:StringAlternatives {
+        yyValue = new StringRule (i, t, alts);
     } /
     i:IdnDef t:Type? anns:RuleAnnotations? void:"=":Symbol alts:ASTAlternatives {
         yyValue = new ASTRule (i, t, alts, false, anns);
@@ -118,11 +115,25 @@ Rule GrammarRule =
 
 // Types
 
-void VoidType =
-    void:":":Symbol void:"Void":Word;
+IdnUse StringRuleType =
+    StringType /
+    TokenType /
+    VoidType;
 
-void StringType =
-    void:":":Symbol void:"String":Word;
+IdnUse StringType =
+    void:"String":Word {
+        yyValue = new IdnUse ("String");
+    };
+
+IdnUse TokenType =
+    void:"Token":Word {
+        yyValue = new IdnUse ("Token");
+    };
+
+IdnUse VoidType =
+    void:"Void":Word {
+        yyValue = new IdnUse ("Void");
+    };
 
 IdnUse Type =
     void:":":Symbol IdnUse;
@@ -351,7 +362,7 @@ Rule RatsSection =
 // Rats! rule
 
 RatsRule RatsRule =
-    i:IdnDef StringType void:"=":Symbol void:"rats":Word s:CodeBlock {
+    i:IdnDef void:":":Symbol StringType void:"=":Symbol void:"rats":Word s:CodeBlock {
         yyValue = new RatsRule (i, new IdnUse ("String"), s);
     } /
     i:IdnDef t:Type void:"=":Symbol void:"rats":Word s:CodeBlock {

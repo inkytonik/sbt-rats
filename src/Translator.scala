@@ -280,7 +280,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                         parens (toElem (left) <> "/" <> toElem (right))
 
                     case Seqn (left, right) =>
-                        val inner = parens (toElem (left) <+> toElem (right))
+                        val inner = toElem (left) <+> toElem (right)
                         if (elem->elemtype == "Void")
                             inner
                         else
@@ -405,19 +405,37 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
 
         def toStringRule (stringRule : StringRule) : Doc = {
 
-            val StringRule (lhs, alts, save) = stringRule
+            val StringRule (lhs, IdnUse (tipeStr), alts) = stringRule
 
-            val tipe = if (save) "String" else "void"
+            val tipe = if (tipeStr == "Void") "void" else "String"
 
             def toAlternative (e : Element) : Doc =
                 toRHS (e, false, false)
 
-            line <>
-            "public" <+> tipe <+> lhs.name <+> equal <>
-            nest (
+            def auxname (name : String) : String =
+                name + "Form"
+
+            def auxdef (name : String) =
                 line <>
-                lsep2 (alts map toAlternative, "/") <> semi
-            )
+                "public" <+> "String" <+> name <+> equal <>
+                nest (
+                    line <>
+                    auxname (name) <+> "Spacing" <@>
+                    semi
+                )
+
+            def maindef (name : String) : Doc =
+                line <>
+                "public" <+> tipe <+> name <+> equal <>
+                nest (
+                    line <>
+                    lsep2 (alts map toAlternative, "/") <> semi
+                )
+
+            if (tipeStr == "Token")
+                auxdef (lhs.name) <@> maindef (auxname (lhs.name))
+            else
+                maindef (lhs.name)
 
         }
 
