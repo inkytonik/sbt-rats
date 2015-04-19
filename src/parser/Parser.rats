@@ -24,8 +24,8 @@ header {
 body {
     static {
         add (KEYWORDS, new String[] {
-            "body", "header", "left", "line", "module", "nest",
-            "none", "option", "paren", "rats", "right", "setOfString",
+            "body", "defaultIndent", "defaultWidth", "header", "left", "line",
+            "module", "nest", "none", "option", "paren", "rats", "right", "setOfString",
             "sp", "String", "Token", "verbose", "Void"
         });
     }
@@ -84,12 +84,18 @@ String CodeBlockText =
 
 // Options
 
-Pair<RatsOption> Options =
+Pair<SyntaxOption> Options =
     void:"option":Word h:Option tl:(void:",":Symbol Option)* void:";":Symbol {
         yyValue = SList.create (h, tl);
     };
 
-RatsOption Option =
+SyntaxOption Option =
+    void:"defaultIndent":Word void:"(":Symbol d:DecDigits void:")":Symbol {
+        yyValue = new Indentation (Integer.parseInt (d));
+    } /
+    void:"defaultWidth":Word void:"(":Symbol d:DecDigits void:")":Symbol {
+        yyValue = new Width (Integer.parseInt (d));
+    } /
     void:"setOfString":Word void:"(":Symbol n:Word void:")":Symbol {
         yyValue = new SetOfString (n);
     } /

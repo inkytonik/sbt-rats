@@ -145,14 +145,15 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                 )
             ) <> semi
 
-        def toOptions (options : List[RatsOption]) : Doc = {
+        def toOptions (options : List[SyntaxOption]) : Doc = {
             val userOptionStrings =
                 if (options == null)
                     Nil
                 else
-                    options.map {
-                        case Verbose ()      => "verbose"
-                        case SetOfString (n) => s"setOfString ($n)"
+                    options.distinct.flatMap {
+                        case Verbose ()      => List ("verbose")
+                        case SetOfString (s) => List (s"setOfString ($s)")
+                        case _               => Nil
                     }
             val possibleOptions =
                 List (flags.includeKeywordTable -> "setOfString (KEYWORDS)",

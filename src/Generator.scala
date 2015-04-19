@@ -334,6 +334,7 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
             line <>
             "trait" <+> name <+> "extends PP with PPP {" <@>
             nest (
+                toOptions <@>
                 toPretty <@>
                 toDoc <@>
                 toToParenDoc (toParenDocCases.result)
@@ -343,6 +344,36 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
             line <@>
             "object" <+> name <+> "extends" <+> name <>
             line
+
+        }
+
+        def toOptions : Doc = {
+
+            def getOption (func : PartialFunction[SyntaxOption,Int]) =
+                grammar.options.foldLeft[Option[Int]] (None) {
+                    case (previous, option) =>
+                        if (func.isDefinedAt (option))
+                            Some (func (option))
+                        else
+                            previous
+                }
+
+            def makeOption (optn : Option[Int], name : String) : Doc =
+                optn.map {
+                    case n =>
+                        line <> "override" <+> "val" <+> name <+> "=" <+> value (n)
+                }.getOrElse (
+                    empty
+                )
+
+            lazy val indentationOptionValue = getOption {case Indentation (n) => n}
+            lazy val widthOptionValue = getOption {case Width (n) => n}
+
+            if (grammar.options == null)
+                empty
+            else
+                makeOption (indentationOptionValue, "defaultIndent") <>
+                makeOption (widthOptionValue, "defaultWidth")
 
         }
 

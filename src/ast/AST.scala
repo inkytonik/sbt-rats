@@ -14,11 +14,13 @@ import org.kiama.output.Side
 abstract class ASTNode extends Attributable
 
 case class Grammar (module : List[String], header : String, body : String,
-                    options : List[RatsOption], rules : List[Rule]) extends ASTNode
+                    options : List[SyntaxOption], rules : List[Rule]) extends ASTNode
 
-sealed abstract class RatsOption extends ASTNode
-case class Verbose () extends RatsOption
-case class SetOfString (name : String) extends RatsOption
+sealed abstract class SyntaxOption extends ASTNode
+case class Indentation (n : Int) extends SyntaxOption
+case class Verbose () extends SyntaxOption
+case class SetOfString (name : String) extends SyntaxOption
+case class Width (n : Int) extends SyntaxOption
 
 sealed abstract class Rule extends ASTNode
 case class ASTRule (idndef : IdnDef, tipe : IdnUse, alts : List[Alternative],
