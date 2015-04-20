@@ -104,7 +104,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                 |        if (c != -1) {
                 |            buf.append ((char)c);
                 |        } else {
-                |            return new ParseError (s"expected $n bytes but EOF found", base + i);
+                |            return new ParseError (String.format ("expected %d bytes but EOF found", n), base + i);
                 |        }
                 |    }
                 |    return new SemanticValue (buf.toString (), base + n);
