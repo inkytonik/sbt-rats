@@ -2,9 +2,9 @@ sbtPlugin := true
 
 name := "sbt-rats"
 
-version := "2.2.0-SNAPSHOT"
+version in ThisBuild := "2.2.0"
 
-organization := "org.bitbucket.inkytonik.sbt-rats"
+organization in ThisBuild := "org.bitbucket.inkytonik.sbt-rats"
 
 // Scala compiler settings
 
@@ -48,6 +48,16 @@ unmanagedResources in Test <<= scalaSource map { s => {
 
 // Publishing
 
-publishTo := Some (Classpaths.sbtPluginReleases)
+import bintray.Keys._
+
+bintrayPublishSettings
+
+licenses += ("BSD New", url (s"https://bitbucket.org/inkytonik/${name.value}/src/default/LICENSE"))
 
 publishMavenStyle := false
+
+repository in bintray := "sbt-plugins"
+
+bintrayOrganization in bintray := None
+
+vcsUrl in bintray := Some (s"https://bitbucket.org/inkytonik/${name.value}")

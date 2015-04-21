@@ -1,4 +1,4 @@
-This release of the sbt-rats plugin contains the following changes:
+Release 2.2.0 of the sbt-rats plugin contains the following changes:
 
 ### Specification files
 
@@ -48,9 +48,14 @@ Example:
 
 * The `ratsUseKiama` plugin option is now an integer that specifies the major version of Kiama that is going to be used with the generated code. We currently support Kiama 1.x and the upcoming 2.x series. The default is zero which means don't use Kiama at all.
 
+### Publishing
+
+* The source repository of the plugin has moved to [https://bitbucket.org/inkytonik/sbt-rats](BitBucket) from Google Code. A corresponding change has been made to the organisation of the published artefacts which is now `org.bitbucket.inkytonik.sbt-rats`.
+
+* The plugin is now published on [https://bintray.com/inkytonik/sbt-plugins/sbt-rats/view](bintray) and is included in the sbt plugin releases repository so it should be found automatically by sbt.
+
 ### Other
 
-* Move to sbt 0.13.8 and Rats! from xtc 2.4.0.
+* Moved to sbt 0.13.8 and Rats! from xtc 2.4.0.
 
 * Many other bug fixes, error checking and improvements to generated code.
-
