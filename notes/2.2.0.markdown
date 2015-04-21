@@ -1,24 +1,54 @@
-This is a release of the sbt-rats plugin containing the following main
-changes:
+This release of the sbt-rats plugin contains the following changes:
+
+### Specification files
 
 * More than one syntax file can now be included in a project.
 
-* A body section can be included as in Rats! specifications.
+* A body section can be included in a syntax file as in Rats! specifications.
 
-* Non-terminals can have type `Void` which means they are parsed as
-for `String` non-terminals but the resulting value is discarded.
+### Grammar notations
 
-* New separated list constructs `**` and `++`. E.g., `a ** b` parses
-a sequence of zero or more `a`'s separated by `b`'s. The plus form
-requires at least one `a`.
+* Non-terminals can now have type `Void` which means they are parsed as for `String` non-terminals but the resulting value is discarded.
 
-* The ratsVerboseOutput plugin option has been removed in favour of new
-support for including Rats! options in syntax files (just verbose and
-setOfString options for now).
+* A new `Token` type has been added to make it easier to define common lexical level symbols which should allow following spacing.
 
-* New ratsIncludeKeywordTable option (default true) and
-ratsIncludeBinarySupport option (default false).
+* New separated list constructs `**` and `++`. `a ** b` parses a sequence of zero or more `a`'s separated by `b`'s. The `++` form requires at least one `a`.
 
-* Moved to sbt 0.13.6 and target Scala 2.11.2 and Kiama 1.7.0.
+* Empty alternatives are now allowed.
 
-* A number of other bug fixes and improvements to generated code.
+* Add `nestnl` pretty-printing directive that means start a new line at the beginning of the nested output.
+
+* Add `nested` rule annotation that causes all of the alternatives for a rule to be nested when pretty-printed.
+
+* Standard non-terminals such as `Spacing` and `Word` are now public
+so they can be used in grammar rules.
+
+* Allow the default form of single line comments (`SLComment`) to be
+terminated by `EOF` not just `EOL`.
+
+### Behaviour
+
+* Parsing error messages are now produced in standard Scala format by default, as in:
+
+    tests/error.java:3:5: error: ';' expected
+        v = true;
+        ^
+
+### Options
+
+* New `defaultIndent` and `defaultWidth` options in syntax files allow the pretty-printing defaults to be specified.
+
+* The `ratsVerboseOutput` plugin option has been removed in favour of new support for including Rats! options in syntax files (just `verbose` and `setOfString` for now).
+
+* The previous support for a keyword table is now optionally selected by the new `ratsIncludeKeywordTable` plugin option (default true).
+
+* The previous support for binary parsing support is now optionally selected by the new `ratsIncludeBinarySupport` plugin option (default false).
+
+* The `ratsUseKiama` plugin option is now an integer that specifies the major version of Kiama that is going to be used with the generated code. We currently support Kiama 1.x and the upcoming 2.x series. The default is zero which means don't use Kiama at all.
+
+### Other
+
+* Move to sbt 0.13.8 and Rats! from xtc 2.4.0.
+
+* Many other bug fixes, error checking and improvements to generated code.
+
