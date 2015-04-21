@@ -10,7 +10,7 @@ For information on usage, see the [documentation](https://bitbucket.org/inkytoni
 
 There is also a [giter8](http://github.com/n8han/giter8#readme) template showing a [simple usage of the plugin with Kiama](https://github.com/inkytonik/kiama-rats.g8).
 
-### News
+## News
 
 * April 21, 2015: project moved to [BitBucket](https://bitbucket.org/inkytonik/sbt-rats)
 * October 26, 2012: [version 2.1.0](https://bitbucket.org/inkytonik/sbt-rats/src/default/notes/2.1.0.markdown) released
