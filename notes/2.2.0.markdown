@@ -1,4 +1,4 @@
-Release 2.2.0 of the sbt-rats plugin contains the following changes:
+This release of the sbt-rats plugin contains the following changes:
 
 ### Specification files
 
@@ -16,9 +16,9 @@ Release 2.2.0 of the sbt-rats plugin contains the following changes:
 
 * Empty alternatives are now allowed.
 
-* Add `nestnl` pretty-printing directive that means start a new line at the beginning of the nested output.
+* Added `nestnl` pretty-printing directive that means start a new line at the beginning of the nested output.
 
-* Add `nested` rule annotation that causes all of the alternatives for a rule to be nested when pretty-printed.
+* Added `nested` rule annotation that causes all of the alternatives for a rule to be nested when pretty-printed.
 
 * Standard non-terminals such as `Spacing` and `Word` are now public
 so they can be used in grammar rules.
@@ -52,7 +52,7 @@ Example:
 
 * The source repository of the plugin has moved to [https://bitbucket.org/inkytonik/sbt-rats](BitBucket) from Google Code. A corresponding change has been made to the organisation of the published artefacts which is now `org.bitbucket.inkytonik.sbt-rats`.
 
-* The plugin is now published on [https://bintray.com/inkytonik/sbt-plugins/sbt-rats/view](bintray) and is included in the sbt plugin releases repository so it should be found automatically by sbt.
+* The plugin is now published on [bintray](https://bintray.com/inkytonik/sbt-plugins/sbt-rats/view) and is included in the sbt plugin releases repository so it should be found automatically by sbt.
 
 ### Other
 
