@@ -28,7 +28,9 @@ terminated by `EOF` not just `EOL`.
 
 ### Behaviour
 
-* Parsing error messages are now produced in standard Scala format by default, as in:
+* Parsing error messages are now produced in standard Scala format by default.
+
+Example:
 
     tests/error.java:3:5: error: ';' expected
         v = true;
