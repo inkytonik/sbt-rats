@@ -4,7 +4,7 @@ name := "sbt-rats"
 
 version := "2.2.0-SNAPSHOT"
 
-organization := "com.googlecode.sbt-rats"
+organization := "org.bitbucket.inkytonik.sbt-rats"
 
 // Scala compiler settings
 
