@@ -14,7 +14,7 @@ The rest of this page describes how to install, configure and use the `sbt-rats`
 
 We do not describe full details of using sbt, Rats! or Kiama. Please consult their respective documentation. In particular, a description of the Rats! specification notation can be found in the [Rats! introduction](http://cs.nyu.edu/rgrimm/xtc/rats-intro.html).
 
-The plugin has most recently been tested with sbt 0.13.8, Rats! from xtc 2.4.0 and Kiama 1.8.0/2.0.0-SNAPSHOT, but may work with other versions.
+The plugin has most recently been tested with Scala 2.10.5, sbt 0.13.8, Rats! from xtc 2.4.0 and Kiama 1.8.0/2.0.0-SNAPSHOT, but may work with other versions.
 
 ## Instantiating the plugin
 
