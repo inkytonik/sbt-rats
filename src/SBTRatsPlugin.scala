@@ -624,7 +624,7 @@ object SBTRatsPlugin extends Plugin {
         def transformMessages (contents : String) : String = {
             val removeLevel0InMessage =
                 List (
-                    " level0 expected\"".r ->
+                    " level[0-9]+ expected\"".r ->
                         " expected\""
                 )
             makeReplacements (contents, removeLevel0InMessage)
