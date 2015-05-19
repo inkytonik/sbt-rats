@@ -14,11 +14,13 @@ import org.kiama.output.PrettyPrinter
  */
 class Generator (analyser : Analyser) extends PrettyPrinter {
 
-    import analyser.{constr, elemtype, fieldName, fieldTypes, isLinePP,
-        isNestedPP, isParenPP, isTransferAlt, lhs, orderOpPrecFixityNonterm,
+    import analyser.{associativity, constr, elemtype, Field, fieldName,
+        fieldTypes, fields, isLeftRecursive, isLinePP, isNestedPP, isParenPP,
+        isRightRecursive, isTransferAlt, lhs, precFixity, orderOpPrecFixityNonterm,
         requiresNoPPCase, treeAlternatives, typeName}
     import ast._
     import org.kiama.attribution.Attribution.{initTree, resetMemo}
+    import org.kiama.output.{LeftAssoc, NonAssoc, RightAssoc, Side}
     import org.kiama.rewriting.Rewriter.{alltd, rewrite, query}
     import sbt.File
     import sbt.IO.write
@@ -60,7 +62,9 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
             includeImportWhen ("org.kiama.output.{Infix, LeftAssoc, NonAssoc, Prefix, RightAssoc}",
                                flags.definePrettyPrinter) <>
             includeImportWhen ("org.kiama.output.{PrettyBinaryExpression, PrettyExpression, PrettyUnaryExpression}",
-                               flags.definePrettyPrinter) <>
+                               flags.definePrettyPrinter && flags.useKiama == 1) <>
+            includeImportWhen ("org.kiama.output.{PrettyExpression, PrettyNaryExpression}",
+                               flags.definePrettyPrinter && flags.useKiama == 2) <>
             includeImportWhen ("scala.util.parsing.input.Positional",
                                flags.useScalaPositions && (flags.useKiama == 0))
 
@@ -98,141 +102,65 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
         def toASTRuleClasses (astRule : ASTRule) : Doc = {
 
             def toFields (alt : Alternative) : Doc = {
-
-                /**
-                 * Representation of a field by its name and its type.
-                 */
-                case class Field (name : String, tipe : String)
-
-                /**
-                 * List of fields in the process of being built.
-                 */
-                val fields = ListBuffer[Field] ()
-
-                /**
-                 * Add a field for the given element if it's not Void.
-                 */
-                def addField (elem : Element) {
-                    if (elem->elemtype != "Void") {
-                        val fieldNum = fields.length + 1
-                        val fieldType = (alt->fieldTypes).getOrElse (fieldNum, elem->elemtype)
-                        fields.append (Field (elem->fieldName, fieldType))
-                    }
-                }
-
-                /**
-                 * Traverse the elements on the RHS of the rule to collect fields.
-                 */
-                def traverseRHS (elems : List[Element]) {
-
-                    def traverseElem (elem : Element) {
-                        elem match {
-                            case Block (name, _) =>
-                                fields.append (Field (elem->fieldName, "String"))
-                            case _ : NonTerminal =>
-                                addField (elem)
-                            case Opt (innerElem) =>
-                                val optElem =
-                                    if (flags.useScalaOptions)
-                                        elem
-                                    else
-                                        innerElem
-                                addField (optElem)
-                            case Nest (nestedElem, _) =>
-                                addField (nestedElem)
-                            case _ : Rep =>
-                                addField (elem)
-                            case Seqn (l, r) =>
-                                traverseElem (l)
-                                traverseElem (r)
-                            case _ =>
-                                // No argument for the rest of the element kinds
-                        }
-                    }
-
-                    elems.map (traverseElem)
-
-                }
-
-                // Traverse the RHS elememts to collect field information
-                traverseRHS (alt.rhs)
-
-                // Set of non-unique field names
-                val nonUniqueFieldNames =
-                    fields.map (_.name).groupBy (s => s).collect {
-                        case (n, l) if l.length > 1 =>
-                            n
-                    }.toSet
-
-                /**
-                 * Is the field name not unique in this field list?
-                 */
-                def isNotUnique (fieldName : String) : Boolean =
-                    nonUniqueFieldNames contains fieldName
-
-                /**
-                 * Make the field names unique by numbering fields whose names are
-                 * not unique.
-                 */
-                val uniqueFields =
-                    fields.result.foldLeft (Map[String,Int] (), List[Field] ()) {
-                        case ((m, l), f @ Field (n, t)) =>
-                            if (isNotUnique (n)) {
-                                val i = m.getOrElse (n, 0) + 1
-                                (m.updated (n, i), Field (n + i.toString, t) :: l)
-                            } else
-                                (m, f :: l)
-                    }
-
-                /**
-                 * Convert the final field list to a list of documents.
-                 */
                 val fieldDocs =
-                    uniqueFields._2.reverse map {
+                    (alt->fields).map {
                         case Field (n, t) => n <+> colon <+> t
                     }
-
-                // Assemble final document for argument list
                 parens (hsep (fieldDocs, comma))
-
             }
 
             def toParenPPInfo (alt : Alternative) : Doc =
                 if (flags.definePrettyPrinter && (astRule->isParenPP))
-                    (alt->orderOpPrecFixityNonterm) match {
-                        case Some ((order, op, prec, fixity, nt1, nt2)) =>
-                            (order match {
-                                 case 1 =>
-                                    text ("with PrettyUnaryExpression ")
-                                 case 2 =>
-                                    text ("with PrettyBinaryExpression ")
-                                 case _ =>
-                                    sys.error (s"toParenPPInfo: unexpected order $order")
-                             }) <>
-                            braces (
-                                nest (
-                                    line <>
-                                    "val priority =" <+> value (prec) <@>
-                                    "val op =" <+> dquotes (op) <@>
-                                    "val fixity =" <+> value (fixity) <>
-                                    (order match {
-                                        case 1 =>
-                                            if (nt1 == "exp")
-                                                empty
-                                            else
+                    if (flags.useKiama == 1)
+                        (alt->orderOpPrecFixityNonterm) match {
+                            case Some ((order, op, prec, fixity, nt1, nt2)) =>
+                                (order match {
+                                     case 1 =>
+                                        text ("with PrettyUnaryExpression ")
+                                     case 2 =>
+                                        text ("with PrettyBinaryExpression ")
+                                     case _ =>
+                                        sys.error (s"toParenPPInfo: unexpected order $order")
+                                 }) <>
+                                braces (
+                                    nest (
+                                        line <>
+                                        "val priority =" <+> value (prec) <@>
+                                        "val op =" <+> dquotes (op) <@>
+                                        "val fixity =" <+> value (fixity) <>
+                                        (order match {
+                                            case 1 =>
+                                                if (nt1 == "exp")
+                                                    empty
+                                                else
+                                                    line <>
+                                                    "val exp =" <+> nt1
+                                            case 2 =>
                                                 line <>
-                                                "val exp =" <+> nt1
-                                        case 2 =>
-                                            line <>
-                                            "val left =" <+> nt2 <> "1" <@>
-                                            "val right =" <+> nt2 <> "2"
-                                     })
-                                ) <>
-                                line
-                            )
-                        case _ =>
-                            empty
-                    }
+                                                "val left =" <+> nt2 <> "1" <@>
+                                                "val right =" <+> nt2 <> "2"
+                                         })
+                                    ) <>
+                                    line
+                                )
+                            case None =>
+                                empty
+                        }
+                    else if (flags.useKiama == 2)
+                        (alt->precFixity) match {
+                            case (prec, fixity) =>
+                                text ("with PrettyNaryExpression") <+>
+                                braces (
+                                    nest (
+                                        line <>
+                                        "val priority =" <+> value (prec) <@>
+                                        "val fixity =" <+> value (fixity)
+                                    ) <>
+                                    line
+                                )
+                        }
+                    else
+                        empty
                 else
                     empty
 
@@ -316,7 +244,7 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
             "package" <+> pkg <@>
             line <>
             "import" <+> pkg <> "." <> module <> "Syntax._" <@>
-            "import org.kiama.output.{PrettyExpression, PrettyPrinter => PP, ParenPrettyPrinter => PPP}" <@>
+            "import org.kiama.output.{LeftAssoc, NonAssoc, PrettyExpression, PrettyPrinter => PP, ParenPrettyPrinter => PPP, RightAssoc}" <@>
             (if (flags.useKiama == 2)
                 "import org.kiama.output.PrettyPrinterTypes.{Document, Width}"
              else
@@ -408,16 +336,16 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                 empty
             else
                 line <>
-                "override def toParenDoc (v : PrettyExpression) : Doc =" <>
+                "override def toParenDoc (astNode : PrettyExpression) : Doc =" <>
                 nest (
                     line <>
-                    "v match {" <>
+                    "astNode match {" <>
                     nest (
                         hsep (cases) <@>
                         "case _ =>" <>
                         nest (
                             line <>
-                            "super.toParenDoc (v)"
+                            "super.toParenDoc (astNode)"
                         )
                     ) <@>
                     "}"
@@ -479,6 +407,20 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                         }
                     }
 
+                    def traverseChild (elem : Element, varr : Doc) : Doc = {
+
+                        def recursiveCall (side : Side) : Doc =
+                            "recursiveToDoc" <+> parens ("v," <+> varr <> "," <+> value (side))
+
+                        if (elem.index == 0)
+                            recursiveCall (LeftAssoc)
+                        else if (elem.index == elems.length - 1)
+                            recursiveCall (RightAssoc)
+                        else
+                            recursiveCall (NonAssoc)
+
+                    }
+
                     def traverseElem (elem : Element, wrap : Boolean = true) : Doc =
                         elem match {
 
@@ -491,7 +433,7 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                             case Epsilon () =>
                                 text ("empty")
 
-                            case _ : NonTerminal =>
+                            case NonTerminal (NTName (IdnUse (nt))) =>
                                 if (elem->elemtype == "Void")
                                     text ("empty")
                                 else {
@@ -502,6 +444,8 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                                         if ((elem->elemtype == "String") ||
                                             (elem->elemtype == "Token"))
                                             "value" <+> args
+                                        else if ((flags.useKiama == 2) && (nt == astRule->lhs))
+                                            traverseChild (elem, varr)
                                         else
                                             "toDoc" <+> args
                                     } else
@@ -577,7 +521,7 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
 
                     val newCase =
                         line <>
-                        "case" <+> pattern <+> "=>" <>
+                        "case" <+> "v" <+> "@" <+> pattern <+> "=>" <>
                         nest (
                             body
                         )

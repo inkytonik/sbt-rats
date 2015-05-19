@@ -335,7 +335,9 @@ The plugin transforms these rules into equivalent iterative forms, somewhat simp
     Exp0 = Number
          | "(" Exp ")".
 
-The annotations on the original rules give the plugin information about how to do the translation. You can give the associativity (left, right or none; left is the default) and the precedence level (a number, lower number means higher precedence; 1 is the default). In the example the precedence level annotations tell the plugin that the multiplication binds tighter than the addition which leads to the different versions of `Exp`. Moreover, the plugin uses the annotations to make sure that the correct tree is constructed by the iterative rules.
+The annotations on the original rules give the plugin information about how to do the translation. You can give the associativity (left, right or none; left is the default) and the precedence level (a number, lower number means higher precedence; 0 is the default). In the example the precedence level annotations tell the plugin that the multiplication binds tighter than the addition which leads to the different versions of `Exp`. Moreover, the plugin uses the annotations to make sure that the correct tree is constructed by the iterative rules.
+
+The precedence annotations should define a sequence of levels from the highest precedence (level zero) to the lowest precedence level (two in the example above). It is an error to omit a level.
 
 ## Value conversion
 

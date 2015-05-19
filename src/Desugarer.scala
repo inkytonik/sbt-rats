@@ -249,12 +249,9 @@ class Desugarer (analyser : Analyser) {
          * Make iterative rules from a set of alternatives at the same precedence
          * level.
          */
-        def makeIterativeRules (precalt : (Int, List[Alternative])) : List[ASTRule] = {
+        def makeIterativeRules (prec : Int, alts : List[Alternative]) : List[ASTRule] = {
 
-            val prec = precalt._1
-            val alts = precalt._2
-
-            // Name of for a non-terminal at this level
+            // Name of a non-terminal at this level
             val ntname = makePrecName (prec)
 
             // A non-terminal for this level
@@ -353,16 +350,53 @@ class Desugarer (analyser : Analyser) {
         }
 
         /**
-         * Fix a right recursive zero-level alternative to recurse at zero level.
+         * Fix a right recursive zero-level alternative to recurse at the next level
+         * or the same level, depending on whether it's right recursive or not.
          */
         def flattenRightRecursion (alt : Alternative) : Alternative =
             if (alt->isRightRecursive) {
                 val rhslen = alt.rhs.length
-                val zerolevelnt = NonTerminal (NTGen (makePrecName (0), lhsnttype))
-                val newrhs = alt.rhs.init :+ zerolevelnt
+                val recursiveLevel =
+                    if ((alt->associativity == RightAssoc) || (alt->precedence == 0))
+                        alt->precedence
+                    else
+                        alt->precedence - 1
+                val recursivent = NonTerminal (NTGen (makePrecName (recursiveLevel), lhsnttype))
+                val newrhs = alt.rhs.init :+ recursivent
                 Alternative (newrhs, alt.anns, alt.action)
             } else
                 alt
+
+        /**
+         * Handle non-left recursive alternatives.
+         */
+        def makeNonIterativeRule (prec : Int, alts : List[Alternative]) : ASTRule = {
+            val ntidn = IdnDef (makePrecName (prec))
+            val recursivent = NonTerminal (NTGen (makePrecName (prec - 1), lhsnttype))
+            val theseAlts = alts.map (flattenRightRecursion)
+            val newAlts =
+                if (prec == 0)
+                    theseAlts
+                else {
+                    val fallThroughAlt = Alternative (List (recursivent), Nil, NoAction ())
+                    theseAlts :+ fallThroughAlt
+                }
+            ASTRule (ntidn, IdnUse (astRule->typeName), newAlts)
+        }
+
+        /**
+         * Handle all of the alternatives at a particular precedence level. Return a
+         * list of new rules for that level.
+         */
+        def handlePrecLevel (prec : Int, alts : List[Alternative]) : List[ASTRule] = {
+            val (leftRecursiveAlts, nonLeftRecursiveAlts) = alts.partition (isLeftRecursive)
+            if (nonLeftRecursiveAlts.isEmpty)
+                makeIterativeRules (prec, alts)
+            else if (leftRecursiveAlts.isEmpty)
+                List (makeNonIterativeRule (prec, alts))
+            else
+                sys.error (s"handlePrecLevel: mixed left recursive and non-recursive at precedence level $prec")
+        }
 
         // Partition the alternatives into recursive ones and non-recursive ones
         val (leftRecursiveAlts, nonLeftRecursiveAlts) = astRule.alts.partition (isLeftRecursive)
@@ -374,44 +408,27 @@ class Desugarer (analyser : Analyser) {
 
         } else {
 
-            // The zero-level LHS for this iteration
-            val zerontidn = IdnDef (makePrecName (0))
-
-            /*
-             * Any non-left-recursive alternatives that are right recursive need to
-             * recurse on the zero-level LHS not on the top LHS, since these operators
-             * should have highest precedence. Transform any such alternatives.
-             */
-            val newNonLeftRecursiveAlts = nonLeftRecursiveAlts.map (flattenRightRecursion)
-
-            /*
-             * The new rule that replaces the non-recursive alternatives of the old rule.
-             * It defines the base level non-terminal and the type is given by the type
-             * of the old non-terminal.
-             */
-            val newr = ASTRule (zerontidn, IdnUse (astRule->typeName), newNonLeftRecursiveAlts)
-
-            // Group the recursive alternatives by precedence level
-            val recMap = leftRecursiveAlts.groupBy (precedence)
-
             // Calculate top precedence level
             // FIXME: avoid this extra pass over recursive alternatives
-            val top = leftRecursiveAlts.foldLeft (0) {
+            val top = astRule.alts.foldLeft (0) {
                           case (p, alt) => p.max (precedence (alt))
                       }
 
             // The "topmost" (i.e. lowest precedence) non-terminal for this iteration
             val topnt = NonTerminal (NTGen (makePrecName (top), lhsnttype))
 
-            // Each group gets translated together to give a list of new iterative rules.
-            val precRules = recMap.flatMap (makeIterativeRules)
-
             // The head rule connects the original non-terminal to the precedence chain
             val headRule =
                 ASTRule (astRule.idndef, IdnUse (astRule->typeName),
                          List (Alternative (List (topnt), null, NoAction ())))
 
-            (newr, List (headRule) ++: precRules)
+            // Group the alternatives by precedence
+            val precMap = astRule.alts.groupBy (precedence)
+
+            // Process each of the precedence levels separately
+            val precRules = precMap.flatMap ((handlePrecLevel _).tupled)
+
+            (headRule, precRules)
 
         }
 

@@ -24,6 +24,7 @@ class Analyser (flags : Flags) extends Environments {
     import org.kiama.util.{Entity, MultipleEntity, UnknownEntity}
     import org.kiama.util.Messaging.{check, message, Messages}
     import org.kiama.util.Patterns.HasParent
+    import scala.collection.mutable.ListBuffer
 
     val errors =
         attr (collectall {
@@ -555,21 +556,21 @@ class Analyser (flags : Flags) extends Environments {
 
     /**
      * The associativity of an alternative. If there are no associativity
-     * annotations, it's left associative. Otherwise, it's the first such
+     * annotations, it's not associative. Otherwise, it's the first such
      * annotation that applies.
      */
     lazy val associativity : Alternative => Side =
         attr {
             case alt =>
                 if (alt.anns == null)
-                    LeftAssoc
+                    NonAssoc
                 else
                     alt.anns.collect {
                         case Associativity (side) =>
                             side
                     } match {
                         case assoc :: _ => assoc
-                        case _          => LeftAssoc
+                        case _          => NonAssoc
                     }
         }
 
@@ -682,17 +683,17 @@ class Analyser (flags : Flags) extends Environments {
 
     /**
      * Does the alternative require no pretty-printing clause? Cases are:
-     * a) if it has no action, b) if it's part of a parenthesized rule,
-     * features the recursive symbols and has a precedence level, or c)
-     * or if it's a transfer alternative. In the second case it will be
-     * handled by the paren pretty printer.
+     * a) if it has no action, b) for Kiama 1.x, if it's part of a
+     * parenthesized rule, features the recursive symbols and has a
+     * precedence level, or c) or if it's a transfer alternative. In the
+     * second case it will be handled by the paren pretty printer.
      */
     lazy val requiresNoPPCase : Alternative => Boolean =
         attr {
             case alt =>
                 (alt->requiresNoAction) ||
-                ((alt->astrule->isParenPP) && (alt->isRecursive) &&
-                    (alt->hasPrecedenceLevel)) ||
+                ((flags.useKiama == 1) && (alt->astrule->isParenPP) &&
+                    (alt->isRecursive) && (alt->hasPrecedenceLevel)) ||
                 (alt->isTransferAlt)
         }
 
@@ -778,6 +779,102 @@ class Analyser (flags : Flags) extends Environments {
         }
 
     /**
+     * Representation of a field by its name and its type.
+     */
+    case class Field (name : String, tipe : String)
+
+    /**
+     * Traverse the elements on the RHS of a rule to collect fields.
+     * The names of the fields are uniqued in the process.
+     */
+    def fieldsOfAlternative (alt : Alternative) : List[Field] = {
+
+        /**
+         * List of fields in the process of being built.
+         */
+        val fields = ListBuffer[Field] ()
+
+        /**
+         * Add a field for the given element if it's not Void.
+         */
+        def addField (elem : Element) {
+            if (elem->elemtype != "Void") {
+                val fieldNum = fields.length + 1
+                val fieldType = (alt->fieldTypes).getOrElse (fieldNum, elem->elemtype)
+                fields.append (Field (elem->fieldName, fieldType))
+            }
+        }
+
+        def traverseElem (elem : Element) {
+            elem match {
+                case Block (name, _) =>
+                    fields.append (Field (elem->fieldName, "String"))
+                case _ : NonTerminal =>
+                    addField (elem)
+                case Opt (innerElem) =>
+                    val optElem =
+                        if (flags.useScalaOptions)
+                            elem
+                        else
+                            innerElem
+                    addField (optElem)
+                case Nest (nestedElem, _) =>
+                    addField (nestedElem)
+                case _ : Rep =>
+                    addField (elem)
+                case Seqn (l, r) =>
+                    traverseElem (l)
+                    traverseElem (r)
+                case _ =>
+                    // No argument for the rest of the element kinds
+            }
+        }
+
+        // Traverse RHS gathering fields
+        alt.rhs.map (traverseElem)
+
+        // Set of non-unique field names
+        val nonUniqueFieldNames =
+            fields.map (_.name).groupBy (s => s).collect {
+                case (n, l) if l.length > 1 =>
+                    n
+            }.toSet
+
+        /**
+         * Is the field name not unique in this field list?
+         */
+        def isNotUnique (fieldName : String) : Boolean =
+            nonUniqueFieldNames contains fieldName
+
+        /**
+         * Make the field names unique by numbering fields whose names are
+         * not unique.
+         */
+        val uniqueFields =
+            fields.result.foldLeft (Map[String,Int] (), List[Field] ()) {
+                case ((m, l), f @ Field (n, t)) =>
+                    if (isNotUnique (n)) {
+                        val i = m.getOrElse (n, 0) + 1
+                        (m.updated (n, i), Field (n + i.toString, t) :: l)
+                    } else
+                        (m, f :: l)
+            }
+
+        uniqueFields._2.reverse
+
+    }
+
+    /**
+     * List of fields for a RHS of an alternative in the order of their
+     * appearance in the RHS. The field names have been made unique.
+     */
+    lazy val fields : Alternative => List[Field] =
+        attr {
+            case alt =>
+                fieldsOfAlternative (alt)
+        }
+
+    /**
      * Collected information about an alternative: its order (unary=1,
      * binary=2), operator, precedence, fixity and non-terminals. If we can't
      * tell or it's a case we don't support, return None.
@@ -801,6 +898,31 @@ class Analyser (flags : Flags) extends Environments {
 
                     case elems =>
                         None
+
+                }
+        }
+
+    /**
+     * Collected information about an alternative: currently its precedence
+     * and fixity.
+     */
+    lazy val precFixity : Alternative => (Int, Fixity) =
+        attr {
+            case alt =>
+                val lhsnt = alt->astrule->lhs
+                alt.rhs match {
+
+                    // Postfix
+                    case List (elem @ NonTermIdn (nt), Literal (op)) if nt == lhsnt =>
+                        (alt->precedence, Postfix)
+
+                    // Prefix
+                    case List (Literal (op), elem @ NonTermIdn (nt)) if nt == lhsnt =>
+                        (alt->precedence, Prefix)
+
+                    // Infix
+                    case elems =>
+                        (alt->precedence, Infix (alt->associativity))
 
                 }
         }
