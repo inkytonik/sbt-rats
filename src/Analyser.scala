@@ -36,6 +36,10 @@ class Analyser (flags : Flags) extends Environments {
             case u @ IdnUse (i) if !(u->idntypeok) =>
                 message (u, s"a ${u->idntypedesc} can't be used here")
 
+            case r : ASTRule if !missingPrecedences (r).isEmpty =>
+                val levelStr = missingPrecedences (r).mkString (" ")
+                message (r, s"missing precendence levels: $levelStr")
+
             case b @ Block (_, n) if (b.index + 1 == n) =>
                 check (b.parent) {
                     case alt : Alternative =>
@@ -431,21 +435,51 @@ class Analyser (flags : Flags) extends Environments {
         }
 
     /**
+     * The precedences of the alternatives of a rule.
+     */
+    lazy val precedences : ASTRule => Set[Int] =
+        attr {
+            case astRule =>
+                astRule.alts.map (precedence).toSet
+        }
+
+    /**
+     * The expected precedences for a rule's alternatives. In other words,
+     * zero up to and including the largest precedence that the user has
+     * given.
+     */
+    lazy val expectedPrecedences : ASTRule => Set[Int] =
+        attr {
+            case astRule =>
+                (0 to (astRule->precedences).max).toSet
+        }
+
+    /**
+     * The expected precedences for a rule's alternatives that are missing.
+     * If this is not empty an error will be reported.
+     */
+    lazy val missingPrecedences : ASTRule => Set[Int] =
+        attr {
+            case astRule =>
+                (astRule->expectedPrecedences) -- (astRule->precedences)
+        }
+
+    /**
      * The precedence level of an alternative. If no explicit precedence level
-     * is given in the annotations of the alternative, return one. If there is
+     * is given in the annotations of the alternative, return zero. If there is
      * more than one precedence annotation, the first one is used.
      */
     lazy val precedence : Alternative => Int =
         attr {
             case alt =>
                 if (alt.anns == null)
-                    1
+                    0
                 else
                     alt.anns.collect {
                         case Precedence (level) => level
                     } match {
                         case level :: _ => level
-                        case _          => 1
+                        case _          => 0
                     }
         }
 

@@ -260,8 +260,9 @@ class Desugarer (analyser : Analyser) {
             // A non-terminal for this level
             def nt = NonTerminal (NTGen (ntname, lhsnttype))
 
-            // Name for the non-terminal for the previous level
-            val prevntname = makePrecName (prec - 1)
+            // Name for the non-terminal for the "previous" level. If we are at the
+            // highest precedence level just recurse here.
+            val prevntname = makePrecName (if (prec == 0) 0 else prec - 1)
 
             // A non-terminal for the previous level
             def prevnt = NonTerminal (NTGen (prevntname, lhsnttype))
