@@ -39,7 +39,11 @@ class Analyser (flags : Flags) extends Environments {
 
             case r : ASTRule if !missingPrecedences (r).isEmpty =>
                 val levelStr = missingPrecedences (r).mkString (" ")
-                message (r, s"missing precendence levels: $levelStr")
+                message (r, s"missing precedence levels: $levelStr")
+
+            case r : ASTRule if !mixedAssociativities (r).isEmpty =>
+                val levelStr = mixedAssociativities (r).mkString (" ")
+                message (r, s"mixed associativities at levels: $levelStr")
 
             case b @ Block (_, n) if (b.index + 1 == n) =>
                 check (b.parent) {
@@ -463,6 +467,19 @@ class Analyser (flags : Flags) extends Environments {
         attr {
             case astRule =>
                 (astRule->expectedPrecedences) -- (astRule->precedences)
+        }
+
+    /**
+     * A collection of the precedences of a rule that use mixed associativities.
+     * At present we only support a single associativity at each precedence level.
+     */
+    lazy val mixedAssociativities : ASTRule => Iterable[Int] =
+        attr {
+            case astRule =>
+                astRule.alts.groupBy (precedence).collect {
+                    case (prec, alts) if alts.map (associativity).distinct.length > 1 =>
+                        prec
+                }
         }
 
     /**
