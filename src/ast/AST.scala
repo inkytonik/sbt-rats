@@ -18,8 +18,9 @@ case class Grammar (module : List[String], header : String, body : String,
 
 sealed abstract class SyntaxOption extends ASTNode
 case class Indentation (n : Int) extends SyntaxOption
-case class Verbose () extends SyntaxOption
+case class RelativeFilenames () extends SyntaxOption
 case class SetOfString (name : String) extends SyntaxOption
+case class Verbose () extends SyntaxOption
 case class Width (n : Int) extends SyntaxOption
 
 sealed abstract class Rule extends ASTNode

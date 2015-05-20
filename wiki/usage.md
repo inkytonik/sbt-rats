@@ -126,7 +126,7 @@ After the module declaration an optional header section can appear. This section
         import foo.bar.Syntax.*;
     }
 
-After the header section is an optional body section. This section has the same syntax and meaning as the body construct in a Rats! specification. Its contents will be insserted into the generated parser inside the parser class.
+After the header section is an optional body section. This section has the same syntax and meaning as the body construct in a Rats! specification. Its contents will be inserted into the generated parser inside the parser class.
 
     body {
         // Code goes here...
@@ -136,7 +136,13 @@ After the body section some Rats! options can be optionally specified. At the mo
 
     option setOfString (MyStrings), verbose;
 
-The rest of a syntax specification consists of rules whose form is described in the following.
+The following `sbt-rats` options are supported:
+
+* `defaultIndent` and `defaultWidth`: control the default indentation and width for pretty-printing. See below for more detail.
+
+* `relativeFilenames`: when an error message is produced, instead of using the full filename in the error message, remove the current path from the prefix of the name if it is present. E.g., if the current path is "/Users/bob" and the error is in file "/Users/bob/foo.c" then the name "foo.c" will be used. The default is to use full filenames.
+
+After the options, the rest of a syntax specification consists of rules whose form is described in the following sections.
 
 ## String rules
 

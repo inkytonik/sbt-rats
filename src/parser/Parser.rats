@@ -96,6 +96,9 @@ SyntaxOption Option =
     void:"defaultWidth":Word void:"(":Symbol d:DecDigits void:")":Symbol {
         yyValue = new Width (Integer.parseInt (d));
     } /
+    void:"relativeFilenames":Word {
+        yyValue = new RelativeFilenames ();
+    } /
     void:"setOfString":Word void:"(":Symbol n:Word void:")":Symbol {
         yyValue = new SetOfString (n);
     } /

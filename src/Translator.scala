@@ -50,8 +50,31 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
 
         def toBody (userBody : String, keywords : Set[String]) : Doc = {
 
+            lazy val filenameValue =
+                if ((grammar.options != null) && (grammar.options.contains (RelativeFilenames ())))
+                    "dropCurrentPath (loc.file)"
+                else
+                    "loc.file"
+
             lazy val fixedBody =
-                """
+                s"""
+                |/**
+                | * Drop the current path off string when it occurs at the beginning.
+                | */
+                |public String dropCurrentPath (String string) {
+                |    int index = 0;
+                |    int stringlen = string.length ();
+                |    String prefix = System.getProperty (\"user.dir\");
+                |    int prefixlen = prefix.length ();
+                |    while ((index < stringlen) && (index < prefixlen) && (string.charAt (index) == prefix.charAt (index))) {
+                |        index++;
+                |    }
+                |    if ((index != 0) && (string.charAt (index) == java.io.File.separatorChar)) {
+                |        index++;
+                |    }
+                |    return string.substring (index);
+                |}
+                |
                 |/**
                 | * Format a Rats! parser error message according to Scala compiler
                 | * conventions for better compatibility with error processors.
@@ -64,18 +87,19 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                 |    } else {
                 |        Location loc = location (error.index);
                 |        if (showCoord) {
-                |            buf.append (loc.file);
+                |            String filename = $filenameValue;
+                |            buf.append (filename);
                 |            buf.append (':');
                 |            buf.append (loc.line);
                 |            buf.append (": ");
                 |        }
                 |
                 |        buf.append (error.msg);
-                |        buf.append ("\n\n");
+                |        buf.append ("\\n\\n");
                 |
                 |        String line = lineAt (error.index);
                 |        buf.append (line);
-                |        buf.append ('\n');
+                |        buf.append ('\\n');
                 |        for (int i = 1; i < loc.column; i++) buf.append (' ');
                 |        buf.append ("^");
                 |    }
