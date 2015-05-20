@@ -394,7 +394,17 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                                             "return node;"
                                         ) <> semi
                                     )
-                             }) <> semi
+                             }) <> semi <>
+                        (alt.action match {
+                            case _ : ConsAction | _ : SingletonAction =>
+                                line <>
+                                "setLocation(yyValue, yyStart);"
+                            case NilAction () =>
+                                line <>
+                                "setLocation(yyValue, yyCount);"
+                            case _ =>
+                                empty
+                         })
                     ) <> line)
 
             }
