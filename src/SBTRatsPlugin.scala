@@ -575,6 +575,13 @@ object SBTRatsPlugin extends Plugin {
                         |      positional.setPos(new LineColPosition(this, index, c.line, c.column));
                         |    }
                         |  }
+                        |
+                        |  /** Set the position of a Positional to be the same as another one */
+                        |  void copyLocation(final Positional positional, final Positional source) {
+                        |    if ((null != positional) && (null != source)) {
+                        |      setLocation(positional, source.getPos.index);
+                        |    }
+                        |  }
                         |""".stripMargin
                 )
 
@@ -590,7 +597,8 @@ object SBTRatsPlugin extends Plugin {
                         """
                         |public final class $1 extends ParserBase {
                         |
-                        |  /** Set position of an Object */
+                        |  /** Set start position of an Object to a start index and the finish
+                        |   *  position to the current parsing index. */
                         |  void setLocation(final Object object, final int start) {
                         |    if (null != object) {
                         |      Column s = column(start);
@@ -598,6 +606,14 @@ object SBTRatsPlugin extends Plugin {
                         |      int finish = yyCount == 0 ? 0 : yyCount - 1;
                         |      Column f = column(finish);
                         |      Positions.setFinish(object, new LineColPosition(this, finish, f.line, f.column));
+                        |    }
+                        |  }
+                        |
+                        |  /** Set the start position of an Object to the start location of
+                        |   *  another one and the finish position to the current parsing index. */
+                        |  void copyLocation(final Object object, final Object source) {
+                        |    if ((null != object) && (null != source)) {
+                        |      setLocation(object, ((LineColPosition)Positions.getStart(source)).index());
                         |    }
                         |  }
                         |

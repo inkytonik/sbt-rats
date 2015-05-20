@@ -175,7 +175,8 @@ class Desugarer (analyser : Analyser) {
      *     Op1 v1:Exp {
      *         yyValue = new Action<Exp> () {
      *             public Exp run (Exp left) {
-     *                 return new C1 (left, v1);
+     *                 C1 node = new C1 (left, v1);
+     *                 return node;
      *             }
      *         };
      *     };
@@ -188,11 +189,17 @@ class Desugarer (analyser : Analyser) {
      *     Op2 v1:Id v2:Exp1 {
      *         yyValue = new Action<Exp> () {
      *             public Exp run (Exp left) {
-     *                 return new C2 (left, v1, v2);
+     *                 C2 node = new C2 (left, v1, v2);
+     *                 return node;
      *             }
      *         };
      *     };
      *
+     * If locations are being tracked, then code is also emitted to
+     * set the location of the "node" value.
+     *
+     * The code here just decides which actions need to be done and
+     * the translator emits the code for those actions.
      */
     def removeLeftRecursion (grammar : Grammar) : Grammar = {
 

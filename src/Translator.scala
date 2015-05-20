@@ -386,7 +386,12 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                                     val args = (1 to num).map ("v" + _).mkString (", ", ", ", "")
                                     toBraceSection (s"new Action<$tipe>()",
                                         toBraceSection (s"public $tipe run ($tipe left)",
-                                            "return new" <+> constr <+> parens ("left" <> args) <> semi
+                                            constr <+> "node" <+> "=" <+> "new" <+> constr <+> parens ("left" <> args) <> semi <@>
+                                            (if (flags.useScalaPositions)
+                                                "copyLocation(node, left);" <> line
+                                             else
+                                                 empty) <>
+                                            "return node;"
                                         ) <> semi
                                     )
                              }) <> semi
