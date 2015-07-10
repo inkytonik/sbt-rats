@@ -396,7 +396,7 @@ object SBTRatsPlugin extends Plugin {
             if (isUserMain) {
                 val relFile = main.getParent.drop (srcDir.getPath.length)
                 val ratsGenDir = genDir / relFile
-                if (ratsGenDir.exists () || ratsGenDir.mkdir ())
+                if (ratsGenDir.exists () || ratsGenDir.mkdirs ())
                     ratsGenDir
                 else
                     sys.error ("Can't create Rats! output dir %s".format (ratsGenDir))
