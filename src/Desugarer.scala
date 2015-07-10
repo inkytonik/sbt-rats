@@ -402,7 +402,7 @@ class Desugarer (analyser : Analyser) {
             else if (leftRecursiveAlts.isEmpty)
                 List (makeNonIterativeRule (prec, alts))
             else
-                sys.error (s"handlePrecLevel: mixed left recursive and non-recursive at precedence level $prec")
+                sys.error (s"handlePrecLevel: mixed left recursive and non-recursive at precedence level $prec of ${lhs (astRule)}")
         }
 
         // Partition the alternatives into recursive ones and non-recursive ones
