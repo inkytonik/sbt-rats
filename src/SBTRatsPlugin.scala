@@ -585,7 +585,7 @@ object SBTRatsPlugin extends Plugin {
                         |""".stripMargin
                 )
 
-            val locatablesToPositionsKiama =
+            val locatablesToPositionsKiama1 =
                 List (
                     """import xtc\.tree\.Locatable;""".r ->
                         """import org.kiama.util.Positions;
@@ -616,24 +616,102 @@ object SBTRatsPlugin extends Plugin {
                         |      setLocation(object, ((LineColPosition)Positions.getStart(source)).index());
                         |    }
                         |  }
+                        |""".stripMargin
+                )
+
+            val locatablesToPositionsKiama2 =
+                List (
+                    """import xtc\.tree\.Locatable;""".r ->
+                        """import org.kiama.util.FileSource;
+                          |import org.kiama.util.Message;
+                          |import org.kiama.util.Position;
+                          |import org.kiama.util.Positions;
+                          |import org.kiama.util.Source;""".stripMargin,
+                    """Locatable""".r ->
+                        """Object""",
+                    """public final class (\w+) extends ParserBase \{""".r ->
+                        """
+                        |public final class $1 extends ParserBase {
                         |
-                        |  /** Text corresponding to a positioned value. */
-                        |  String textOf(final Object object) {
-                        |    if (null == object)
-                        |      return null;
-                        |    else {
-                        |      LineColPosition start = (LineColPosition)Positions.getStart (object);
-                        |      LineColPosition finish = (LineColPosition)Positions.getFinish (object);
-                        |      return difference(start.index(), finish.index());
+                        |  // =========================================================================
+                        |
+                        |  /** The Kiama source from which input is being read. */
+                        |  protected Source source;
+                        |
+                        |  /** The Kiama position store being used to track value positions. */
+                        |  protected Positions positions;
+                        |
+                        |  /**
+                        |   * Create a new packrat parser.
+                        |   *
+                        |   * @param src The Kiama source to be parsed.
+                        |   * @param posns The store in which to keep track of parsed value positions.
+                        |   * @throws NullPointerException Signals a null file name.
+                        |   * @throws IllegalArgumentException Signals a negative file size.
+                        |   */
+                        |  public $1(final Source src, final Positions posns) {
+                        |      this(src, INIT_SIZE - 1, posns);
+                        |  }
+                        |
+                        |  /**
+                        |   * Create a new packrat parser.
+                        |   *
+                        |   * @param src The Kiama source to be parsed.
+                        |   * @param size The length of the character stream.
+                        |   * @param posns The store in which to keep track of parsed value positions.
+                        |   * @throws NullPointerException Signals a null file name.
+                        |   * @throws IllegalArgumentException Signals a negative file size.
+                        |   */
+                        |  public $1(final Source src, final int size, final Positions posns) {
+                        |      super(src.reader(), src.optName().isEmpty() ? "" : src.optName().get(), size);
+                        |      source = src;
+                        |      positions = posns;
+                        |  }
+                        |
+                        |  /** Set start position of an Object to one that corresponds to a start
+                        |   *  index and the finish position to the one that corresponds to the
+                        |   *  current parsing index. */
+                        |  void setLocation(final Object object, final int start) {
+                        |    if (null != object) {
+                        |      Column s = column(start);
+                        |      positions.setStart(object, new Position(s.line, s.column, source));
+                        |      int finish = yyCount == 0 ? 0 : yyCount - 1;
+                        |      Column f = column(finish);
+                        |      positions.setFinish(object, new Position(f.line, f.column, source));
                         |    }
+                        |  }
+                        |
+                        |  /** Set the start position of an Object to the start position of
+                        |   *  another object and the finish position to one that corresponds to
+                        |   *  the current parsing index. If the source object doesn't have a
+                        |   *  start position, do nothing. */
+                        |  void copyLocation(final Object object, final Object another) {
+                        |    if ((null != object) && (null != another)) {
+                        |      scala.Option<Position> optStart = positions.getStart(another);
+                        |      if (!optStart.isEmpty()) {
+                        |        scala.Option<Object> optOffset = optStart.get().optOffset();
+                        |        if (!optOffset.isEmpty())
+                        |          setLocation(object, ((Integer)optOffset.get()).intValue());
+                        |      }
+                        |    }
+                        |  }
+                        |
+                        |  /** Return a Kiama message for a given parse error. */
+                        |  public Message errorToMessage (ParseError error) {
+                        |    Location loc = location(error.index);
+                        |    Position pos = new Position(loc.line, loc.column, source);
+                        |    positions.setStart(error, pos);
+                        |    positions.setFinish(error, pos);
+                        |    return new Message(error, error.msg);
                         |  }
                         |""".stripMargin
                 )
 
-            makeReplacements (contents, if (flags.useKiama > 0)
-                                            locatablesToPositionsKiama
-                                        else
-                                            locatablesToPositionsScala)
+            makeReplacements (contents, flags.useKiama match {
+                                            case 1 => locatablesToPositionsKiama1
+                                            case 2 => locatablesToPositionsKiama2
+                                            case _ => locatablesToPositionsScala
+                                        })
 
         }
 

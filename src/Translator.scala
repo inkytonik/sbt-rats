@@ -95,7 +95,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                 |        }
                 |
                 |        buf.append (error.msg);
-                |        buf.append ("\\n\\n");
+                |        buf.append ("\\n");
                 |
                 |        String line = lineAt (error.index);
                 |        buf.append (line);
