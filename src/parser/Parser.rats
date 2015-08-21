@@ -25,8 +25,9 @@ body {
     static {
         add (KEYWORDS, new String[] {
             "body", "defaultIndent", "defaultWidth", "header", "left", "line",
-            "module", "nest", "none", "option", "paren", "rats", "right", "setOfString",
-            "sp", "String", "Token", "verbose", "Void"
+            "module", "nest", "nested", "none", "nospacing", "option", "paren",
+            "rats", "relativeFilenames", "right", "setOfString", "sp", "String",
+            "Token", "verbose", "Void"
         });
     }
 
