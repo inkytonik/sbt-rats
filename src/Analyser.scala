@@ -308,12 +308,20 @@ class Analyser (flags : Flags) extends Environments {
                 if (elem->elemtype == "Void")
                     "Void"
                 else
-                    "Option[%s]".format (elem->elemtype)
+                    s"Option[${elem->elemtype}]"
             case Rep (_, elem, _) =>
                 if (elem->elemtype == "Void")
                     "Void"
-                else
-                    "List[%s]".format (elem->elemtype)
+                else {
+                    val seqType =
+                        flags.scalaRepetitionType match {
+                            case Some (ListType) =>
+                                "List"
+                            case _ =>
+                                "Vector"
+                        }
+                    s"$seqType[${elem->elemtype}]"
+                }
             case Seqn (l, r) =>
                 (l->elemtype) match {
                     case "Void" => r->elemtype
@@ -790,7 +798,7 @@ class Analyser (flags : Flags) extends Environments {
                     else
                         (basename (0).toLower) + basename.tail
                 if (scalaKeywords contains name)
-                    "%sField".format (name)
+                    s"${name}Field"
                 else
                     name
         }

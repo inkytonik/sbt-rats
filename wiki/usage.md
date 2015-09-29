@@ -100,7 +100,7 @@ By default, Rats! will use its own data structures to represent constructs such 
 
 The plugin can post-process the generated parser to make it more usable from Scala. Three plugin settings control this behaviour.
 
- * `ratsUsesScalaLists`: use normal Scala lists instead of Rats!' pair-based lists to represent values that arise from repeated constructs (EBNF star and plus operators).
+ * `ratsScalaRepetitionType`: specify the sequence type to use to represent values that arise from repeated constructs (EBNF star and plus operators). Possible values are `Some (ListType)` and `Some (VectorType)`. The latter is recommended if you are using recent versions of Kiama since it ensures that all sequences will be unique. Default: `None` which means that the default sequence representation of Rats! will be used.
 
  * `ratsUseScalaOptions`: use Scala `Option` values instead of normal values and `null` to represent optional constructs (EBNF question mark operator).
 

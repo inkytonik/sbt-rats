@@ -372,7 +372,7 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                  * Make a variable name from a variable count.
                  */
                 def varName (count : Int) =
-                    text ("v%d".format (count))
+                    text (s"v$count")
 
                 /**
                  * Traverse the elements on the RHS of the rule to collect pattern
@@ -603,15 +603,24 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
             |    def create[T] (hd : T, tl : L[T]) : L[T] = hd :: tl
             |}
             |
+            |object SVector {
+            |    type L[T] = scala.collection.immutable.Vector[T]
+            |    def empty[T] : L[T] = Vector ()
+            |    def create[T] (hd : T) : L[T] = hd +: Vector ()
+            |    def create[T] (hd : T, nxt : T) : L[T] = hd +: nxt +: Vector ()
+            |    def create[T] (hd : T, tl : L[T]) : L[T] = hd +: tl
+            |}
+            |
             |object ParserSupport {
             |
-            |    def apply[T] (actions : List[Action[T]], seed : T) : T = {
-            |        var result = seed
-            |        for (action <- actions) {
-            |            result = action.run (result)
+            |    import scala.language.higherKinds
+            |
+            |    def apply[T] (actions : Seq[Action[T]], seed : T) : T =
+            |        actions.foldLeft (seed) {
+            |            case (result, action) =>
+            |                action.run (result)
             |        }
-            |        result
-            |    }
+            |
             |}
             |
             |""".stripMargin

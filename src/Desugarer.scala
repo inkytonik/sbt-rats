@@ -250,7 +250,7 @@ class Desugarer (analyser : Analyser) {
          * FIXME: still possibility of clashes with user names
          */
         def makePrecName (level : Int) : String =
-            "%sLevel%d".format (astRule->lhs, level)
+            s"${astRule->lhs}Level$level"
 
         /**
          * Make iterative rules from a set of alternatives at the same precedence

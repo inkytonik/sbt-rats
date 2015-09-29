@@ -13,10 +13,26 @@ import xtc.tree.Node
 import xtc.util.Runtime
 
 /**
+ * The possible sequence data structures that can be used with Scala
+ * to represent repetitions.
+ */
+sealed abstract class ScalaSequenceType
+
+/**
+ * Use Scala lists to represent repetitions.
+ */
+case object ListType extends ScalaSequenceType
+
+/**
+ * Use Scala vectors to represent repetitions.
+ */
+case object VectorType extends ScalaSequenceType
+
+/**
  * A structure to hold the flag values so we can pass them around together.
  */
 case class Flags (
-    useScalaLists : Boolean,
+    scalaRepetitionType : Option[ScalaSequenceType],
     useScalaPositions : Boolean,
     useScalaOptions : Boolean,
     useDefaultComments : Boolean,
@@ -52,13 +68,13 @@ object SBTRatsPlugin extends Plugin {
     )
 
     /**
-     * If true, assume that the Rats!-generated parser is to be used with
-     * Scala and use Scala lists for repeated constructs. Otherwise, use
-     * the default Rats! pair-based lists.
+     * If set, assume that the Rats!-generated parser is to be used with
+     * Scala and use the specified type for repeated constructs. Otherwise,
+     * use the default Rats! pair-based lists.
      */
-    val ratsUseScalaLists = SettingKey[Boolean] (
-        "rats-use-scala-lists",
-            "Use Scala lists instead of Rats! pair-based lists for repetitions"
+    val ratsScalaRepetitionType = SettingKey[Option[ScalaSequenceType]] (
+        "rats-scala-repetition-type",
+            "Form of Scala data to use for repetitions. If not set, use Rats! pair-based lists."
     )
 
     /**
@@ -209,10 +225,9 @@ object SBTRatsPlugin extends Plugin {
         val generatedFiles = ListBuffer[File] ()
 
         // If some Scala support is requested, generate Scala support file
-        if (flags.useScalaLists | flags.useScalaOptions | flags.useScalaPositions) {
+        if (flags.scalaRepetitionType != None | flags.useScalaOptions | flags.useScalaPositions) {
             val supportFile = outDir / "sbtrats" / "ParserSupport.scala"
-            str.log.info ("Rats! generating Scala support file %s".format (
-                              supportFile))
+            str.log.info (s"Rats! generating Scala support file $supportFile")
             generator.generateSupportFile (flags, supportFile)
             generatedFiles.append (supportFile)
         }
@@ -234,7 +249,7 @@ object SBTRatsPlugin extends Plugin {
         optmain match {
 
             case Some (main) =>
-                str.log.info ("Rats! got a .rats file %s".format (main))
+                str.log.info (s"Rats! got a .rats file $main")
                 // Got one, just run Rats! on it and we're done.
                 val newFiles = runRatsImpl (flags, main, true, srcDir, genDir,
                                             outDir, str)
@@ -267,8 +282,7 @@ object SBTRatsPlugin extends Plugin {
                        str : TaskStreams, analyser : Analyser,
                        generator : Generator) :
                           Option[(File,File,List[File])] = {
-        str.log.info ("Running Syntax generation on %s, output to %s and %s".format (
-                          main, genDir, outDir))
+        str.log.info (s"Running Syntax generation on $main, output to $genDir and $outDir")
         val filename = main.absolutePath
         val reader = filereader (filename)
         val p = new Parser (reader, filename)
@@ -302,7 +316,7 @@ object SBTRatsPlugin extends Plugin {
 
                 // Generate the Rats! specification
                 val genFile = genSubDir / s"${basename}.rats"
-                str.log.info ("Syntax generating Rats! file %s".format (genFile))
+                str.log.info (s"Syntax generating Rats! file $genFile")
                 translator.translate (flags, genFile, desugaredGrammar)
 
                 // Buffer of extra generated files
@@ -311,7 +325,7 @@ object SBTRatsPlugin extends Plugin {
                 // If requested, generate the AST classes
                 if (flags.defineASTClasses) {
                     val astFile = outSubDir / s"${basename}Syntax.scala"
-                    str.log.info ("Syntax generating AST classes %s".format (astFile))
+                    str.log.info (s"Syntax generating AST classes $astFile")
                     generator.generateASTClasses (flags, astFile, grammar)
                     extraFiles.append (astFile)
                 }
@@ -319,7 +333,7 @@ object SBTRatsPlugin extends Plugin {
                 // If requested, generate the AST classes
                 if (flags.defineASTClasses && flags.definePrettyPrinter) {
                     val ppFile = outSubDir / s"${basename}PrettyPrinter.scala"
-                    str.log.info ("Syntax generating pretty-printer %s".format (ppFile))
+                    str.log.info (s"Syntax generating pretty-printer $ppFile")
                     generator.generatePrettyPrinter (flags, ppFile, grammar)
                     extraFiles.append (ppFile)
                 }
@@ -330,14 +344,14 @@ object SBTRatsPlugin extends Plugin {
 
                 for (message <- sortmessages (messages))
                     str.log.error (formatSemanticError (p, filename, message))
-                sys.error ("Syntax semantic analysis of %s failed".format (main))
+                sys.error (s"Syntax semantic analysis of $main failed")
 
             }
 
         } else {
 
             str.log.error (formatParseError (p, pr.parseError))
-            sys.error ("Syntax parsing %s failed".format (main))
+            sys.error (s"Syntax parsing $main failed")
 
         }
     }
@@ -399,7 +413,7 @@ object SBTRatsPlugin extends Plugin {
                 if (ratsGenDir.exists () || ratsGenDir.mkdirs ())
                     ratsGenDir
                 else
-                    sys.error ("Can't create Rats! output dir %s".format (ratsGenDir))
+                    sys.error ("Can't create Rats! output dir $ratsGenDir")
             } else
                 main.getParentFile
 
@@ -458,8 +472,7 @@ object SBTRatsPlugin extends Plugin {
         val rats = overrideRuntime (new RatsRunner)
 
         // Actually run Rats!
-        str.log.info ("Running Rats! on %s, input from %s and %s, output to %s".format (
-                          mainPath, mainDir, genDir, ratsOutDir))
+        str.log.info (s"Running Rats! on $mainPath, input from $mainDir and $genDir, output to $ratsOutDir")
         rats.run (Array ("-silent", "-no-exit",
                          "-in", mainDir.absolutePath,
                          "-in", genDir.absolutePath,
@@ -480,28 +493,27 @@ object SBTRatsPlugin extends Plugin {
 
             // If we've got it, process it further
             if (genFile.exists) {
-                str.log.info ("Rats! generated %s".format (genFile))
+                str.log.info (s"Rats! generated $genFile")
 
                 val relFile = genFile.getPath.drop (genDir.getPath.length)
                 val outFile = outDir / relFile
 
-                if (flags.useScalaLists || flags.useScalaOptions || flags.useScalaPositions) {
+                if (flags.scalaRepetitionType != None || flags.useScalaOptions || flags.useScalaPositions) {
 
-                    str.log.info ("Rats! transforming %s for Scala into %s".format (
-                                      genFile, outFile))
+                    str.log.info (s"Rats! transforming $genFile for Scala into $outFile")
                     transformForScala (flags, genFile, outFile)
                     Set (outFile)
 
                 } else {
 
-                    str.log.info ("Rats! copying %s to %s".format (genFile, outFile))
+                    str.log.info (s"Rats! copying $genFile to $outFile")
                     IO.copyFile (genFile, outFile, true)
                     Set (outFile)
 
                 }
             } else {
 
-                sys.error ("Rats!, can't find generated file %s".format (genFile))
+                sys.error (s"Rats!, can't find generated file $genFile")
                 Set.empty
 
             }
@@ -519,29 +531,31 @@ object SBTRatsPlugin extends Plugin {
 
     /**
      * Transform the generated file into the output file as per the flag parameters.
-     *  - useScalaLists: replace xtc pairs with Scala lists
+     *  - scalaRepetitionType != None: replace xtc pairs with specified Scala type
      *  - useScalaPositions: replace Rats! location code, gen LineColPosition class
      */
     def transformForScala (flags : Flags, genFile : File, outFile : File) {
 
-        def transformPairsToLists (contents : String) : String = {
-            val pairsToLists =
+        def transformPairsToSequences (seqType : String, contents : String) : String = {
+            val pairsToSequences =
                 List (
                     """import xtc\.util\.Pair;""".r ->
-                        """import xtc.util.Pair;
-                          |import scala.collection.immutable.List;
-                          |import sbtrats.ParserSupport;
-                          |import sbtrats.SList;""".stripMargin,
+                        s"""import xtc.util.Pair;
+                           |import scala.collection.immutable.$seqType;
+                           |import sbtrats.ParserSupport;
+                           |import sbtrats.S$seqType;""".stripMargin,
+                    """(Pair<.*>) (v[0-9]+) = ([^.]+\.reverse\(\);)""".r ->
+                        """$1 $2 = ($1)$3""",
                     """Pair\.empty\(\)""".r ->
-                        """SList.empty()""",
+                        s"""S$seqType.empty()""",
                     """new Pair<.*>\(""".r ->
-                        """SList.create(""",
+                        s"""S$seqType.create(""",
                     """Pair<Pair(<[^>]+>)>""".r ->
-                        """List<List$1>""",
+                        s"""$seqType<$seqType$$1>""",
                     """Pair(<[^>]+>)""".r ->
-                       """List$1"""
+                        s"""$seqType$$1"""
                 )
-            makeReplacements (contents, pairsToLists)
+            makeReplacements (contents, pairsToSequences)
         }
 
         def transformNullablesToOptions (contents : String) : String = {
@@ -727,10 +741,14 @@ object SBTRatsPlugin extends Plugin {
         val contents = IO.read (genFile)
 
         val contents1 =
-            if (flags.useScalaLists)
-                transformPairsToLists (contents)
-            else
-                contents
+            flags.scalaRepetitionType match {
+                case Some (ListType) =>
+                    transformPairsToSequences ("List", contents)
+                case Some (VectorType) =>
+                    transformPairsToSequences ("Vector", contents)
+                case None =>
+                    contents
+            }
 
         val contents2 =
             if (flags.useScalaOptions)
@@ -768,7 +786,7 @@ object SBTRatsPlugin extends Plugin {
 
         ratsMainModule := None,
 
-        ratsUseScalaLists := false,
+        ratsScalaRepetitionType := None,
 
         ratsUseScalaPositions := false,
 
@@ -790,16 +808,16 @@ object SBTRatsPlugin extends Plugin {
 
         ratsUseKiama := 0,
 
-        ratsFlags <<= (ratsUseScalaLists, ratsUseScalaPositions,
+        ratsFlags <<= (ratsScalaRepetitionType, ratsUseScalaPositions,
                        ratsUseScalaPositions, ratsUseDefaultComments,
                        ratsUseDefaultLayout, ratsUseDefaultWords,
                        ratsDefineASTClasses, ratsDefinePrettyPrinter,
                        ratsIncludeKeywordTable, ratsIncludeBinarySupport,
                        ratsUseKiama) {
-            (lists, options, posns, comments, layout, words, ast, pp,
+            (repetitionType, options, posns, comments, layout, words, ast, pp,
              kwtable, binary, kiama) =>
-                Flags (lists, options, posns, comments, layout, words, ast, pp,
-                       kwtable, binary, kiama)
+                Flags (repetitionType, options, posns, comments, layout, words,
+                       ast, pp, kwtable, binary, kiama)
         }
 
     )
