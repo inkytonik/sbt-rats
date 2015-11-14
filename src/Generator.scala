@@ -306,11 +306,15 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
         }
 
         def toPretty : Doc =
-            line <>
             (if (flags.useKiama == 1)
-                "def format (astNode : ASTNode, w : Width = defaultWidth) : String ="
-             else
-                "def format (astNode : ASTNode, w : Width = defaultWidth) : Document =") <>
+                    empty
+                else
+                    line <>
+                    "def show (astNode : ASTNode, w : Width = defaultWidth) : String =" <>
+                         nest (line <> "format (astNode, w).layout") <> line) <>
+            line <>
+            "def format (astNode : ASTNode, w : Width = defaultWidth) : " <>
+                (if (flags.useKiama == 1) "String" else "Document") <+> "=" <>
             nest (
                 line <>
                 (if (flags.useKiama == 1)
