@@ -57,13 +57,13 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
 
         def toImports : Doc =
             line <>
-            includeImportWhen ("org.kiama.attribution.Attributable",
+            includeImportWhen ("org.bitbucket.inkytonik.kiama.attribution.Attributable",
                                flags.useKiama == 1) <>
-            includeImportWhen ("org.kiama.output.{Infix, LeftAssoc, NonAssoc, Prefix, RightAssoc}",
+            includeImportWhen ("org.bitbucket.inkytonik.kiama.output.{Infix, LeftAssoc, NonAssoc, Prefix, RightAssoc}",
                                flags.definePrettyPrinter) <>
-            includeImportWhen ("org.kiama.output.{PrettyBinaryExpression, PrettyExpression, PrettyUnaryExpression}",
+            includeImportWhen ("org.bitbucket.inkytonik.kiama.output.{PrettyBinaryExpression, PrettyExpression, PrettyUnaryExpression}",
                                flags.definePrettyPrinter && flags.useKiama == 1) <>
-            includeImportWhen ("org.kiama.output.{PrettyExpression, PrettyNaryExpression}",
+            includeImportWhen ("org.bitbucket.inkytonik.kiama.output.{PrettyExpression, PrettyNaryExpression}",
                                flags.definePrettyPrinter && flags.useKiama == 2) <>
             includeImportWhen ("scala.util.parsing.input.Positional",
                                flags.useScalaPositions && (flags.useKiama == 0))
@@ -244,9 +244,9 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
             "package" <+> pkg <@>
             line <>
             "import" <+> pkg <> "." <> module <> "Syntax._" <@>
-            "import org.kiama.output.{LeftAssoc, NonAssoc, PrettyExpression, PrettyPrinter => PP, ParenPrettyPrinter => PPP, RightAssoc}" <@>
+            "import org.bitbucket.inkytonik.kiama.output.{LeftAssoc, NonAssoc, PrettyExpression, PrettyPrinter => PP, ParenPrettyPrinter => PPP, RightAssoc}" <@>
             (if (flags.useKiama == 2)
-                "import org.kiama.output.PrettyPrinterTypes.{Document, Width}"
+                "import org.bitbucket.inkytonik.kiama.output.PrettyPrinterTypes.{Document, Width}"
              else
                  empty) <@>
             toPrettyPrinter <>

@@ -104,7 +104,7 @@ The plugin can post-process the generated parser to make it more usable from Sca
 
  * `ratsUseScalaOptions`: use Scala `Option` values instead of normal values and `null` to represent optional constructs (EBNF question mark operator).
 
- * `ratsUseScalaPositions`: use Scala library positions to represent input positions of semantic values instead of Rats!' locations. Specifically, if this option is set and the Rats! specification contains the `withLocation` option, any semantic value that is an instance of the Scala library type `scala.util.parsing.input.Positional` will have its position set. If the `ratsUseKiama` option is also set, Kiama's `org.kiama.util.Positions` module is used instead. The main difference is that `Positions` supports both start and finish positions.
+ * `ratsUseScalaPositions`: use Scala library positions to represent input positions of semantic values instead of Rats!' locations. Specifically, if this option is set and the Rats! specification contains the `withLocation` option, any semantic value that is an instance of the Scala library type `scala.util.parsing.input.Positional` will have its position set. If the `ratsUseKiama` option is also set, Kiama's `util.Positions` module is used instead. The main difference is that `Positions` supports both start and finish positions.
 
 All of these settings are false by default. To override the default, add to your `build.sbt`.  For example, to turn on Scala lists:
 
@@ -466,7 +466,7 @@ The tree fragment was printed using Kiama's default pretty-printer.
 
 The plugin supports has some extra features to support use of the generated code with the [Kiama library](https://code.google.com/p/kiama/). These features are enabled by the `ratsUseKiama` setting, which by default is zero which means that the Kiama support is disabled. Setting `ratsUseKiama` to a non-zero number means that that major version of Kiama is to be targeted. The only supported values are one and two.
 
-If `ratsDefineASTClasses` is true and `ratsUseKiama` is one, the generated `ASTNode` class is made to extend the class `org.kiama.attribution.Attributable` which provides useful assistance for writing attribute grammar rules that operate on the tree. if version two of Kiama is being used the `Attributable` class is no longer required.
+If `ratsDefineASTClasses` is true and `ratsUseKiama` is one, the generated `ASTNode` class is made to extend the class `attribution.Attributable` which provides useful assistance for writing attribute grammar rules that operate on the tree. if version two of Kiama is being used the `Attributable` class is no longer required.
 
 `ratsUseKiama` can also be used to set Kiama positions of tree nodes. See the documentation of the `ratsUseScalaPositions` setting for details.
 

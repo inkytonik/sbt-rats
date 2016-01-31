@@ -602,7 +602,7 @@ object SBTRatsPlugin extends Plugin {
             val locatablesToPositionsKiama1 =
                 List (
                     """import xtc\.tree\.Locatable;""".r ->
-                        """import org.kiama.util.Positions;
+                        """import org.bitbucket.inkytonik.kiama.util.Positions;
                           |import scala.util.parsing.input.Position;
                           |import sbtrats.LineColPosition;""".stripMargin,
                     """Locatable""".r ->
@@ -636,11 +636,11 @@ object SBTRatsPlugin extends Plugin {
             val locatablesToPositionsKiama2 =
                 List (
                     """import xtc\.tree\.Locatable;""".r ->
-                        """import org.kiama.util.FileSource;
-                          |import org.kiama.util.Message;
-                          |import org.kiama.util.Position;
-                          |import org.kiama.util.Positions;
-                          |import org.kiama.util.Source;""".stripMargin,
+                        """import org.bitbucket.inkytonik.kiama.util.FileSource;
+                          |import org.bitbucket.inkytonik.kiama.util.Message;
+                          |import org.bitbucket.inkytonik.kiama.util.Position;
+                          |import org.bitbucket.inkytonik.kiama.util.Positions;
+                          |import org.bitbucket.inkytonik.kiama.util.Source;""".stripMargin,
                     """Locatable""".r ->
                         """Object""",
                     """public final class (\w+) extends ParserBase \{""".r ->
