@@ -57,11 +57,11 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
 
         def toImports : Doc =
             line <>
-            includeImportWhen ("org.bitbucket.inkytonik.kiama.attribution.Attributable",
+            includeImportWhen ("org.kiama.attribution.Attributable",
                                flags.useKiama == 1) <>
-            includeImportWhen ("org.bitbucket.inkytonik.kiama.output.{Infix, LeftAssoc, NonAssoc, Prefix, RightAssoc}",
+            includeImportWhen (s"${flags.kiamaPkg}.kiama.output.{Infix, LeftAssoc, NonAssoc, Prefix, RightAssoc}",
                                flags.definePrettyPrinter) <>
-            includeImportWhen ("org.bitbucket.inkytonik.kiama.output.{PrettyBinaryExpression, PrettyExpression, PrettyUnaryExpression}",
+            includeImportWhen ("org.kiama.output.{PrettyBinaryExpression, PrettyExpression, PrettyUnaryExpression}",
                                flags.definePrettyPrinter && flags.useKiama == 1) <>
             includeImportWhen ("org.bitbucket.inkytonik.kiama.output.{PrettyExpression, PrettyNaryExpression}",
                                flags.definePrettyPrinter && flags.useKiama == 2) <>
@@ -234,6 +234,9 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
         // The name of the pretty printer
         val name = s"${module}PrettyPrinter"
 
+        // The empty document to use
+        val emptyDocText = text (if (flags.useKiama >= 2) "emptyDoc" else "empty")
+
         // Buffer of cases that need to appear in a toParenDoc function since
         // they handle automatically parenthesized nodes.
         val toParenDocCases = ListBuffer[Doc] ()
@@ -244,7 +247,7 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
             "package" <+> pkg <@>
             line <>
             "import" <+> pkg <> "." <> module <> "Syntax._" <@>
-            "import org.bitbucket.inkytonik.kiama.output.{LeftAssoc, NonAssoc, PrettyExpression, PrettyPrinter => PP, ParenPrettyPrinter => PPP, RightAssoc}" <@>
+            s"import ${flags.kiamaPkg}.kiama.output.{LeftAssoc, NonAssoc, PrettyExpression, PrettyPrinter => PP, ParenPrettyPrinter => PPP, RightAssoc}" <@>
             (if (flags.useKiama == 2)
                 "import org.bitbucket.inkytonik.kiama.output.PrettyPrinterTypes.{Document, Width}"
              else
@@ -407,7 +410,7 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                             case Some (sep) =>
                                 "ssep" <+> parens (mapper <> comma <+> traverseElem (sep))
                             case None =>
-                                mapper <> ".getOrElse (empty)"
+                                mapper <> ".getOrElse" <+> parens(emptyDocText)
                         }
                     }
 
@@ -435,11 +438,11 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                                     "text" <+> parens (dquotes (s))
 
                             case Epsilon () =>
-                                text ("empty")
+                                emptyDocText
 
                             case NonTerminal (NTName (IdnUse (nt))) =>
                                 if (elem->elemtype == "Void")
-                                    text ("empty")
+                                    emptyDocText
                                 else {
                                     varcount = varcount + 1
                                     var varr = varName (varcount)
@@ -458,13 +461,13 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
 
                             case Opt (innerElem) =>
                                 if (elem->elemtype == "Void")
-                                    text ("empty")
+                                    emptyDocText
                                 else
                                     traverseMap (innerElem)
 
                             case Rep (_, innerElem, sep) =>
                                 if (elem->elemtype == "Void")
-                                    text ("empty")
+                                    emptyDocText
                                 else
                                     traverseMap (innerElem, Some (sep))
 
@@ -493,7 +496,7 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                         }
 
                     elems match {
-                        case Nil => List (text ("empty"))
+                        case Nil => List (emptyDocText)
                         case _   => elems.map (e => traverseElem (e))
                     }
 

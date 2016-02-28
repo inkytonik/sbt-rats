@@ -42,7 +42,8 @@ case class Flags (
     definePrettyPrinter : Boolean,
     includeKeywordTable : Boolean,
     includeBinarySupport : Boolean,
-    useKiama : Int
+    useKiama : Int,
+    kiamaPkg : String
 )
 
 object SBTRatsPlugin extends Plugin {
@@ -602,7 +603,7 @@ object SBTRatsPlugin extends Plugin {
             val locatablesToPositionsKiama1 =
                 List (
                     """import xtc\.tree\.Locatable;""".r ->
-                        """import org.bitbucket.inkytonik.kiama.util.Positions;
+                        """import org.kiama.util.Positions;
                           |import scala.util.parsing.input.Position;
                           |import sbtrats.LineColPosition;""".stripMargin,
                     """Locatable""".r ->
@@ -816,8 +817,9 @@ object SBTRatsPlugin extends Plugin {
                        ratsUseKiama) {
             (repetitionType, options, posns, comments, layout, words, ast, pp,
              kwtable, binary, kiama) =>
+                val kiamaPkg = if (kiama < 2) "org" else "org.bitbucket.inkytonik"
                 Flags (repetitionType, options, posns, comments, layout, words,
-                       ast, pp, kwtable, binary, kiama)
+                       ast, pp, kwtable, binary, kiama, kiamaPkg)
         }
 
     )
