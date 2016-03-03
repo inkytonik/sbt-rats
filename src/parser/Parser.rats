@@ -353,15 +353,15 @@ AltAnnotation AltAnnotation =
     i:IdnDef {
         yyValue = new Constructor (i);
     } /
-    d:DecDigits void:":":Symbol m:QualIdentifier void:":":Symbol t:QualIdentifier {
-        yyValue = new Transformation (Integer.parseInt (d), m, t);
+    n:Number void:":":Symbol m:QualIdentifier void:":":Symbol t:QualIdentifier {
+        yyValue = new Transformation (Integer.parseInt (n), m, t);
     } /
-    d:DecDigits {
-        yyValue = new Precedence (Integer.parseInt (d));
+    n:Number {
+        yyValue = new Precedence (Integer.parseInt (n));
     };
 
-String DecDigits =
-    [0-9]+;
+String Number =
+    DecDigits Spacing;
 
 // Rats! sections
 
@@ -460,6 +460,9 @@ String OctalEscape =
 
 String OctDigit =
     [0-7];
+
+String DecDigits =
+    [0-9]+;
 
 String DecDigit =
     [0-9];
