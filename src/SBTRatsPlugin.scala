@@ -637,7 +637,8 @@ object SBTRatsPlugin extends Plugin {
             val locatablesToPositionsKiama2 =
                 List (
                     """import xtc\.tree\.Locatable;""".r ->
-                        """import org.bitbucket.inkytonik.kiama.util.FileSource;
+                        """import org.bitbucket.inkytonik.kiama.parsing.Input;
+                          |import org.bitbucket.inkytonik.kiama.util.FileSource;
                           |import org.bitbucket.inkytonik.kiama.util.Message;
                           |import org.bitbucket.inkytonik.kiama.util.Position;
                           |import org.bitbucket.inkytonik.kiama.util.Positions;
@@ -712,12 +713,17 @@ object SBTRatsPlugin extends Plugin {
                         |  }
                         |
                         |  /** Return a Kiama message for a given parse error. */
-                        |  public Message errorToMessage (ParseError error) {
+                        |  public Message errorToMessage(ParseError error) {
                         |    Location loc = location(error.index);
                         |    Position pos = new Position(loc.line, loc.column, source);
                         |    positions.setStart(error, pos);
                         |    positions.setFinish(error, pos);
                         |    return new Message(error, error.msg);
+                        |  }
+                        |
+                        |  /** Return a Kiama input for a given parse index. */
+                        |  public Input indexToInput(int index) {
+                        |    return new Input(source, index);
                         |  }
                         |""".stripMargin
                 )
