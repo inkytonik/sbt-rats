@@ -804,9 +804,10 @@ class Analyser (flags : Flags) extends Environments {
         }
 
     /**
-     * Representation of a field by its name and its type.
+     * Representation of a field by its name and its type. For list
+     * fields, `zero` is true if the list can be empty.
      */
-    case class Field (name : String, tipe : String)
+    case class Field (name : String, tipe : String, zero : Boolean = true)
 
     /**
      * Traverse the elements on the RHS of a rule to collect fields.
@@ -822,11 +823,11 @@ class Analyser (flags : Flags) extends Environments {
         /**
          * Add a field for the given element if it's not Void.
          */
-        def addField (elem : Element) {
+        def addField (elem : Element, zero : Boolean = true) {
             if (elem->elemtype != "Void") {
                 val fieldNum = fields.length + 1
                 val fieldType = (alt->fieldTypes).getOrElse (fieldNum, elem->elemtype)
-                fields.append (Field (elem->fieldName, fieldType))
+                fields.append (Field (elem->fieldName, fieldType, zero))
             }
         }
 
@@ -845,8 +846,8 @@ class Analyser (flags : Flags) extends Environments {
                     addField (optElem)
                 case Nest (nestedElem, _) =>
                     addField (nestedElem)
-                case _ : Rep =>
-                    addField (elem)
+                case Rep (zero, _, _)=>
+                    addField (elem, zero)
                 case Seqn (l, r) =>
                     traverseElem (l)
                     traverseElem (r)
@@ -877,10 +878,10 @@ class Analyser (flags : Flags) extends Environments {
          */
         val uniqueFields =
             fields.result.foldLeft (Map[String,Int] (), List[Field] ()) {
-                case ((m, l), f @ Field (n, t)) =>
+                case ((m, l), f @ Field (n, t, z)) =>
                     if (isNotUnique (n)) {
                         val i = m.getOrElse (n, 0) + 1
-                        (m.updated (n, i), Field (n + i.toString, t) :: l)
+                        (m.updated (n, i), Field (n + i.toString, t, z) :: l)
                     } else
                         (m, f :: l)
             }

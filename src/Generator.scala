@@ -104,69 +104,97 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
             def toFields (alt : Alternative) : Doc = {
                 val fieldDocs =
                     (alt->fields).map {
-                        case Field (n, t) => n <+> colon <+> t
+                        case Field (n, t, _) => n <+> colon <+> t
                     }
                 parens (hsep (fieldDocs, comma))
             }
 
-            def toParenPPInfo (alt : Alternative) : Doc =
+            /*
+             * Returns two components: one list of extensions that the class for
+             * this alternative needs, and one list of definitions that go in the
+             * class.
+             */
+            def toParenPPInfo (alt : Alternative) : (List[Doc], List[Doc]) =
                 if (flags.definePrettyPrinter && (astRule->isParenPP))
                     if (flags.useKiama == 1)
                         (alt->orderOpPrecFixityNonterm) match {
                             case Some ((order, op, prec, fixity, nt1, nt2)) =>
-                                (order match {
-                                     case 1 =>
-                                        text ("with PrettyUnaryExpression ")
-                                     case 2 =>
-                                        text ("with PrettyBinaryExpression ")
-                                     case _ =>
-                                        sys.error (s"toParenPPInfo: unexpected order $order")
-                                 }) <>
-                                braces (
-                                    nest (
-                                        line <>
-                                        "val priority =" <+> value (prec) <@>
-                                        "val op =" <+> dquotes (op) <@>
-                                        "val fixity =" <+> value (fixity) <>
-                                        (order match {
-                                            case 1 =>
-                                                if (nt1 == "exp")
-                                                    empty
-                                                else
-                                                    line <>
-                                                    "val exp =" <+> nt1
-                                            case 2 =>
-                                                line <>
-                                                "val left =" <+> nt2 <> "1" <@>
-                                                "val right =" <+> nt2 <> "2"
-                                         })
-                                    ) <>
-                                    line
+                                (
+                                 List (
+                                     order match {
+                                         case 1 =>
+                                             text ("with PrettyUnaryExpression ")
+                                         case 2 =>
+                                             text ("with PrettyBinaryExpression ")
+                                         case _ =>
+                                             sys.error (s"toParenPPInfo: unexpected order $order")
+                                     }
+                                 ),
+                                 List (
+                                     "val priority =" <+> value (prec),
+                                     "val op =" <+> dquotes (op),
+                                     "val fixity =" <+> value (fixity)
+                                 ) ++
+                                     (order match {
+                                         case 1 =>
+                                             if (nt1 == "exp")
+                                                 Nil
+                                             else
+                                                 List ("val exp =" <+> nt1)
+                                         case 2 =>
+                                             List (
+                                                 "val left =" <+> nt2 <> "1",
+                                                 "val right =" <+> nt2 <> "2"
+                                             )
+                                      })
                                 )
                             case None =>
-                                empty
+                                (Nil, Nil)
                         }
                     else if (flags.useKiama == 2)
                         (alt->precFixity) match {
                             case (prec, fixity) =>
-                                text ("with PrettyNaryExpression") <+>
-                                braces (
-                                    nest (
-                                        line <>
-                                        "val priority =" <+> value (prec) <@>
-                                        "val fixity =" <+> value (fixity)
-                                    ) <>
-                                    line
+                                (
+                                 List (text ("with PrettyNaryExpression")),
+                                 List (
+                                     "val priority =" <+> value (prec),
+                                     "val fixity =" <+> value (fixity)
+                                 )
                                 )
                         }
                     else
-                        empty
+                        (Nil, Nil)
                 else
-                    empty
+                    (Nil, Nil)
 
-            def toConcreteClass (parent : String) (alt : Alternative) : Doc =
+            def toRequires (alt : Alternative) : List[Doc] =
+                (alt->fields).collect {
+                    case Field (n, t, false) =>
+                        "require" <+> parens (
+                            n <> ".length > 0" <> comma <+>
+                            s""""$n field can't be empty""""
+                        )
+                }
+
+            def toConcreteClass (parent : String) (alt : Alternative) : Doc = {
+                val (ppext, pp) = toParenPPInfo (alt)
+                val req = toRequires (alt)
+                val bodylines = if (pp.isEmpty) vsep (req)
+                                else if (req.isEmpty) vsep (pp)
+                                else vsep (pp) <@> vsep (req)
+                val body = if (pp.isEmpty && req.isEmpty)
+                               empty
+                           else
+                               braces (
+                                   nest (
+                                       line <>
+                                       bodylines
+                                   ) <>
+                                   line
+                               )
                 "case class" <+> text (alt->constr) <+> toFields (alt) <+> "extends" <+>
-                    parent <+> toParenPPInfo (alt)
+                    parent <+> hsep (ppext) <+> body
+            }
 
             // Common super class clause
             val superClass =
