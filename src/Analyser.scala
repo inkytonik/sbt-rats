@@ -34,8 +34,8 @@ class Analyser (flags : Flags) extends Environments {
             case u @ IdnUse (i) if u->entity == UnknownEntity () =>
                 message (u, s"'$i' is not declared")
 
-            case u @ IdnUse (i) if !(u->idntypeok) =>
-                message (u, s"a ${u->idntypedesc} can't be used here")
+            case u @ IdnUse (i) if u->idnkindok != None =>
+                message (u, s"$i can't be used here since ${(u->idnkindok).get}")
 
             case r : ASTRule if !missingPrecedences (r).isEmpty =>
                 val levelStr = missingPrecedences (r).mkString (" ")
@@ -275,18 +275,26 @@ class Analyser (flags : Flags) extends Environments {
 
         }
 
-    lazy val idntypeok : Identifier => Boolean =
+    lazy val idnastype : Identifier => Boolean =
+        attr {
+            case idn =>
+                idn.parent.isInstanceOf[ASTRule] ||
+                idn.parent.isInstanceOf[RatsRule] ||
+                idn.parent.isInstanceOf[StringRule]
+        }
+
+    lazy val idnkindok : Identifier => Option[String] =
         attr {
             case idn =>
                 (idn->entity) match {
                     case _ : Cons =>
-                        false
-                    case _ : Type =>
-                        idn.parent.isInstanceOf[ASTRule] ||
-                            idn.parent.isInstanceOf[RatsRule] ||
-                            idn.parent.isInstanceOf[StringRule]
+                        Some ("constructors cannot be used")
+                    case _ : Type if !(idn->idnastype) =>
+                        Some ("types can only be used in rule headings")
+                    case _ : NonTerm if (idn->idnastype) && (idn.name != idn->idntype) =>
+                        Some ("this non-terminal is not a type")
                     case _ =>
-                        true
+                        None
                 }
         }
 
