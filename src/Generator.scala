@@ -636,6 +636,7 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
             |    def create[T] (hd : T) : L[T] = hd :: Nil
             |    def create[T] (hd : T, nxt : T) : L[T] = hd :: nxt :: Nil
             |    def create[T] (hd : T, tl : L[T]) : L[T] = hd :: tl
+            |    def reverse[T] (l : L[T]) : L[T] = l.reverse
             |}
             |
             |object SVector {
@@ -644,6 +645,7 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
             |    def create[T] (hd : T) : L[T] = hd +: Vector ()
             |    def create[T] (hd : T, nxt : T) : L[T] = hd +: nxt +: Vector ()
             |    def create[T] (hd : T, tl : L[T]) : L[T] = hd +: tl
+            |    def reverse[T] (l : L[T]) : L[T] = l.reverse
             |}
             |
             |object ParserSupport {

@@ -545,8 +545,8 @@ object SBTRatsPlugin extends Plugin {
                            |import scala.collection.immutable.$seqType;
                            |import sbtrats.ParserSupport;
                            |import sbtrats.S$seqType;""".stripMargin,
-                    """(Pair<.*>) (v[0-9]+) = ([^.]+\.reverse\(\);)""".r ->
-                        """$1 $2 = ($1)$3""",
+                    """(Pair<.*>) (v[0-9]+) = ([^.]+)\.reverse\(\);""".r ->
+                        s"""$$1 $$2 = S$seqType.reverse($$3);""",
                     """Pair\.empty\(\)""".r ->
                         s"""S$seqType.empty()""",
                     """new Pair<.*>\(""".r ->
