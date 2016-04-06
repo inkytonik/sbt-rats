@@ -8,7 +8,7 @@ organization in ThisBuild := "org.bitbucket.inkytonik.sbt-rats"
 
 // Scala compiler settings
 
-scalaVersion := "2.10.5"
+scalaVersion := "2.10.6"
 
 scalacOptions ++= Seq ("-deprecation", "-feature", "-unchecked")
 
