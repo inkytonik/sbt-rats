@@ -14,13 +14,13 @@ The rest of this page describes how to install, configure and use the `sbt-rats`
 
 We do not describe full details of using sbt, Rats! or Kiama. Please consult their respective documentation. In particular, a description of the Rats! specification notation can be found in the [Rats! introduction](http://cs.nyu.edu/rgrimm/xtc/rats-intro.html).
 
-The plugin has most recently been tested with Scala 2.10.5, sbt 0.13.8, Rats! from xtc 2.4.0 and Kiama 1.8.0/2.0.0-SNAPSHOT, but may work with other versions.
+The plugin has most recently been tested with Scala 2.10.6, sbt 0.13.11, Rats! from xtc 2.4.0 and Kiama 1.8.0/2.0.0, but may work with other versions.
 
 ## Instantiating the plugin
 
 To use the plugin in a project, add a line like the following to your `project/plugins.sbt` file, selecting the version of the plugin you want to use.
 
-    addSbtPlugin ("com.googlecode.sbt-rats" % "sbt-rats" % "2.2.0-SNAPSHOT")
+    addSbtPlugin ("com.googlecode.sbt-rats" % "sbt-rats" % "2.3.0")
 
 In versions of sbt before 0.12.0, you will also have to add the resolver for the sbt community ivy repository. Add these lines or equivalent to the start of your `project/plugins.sbt` file.
 
@@ -34,6 +34,15 @@ If you want to generate pretty-printers or integrate in other ways with Kiama, y
         Seq (
             "com.googlecode.kiama" %% "kiama" % "1.8.0"
         )
+
+for version 1 of Kiama, or
+
+    libraryDependencies ++=
+        Seq (
+            "org.bitbucket.inkytonik.kiama" %% "kiama" % "2.0.0"
+        )
+
+for version 2.
 
 Finally, add the plugin settings to your `build.sbt`:
 
