@@ -4,11 +4,13 @@ This release of the sbt-rats plugin contains the following changes:
 
 * Zero is now the highest precedence level, not one.
 
-* The `ratsUseScalaLists` option has been replaced by `ratsScalaRepetitionType` which allows the collection type used for repetitive constructs to be specified. Can be set to `Some (ListType)` or `Some (VectorType)` to choose `List` or `Vector`, respectively. The default is `None` which means don't use Scala collections.
+* The `ratsUseScalaLists` setting has been replaced by `ratsScalaRepetitionType` which allows the collection type used for repetitive constructs to be specified. Can be set to `Some (ListType)` or `Some (VectorType)` to choose `List` or `Vector`, respectively. The default is `None` which means don't use Scala collections.
 
 ### New
 
 * If a `+` operator is used in a syntax definition and case classes are being generated, the field for the repeated element will be a vector. In this version, the generated case class also gets a `require` call that ensures no instance can be created with an empty vector, thereby enforcing the "one or more" constraint of the `+` operator.
+
+* Generate an `indexToInput` method to improve connection to Kiama. This method is useful if you want to use Kiama support, particularly for testing, since it enables a Rats! parsing location to be used as a Kiama one.
 
 * Generated pretty-printer traits now include a `show` method that returns the format object as a string, in addition to `format` which returns a formatted document.
 
@@ -30,4 +32,12 @@ This release of the sbt-rats plugin contains the following changes:
 
 * Properly set source locations of list constructs built by user-level repeated constructs or constructs built by repetitions that arise from left recursion removal.
 
+* Fixed bug in Syntax parser that disallowed spacing between the number and the colon of a transformation annotation.
+
 * Added a check of syntax definitions to outlaw using a non-terminal as a type if the non-terminal has a different type of its own. E.g., if you have `B : C = ...` and `A : B = ...` then `B` can't be used as a type for `A` since it has a different type `C`. Since both `B` and `A` are concrete types, allowing this kind of thing would result in case class extension which is not desirable and elicits a warning from the Scala compiler. The example would be fine if `B` was its own type, as in `B = ...`. In this case, `A` just defines alternative ways to form a `B`.
+
+* The creation of sequence semantic values has been altered slightly to remove Java warnings about unchecked type casts.
+
+### Other
+
+* Move to Scala 2.10.6, sbt 0.13.11
