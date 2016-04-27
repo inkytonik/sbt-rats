@@ -339,6 +339,7 @@ Suppose that you have a rule where the left-hand side non-terminal occurs as the
     Exp =
       | Exp "+" Exp                         {Add, left, 2}
       | Exp "*" Exp                         {Mul, left, 1}
+      | '-' Exp                             {Neg}
       | Number                              {Num}
       | '(' Exp ')'.
 
@@ -347,12 +348,15 @@ The plugin transforms these rules into equivalent iterative forms, somewhat simp
     Exp  = Exp2.
     Exp2 = Exp1 ("+" Exp1)*.
     Exp1 = Exp0 ("*" Exp0)*.
-    Exp0 = Number
+    Exp0 = "-" Exp0
+         | Number
          | "(" Exp ")".
 
 The annotations on the original rules give the plugin information about how to do the translation. You can give the associativity (left, right or none; left is the default) and the precedence level (a number, lower number means higher precedence; 0 is the default). In the example the precedence level annotations tell the plugin that the multiplication binds tighter than the addition which leads to the different versions of `Exp`. Moreover, the plugin uses the annotations to make sure that the correct tree is constructed by the iterative rules.
 
 The precedence annotations should define a sequence of levels from the highest precedence (level zero) to the lowest precedence level (two in the example above). It is an error to omit a level.
+
+Note that the lowest level in the example includes a recursive alternative for the parenthesisation of expressions. In this case no constructor has been specified, so parenthesised expressions will not be represented explicitly in the abstract syntax tree. This outcome is usually what you want for programming languages since the parenthesisation doesn't contribute any additional semantics, it just controls grouping at the parsing stage. If you have an alternative with a similar form for which a semantic contribution is needed, you can ensure that such constructs are represented in the tree by specifying a constructor, as is done for the `Neg` case above.
 
 ## Value conversion
 
