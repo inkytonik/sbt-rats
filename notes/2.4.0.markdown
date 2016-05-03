@@ -1,0 +1,5 @@
+This release of the sbt-rats plugin contains the following changes:
+
+### Fixes
+
+* Fixed a bug that caused bad pretty-printing code to be generated if a recursive non-terminal unless parenthesized pretty-printing was enabled.

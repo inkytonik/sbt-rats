@@ -479,7 +479,9 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                                         if ((elem->elemtype == "String") ||
                                             (elem->elemtype == "Token"))
                                             "value" <+> args
-                                        else if ((flags.useKiama == 2) && (nt == astRule->lhs))
+                                        else if (astRule->isParenPP &&
+                                                 (flags.useKiama == 2) &&
+                                                 (nt == astRule->lhs))
                                             traverseChild (elem, varr)
                                         else
                                             "toDoc" <+> args
