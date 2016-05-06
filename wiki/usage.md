@@ -20,7 +20,7 @@ The plugin has most recently been tested with Scala 2.10.6, sbt 0.13.11, Rats! f
 
 To use the plugin in a project, add a line like the following to your `project/plugins.sbt` file, selecting the version of the plugin you want to use.
 
-    addSbtPlugin ("com.googlecode.sbt-rats" % "sbt-rats" % "2.3.0")
+    addSbtPlugin ("org.bitbucket.inkytonik.sbt-rats" % "sbt-rats" % "2.3.0")
 
 In versions of sbt before 0.12.0, you will also have to add the resolver for the sbt community ivy repository. Add these lines or equivalent to the start of your `project/plugins.sbt` file.
 
