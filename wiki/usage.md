@@ -101,7 +101,11 @@ A typical error message is:
 
 ## Debugging a generated parser
 
-The plugin provides the `ratsVerboseOutput` build option which turns on debugging output in the generated parser. The output will contain information about parses that are being attempted, where in the input the attempt is being made, and the result of the attempt.
+To turn on debugging output in the generated parser, use the `verbose` option  in your syntax specification or Rats! file. If you are using a syntax specification, add the following after the header but before any syntax rules:
+
+    option verbose;
+
+The output will contain information about parses that are being attempted, where in the input the attempt is being made, and the result of the attempt.
 
 ## Modifying the parser for use with Scala
 
@@ -117,7 +121,7 @@ The plugin can post-process the generated parser to make it more usable from Sca
 
 All of these settings are false by default. To override the default, add to your `build.sbt`.  For example, to turn on Scala lists:
 
-    ratsUseScalaLists := true
+    ratsScalaRepetitionType := true
 
 ## Syntax mode
 
