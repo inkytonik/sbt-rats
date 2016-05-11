@@ -282,6 +282,9 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                         else
                             bind (text (nt->ntname))
 
+                    case And (elem) =>
+                        "&" <> parens (toElem (elem))
+
                     case Not (elem) =>
                         "!" <> parens (toElem (elem))
 
@@ -330,6 +333,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                     case Block (_, n) =>
                         toBlock (n)
 
+                    // Formatting directives
                     case _ =>
                         empty
                 }

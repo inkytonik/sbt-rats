@@ -57,6 +57,7 @@ case class SingletonAction (tipe : String) extends Action
 case class TailAction (tipe : String, constr : String) extends Action
 
 sealed abstract class Element extends ASTNode
+case class And (e : Element) extends Element
 case class Alt (l : Element, r : Element) extends Element
 case class Block (name : String, n : Int) extends Element
 case class CharClass (s : String) extends Element

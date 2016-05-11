@@ -169,29 +169,30 @@ The structure of the construct referred to by _name_ must be defined completely 
 
 The alternatives are specified using the following expression forms. Note that these operators should be interpreted as those from parsing expression grammars, not context-free grammars. The main difference is that the vertical bar above and the slash below are _ordered_ in that the choices are tried in the order written. See the Rats! documentation for more detail.
 
-    name    identifier        match whatever <name> is defined to be
+    name    identifier           match whatever <name> is defined to be
 
-    _       wildcard          match any single character
+    _       wildcard             match any single character
 
-    'foo'   literal           match exactly "foo"
-    "foo"   literal           match exactly "foo"
+    'foo'   literal              match exactly "foo"
+    "foo"   literal              match exactly "foo"
 
-    [cs]    character class   match any single character defined by cs
+    [cs]    character class      match any single character defined by cs
 
-    e*      repetition        match e zero or more times
-    e+      repetition        match e one or more times
-    e?      optionality       match e at most once
+    e*      repetition           match e zero or more times
+    e+      repetition           match e one or more times
+    e?      optionality          match e at most once
 
-    e ** f  separation        e zero or more times separated by f
-    e ++ f  separation        e one or more times separated by f
+    e ** f  separation           e zero or more times separated by f
+    e ++ f  separation           e one or more times separated by f
 
-    e1 / e2  choice           match e1 or if e1 doesn't match, match e2
+    e1 / e2  choice              match e1 or if e1 doesn't match, match e2
 
-    e1 e2   sequence          match e1 followed by match e2
+    e1 e2   sequence             match e1 followed by match e2
 
-    !e      negation          match iff e doesn't match
+    !e      negative lookahead   match when e doesn't match (consumes no input)
+    &e      positive lookahead   match when e matches (consumes no input)
 
-    (e)     bracketing        match e
+    (e)     bracketing           match e
 
 Literals can contain escape characters as defined by Rats!.
 
@@ -239,7 +240,7 @@ Note that the multi-line comment (`MLComment`) is recursive. Thus, this definiti
 
 The other main kind of rule in a syntax specification is an _abstract syntax tree rule_. In contrast to string rules which focus on lexical structure, abstract syntax tree rules are intended to express syntactic structure. The values of abstract syntax tree rules will in general be nodes of an abstract syntax tree structure that is being built by the parser.
 
-Since abstract syntax tree rules correspond to tree constructs, their form is restricted. Specifically, the right-hand side of an abstract syntax tree rule can only contain identifiers, repetition, optionality, sequencing and negation. Repetition and optionality constructs can only contain single identifiers. These restrictions are in place to ensure that the plugin can determine the corresponding tree structure automatically.
+Since abstract syntax tree rules correspond to tree constructs, their form is restricted. Specifically, the right-hand side of an abstract syntax tree rule can only contain identifiers, repetition, optionality, sequencing, negative lookahead and positive lookahead. Repetition and optionality constructs can only contain single identifiers. These restrictions are in place to ensure that the plugin can determine the corresponding tree structure automatically.
 
 For example, here is the definition of simple imperative language statements.
 

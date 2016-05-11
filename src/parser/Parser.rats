@@ -220,6 +220,9 @@ Element Primary =
     void:"!":Symbol p:Primary {
         yyValue = new Not (p);
     } /
+    void:"&":Symbol p:Primary {
+        yyValue = new And (p);
+    } /
     Literal Spacing /
     i:IdnUse {
         yyValue = new NonTerminal (new NTName (i));
@@ -253,6 +256,9 @@ Element ASTPrimary =
     void:"(":Symbol ASTAtMostOneNonterm void:")":Symbol /
     void:"!":Symbol p:ASTPrimary {
         yyValue = new Not (p);
+    } /
+    void:"&":Symbol p:ASTPrimary {
+        yyValue = new And (p);
     } /
     ASTLiteral /
     ASTNonterm;
@@ -489,7 +495,7 @@ String Symbol =
 
 transient String SymbolCharacters =
     "**" / "++" /
-    ":" / "=" / "/" / "|" / "{" / "}" / "(" / ")" / "!" / "." / "," /
+    ":" / "=" / "/" / "|" / "{" / "}" / "(" / ")" / "!" / "&" / "." / "," /
     "*" / "+" / "?" / "[" / "]" / ";" / "\\n";
 
 transient void Spacing   = (Space / SLComment / MLComment)*;
