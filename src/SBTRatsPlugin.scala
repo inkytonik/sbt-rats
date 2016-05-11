@@ -827,7 +827,7 @@ object SBTRatsPlugin extends Plugin {
 
         ratsUseKiama := 0,
 
-        ratsFlags <<= (ratsScalaRepetitionType, ratsUseScalaPositions,
+        ratsFlags <<= (ratsScalaRepetitionType, ratsUseScalaOptions,
                        ratsUseScalaPositions, ratsUseDefaultComments,
                        ratsUseDefaultLayout, ratsUseDefaultWords,
                        ratsDefineASTClasses, ratsDefinePrettyPrinter,
