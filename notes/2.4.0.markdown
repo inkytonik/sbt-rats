@@ -1,5 +1,11 @@
 This release of the sbt-rats plugin contains the following changes:
 
+### Potentially Breaking Changes
+
+* The old functionality of the `ratsUseDefaultLayout` setting has been split into a new setting `ratsUseDefaultSpacing` that controls whether the default `Spacing` definition should be emitted, and a new interpretation of `ratsUseDefaultLayout` that now just controls whether the default `Space` and `EOL` definitions should be emitted.
+
+* The definition of `EOF` is now always emitted on the grounds that there are no other useful definitions for it and it is useful in every syntax specification.
+
 ### Fixes
 
 * Fixed a bug that caused bad pretty-printing code to be generated for a recursive non-terminal unless parenthesized pretty-printing was enabled.

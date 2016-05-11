@@ -495,14 +495,21 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
          */
         def toDefaults : Doc = {
 
+            val spacingSpec =
+                if (flags.useDefaultSpacing)
+                    """
+                    |// Default spacing specification
+                    |public transient void Spacing   = (Space / Comment)*;
+                    |""".stripMargin
+                else
+                    ""
+
             val layoutSpec =
                 if (flags.useDefaultLayout)
                     """
                     |// Default layout specification
-                    |public transient void Spacing   = (Space / Comment)*;
                     |public transient void Space     = ' ' / '\t' / '\f' / EOL;
                     |public transient void EOL       = '\r' '\n' / '\r' / '\n';
-                    |public transient void EOF       = !_;
                     |""".stripMargin
                 else
                     ""
@@ -540,9 +547,11 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                 else
                     ""
 
+            string (spacingSpec) <@>
             string (layoutSpec) <@>
             string (commentSpec) <@>
-            string (wordsSpec)
+            string (wordsSpec) <@>
+            "public transient void EOF      = !_;"
 
         }
 

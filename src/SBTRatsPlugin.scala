@@ -36,6 +36,7 @@ case class Flags (
     useScalaPositions : Boolean,
     useScalaOptions : Boolean,
     useDefaultComments : Boolean,
+    useDefaultSpacing : Boolean,
     useDefaultLayout : Boolean,
     useDefaultWords : Boolean,
     defineASTClasses : Boolean,
@@ -109,7 +110,16 @@ object SBTRatsPlugin extends Plugin {
 
     /**
      * If a syntax definition is being used, generate a default specification
-     * for layout (i.e., whitespace and comment handling).
+     * for spacing (i.e., whitespace and comment handling).
+     */
+    val ratsUseDefaultSpacing = SettingKey[Boolean] (
+        "rats-use-default-spacing",
+            "Use a default definition for spacing (syntax mode only)"
+    )
+
+    /**
+     * If a syntax definition is being used, generate a default specification
+     * for layout (i.e., Space and EOL).
      */
     val ratsUseDefaultLayout = SettingKey[Boolean] (
         "rats-use-default-layout",
@@ -811,11 +821,13 @@ object SBTRatsPlugin extends Plugin {
 
         ratsUseScalaOptions := false,
 
+        ratsUseDefaultComments := true,
+
+        ratsUseDefaultSpacing := true,
+
         ratsUseDefaultLayout := true,
 
         ratsUseDefaultWords := true,
-
-        ratsUseDefaultComments := true,
 
         ratsDefineASTClasses := false,
 
@@ -827,17 +839,15 @@ object SBTRatsPlugin extends Plugin {
 
         ratsUseKiama := 0,
 
-        ratsFlags <<= (ratsScalaRepetitionType, ratsUseScalaOptions,
-                       ratsUseScalaPositions, ratsUseDefaultComments,
-                       ratsUseDefaultLayout, ratsUseDefaultWords,
-                       ratsDefineASTClasses, ratsDefinePrettyPrinter,
-                       ratsIncludeKeywordTable, ratsIncludeBinarySupport,
-                       ratsUseKiama) {
-            (repetitionType, options, posns, comments, layout, words, ast, pp,
-             kwtable, binary, kiama) =>
-                val kiamaPkg = if (kiama < 2) "org" else "org.bitbucket.inkytonik"
-                Flags (repetitionType, options, posns, comments, layout, words,
-                       ast, pp, kwtable, binary, kiama, kiamaPkg)
+        ratsFlags := {
+            val kiamaPkg = if (ratsUseKiama.value < 2) "org" else "org.bitbucket.inkytonik"
+            Flags (ratsScalaRepetitionType.value, ratsUseScalaOptions.value,
+                   ratsUseScalaPositions.value, ratsUseDefaultComments.value,
+                   ratsUseDefaultSpacing.value, ratsUseDefaultLayout.value,
+                   ratsUseDefaultWords.value, ratsDefineASTClasses.value,
+                   ratsDefinePrettyPrinter.value, ratsIncludeKeywordTable.value,
+                   ratsIncludeBinarySupport.value, ratsUseKiama.value,
+                   kiamaPkg)
         }
 
     )

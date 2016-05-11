@@ -391,7 +391,9 @@ The lexical structure of a language, including layout (spacing and comments), ca
 
 For this reason, by default the plugin uses default definitions for some lexical aspects. The use of the defaults is controlled by the following settings, which are all true by default.
 
- * `ratsUseDefaultLayout`: use the definition of `Spacing` shown earlier to define the space between lexical symbols. Note that you will still need to use `Spacing` in various places to get the desired effect.  For example, if you define a new lexical symbol form, you should follow it with `Spacing` so that layout is allowed after an instance of that form. Turn this setting off if you want to define your own `Spacing`.
+ * `ratsUseDefaultSpacing`: use the definition of `Spacing` shown earlier to define the space between lexical symbols. Note that you will still need to use `Spacing` in various places to get the desired effect.  For example, if you define a new lexical symbol form, you should follow it with `Spacing` so that layout is allowed after an instance of that form. Turn this setting off if you want to define your own `Spacing`.
+
+ * `ratsUseDefaultLayout`: use the definition of `Space` and `EOL` shown earlier to define useful patterns for matching whitespace.
 
  * `ratsUseDefaultComments`: use the definition of `Comment` shown earlier to define the form of comments which are part of the `Spacing`. In essence, these are the C language family comments in both single line and multiple line versions, with arbitrary nesting of multiple line comments. Note that if you turn this setting off, you will need to define `Comment` yourself if you use the default layout.
 
