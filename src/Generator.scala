@@ -362,7 +362,7 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                 "astNode match {" <>
                     nest (
                         if (grammar.rules.isEmpty)
-                            "case _ => empty"
+                            "case _ => " <> emptyDocText
                         else
                             hsep (grammar.rules map toToDocCase)
                     ) <@>
