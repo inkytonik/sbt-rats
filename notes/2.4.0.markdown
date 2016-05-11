@@ -5,3 +5,5 @@ This release of the sbt-rats plugin contains the following changes:
 * Fixed a bug that caused bad pretty-printing code to be generated for a recursive non-terminal unless parenthesized pretty-printing was enabled.
 
 * Fixed a bug that caused the generated parser not to compile when the verbose option was used.
+
+* Fix bugs in generated code if the syntax spec only contains String-valued non-terminals.

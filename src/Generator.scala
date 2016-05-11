@@ -360,9 +360,12 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
             nest (
                 line <>
                 "astNode match {" <>
-                nest (
-                    hsep (grammar.rules map toToDocCase)
-                ) <@>
+                    nest (
+                        if (grammar.rules.isEmpty)
+                            "case _ => empty"
+                        else
+                            hsep (grammar.rules map toToDocCase)
+                    ) <@>
                 "}"
             )
 
