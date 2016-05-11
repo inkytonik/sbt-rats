@@ -251,6 +251,9 @@ Element ASTFactor =
 
 Element ASTPrimary =
     void:"(":Symbol ASTAtMostOneNonterm void:")":Symbol /
+    void:"!":Symbol p:ASTPrimary {
+        yyValue = new Not (p);
+    } /
     ASTLiteral /
     ASTNonterm;
 
