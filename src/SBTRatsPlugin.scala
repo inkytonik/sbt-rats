@@ -426,7 +426,10 @@ object SBTRatsPlugin extends Plugin {
 
             def loc (n : Node) : String = {
                 val loc = n.getLocation
-                s"${loc.file}:${loc.line}: "
+                if (loc == null)
+                    "unknown location: "
+                else
+                    s"${loc.file}:${loc.line}: "
             }
 
             override def error (msg : String) {

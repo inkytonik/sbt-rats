@@ -7,3 +7,5 @@ This release of the sbt-rats plugin contains the following changes:
 * Fixed a bug that caused the generated parser not to compile when the verbose option was used.
 
 * Fix bugs in generated code if the syntax spec only contains String-valued non-terminals.
+
+* Protect against Rats! errors that don't have a corresponding location. In some circumstances, including when a `String`-valued production has an unreachable alternative, Rats! will generate an error at a null location. `sbt-rats` previously would crash trying to access this location. We now generate an error saying that the location is unknown.
