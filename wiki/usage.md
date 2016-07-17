@@ -121,7 +121,7 @@ The plugin can post-process the generated parser to make it more usable from Sca
 
 All of these settings are false by default. To override the default, add to your `build.sbt`.  For example, to turn on Scala lists:
 
-    ratsScalaRepetitionType := true
+    ratsScalaRepetitionType := Some (ListType)
 
 ## Syntax mode
 
