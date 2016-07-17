@@ -47,8 +47,9 @@ class Desugarer (analyser : Analyser) {
      * Look for seperator constructs `x ** y` and `x ++ y` (represented by
      * `RepSep` nodes) and replace with auxiliary rules which build the
      * list value. The following translations are made:
-     *   `x ++ y` turns into `nt = x y nt | x.`
-     *   `x ** y` turns into `nt = nt1 / .` and nt1 defined as in `++` case
+     *   `x ++ y` turns into a use of nt where `nt = x (y x)*`
+     *   `x ** y` turns into a use of nt where `nt = nt1 / .` and
+     *                  nt1 is defined as in `++` case
      * where `nt` and `nt1` are fresh non-terminals.
      */
     def removeSeparatorConstructs (grammar : Grammar) : Grammar = {
@@ -93,19 +94,14 @@ class Desugarer (analyser : Analyser) {
             // Get the appropriate RHS non-terminal for this rule
             val nt2 = if (zero) nt1 else nt
 
-            // alt: elem sep nt
-            val alt1 = Alternative (List (elem, sep, NonTerminal (NTGen (nt2, listtype))),
-                                    Nil,
-                                    ConsAction (eltype))
-
-            // alt: elem
-            val alt2 = Alternative (List (deepclone (elem)),
-                                    Nil,
-                                    SingletonAction (eltype))
+            // alt: elem (sep elem)*
+            val elem2 = deepclone (elem)
+            val alt = Alternative (List (elem, Rep (true, Seqn (sep, elem2), Epsilon ())),
+                                   Nil,
+                                   ConsAction (eltype))
 
             // Add the rule
-            val alts = List (alt1, alt2)
-            val newRule = ASTRule (IdnDef (nt2), IdnUse (listtype), alts)
+            val newRule = ASTRule (IdnDef (nt2), IdnUse (listtype), List (alt))
             newRules.append (newRule)
 
             // Return a reference to the new entry point nonterminal
