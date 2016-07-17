@@ -841,8 +841,8 @@ object SBTRatsPlugin extends Plugin {
 
         ratsFlags := {
             val kiamaPkg = if (ratsUseKiama.value < 2) "org" else "org.bitbucket.inkytonik"
-            Flags (ratsScalaRepetitionType.value, ratsUseScalaOptions.value,
-                   ratsUseScalaPositions.value, ratsUseDefaultComments.value,
+            Flags (ratsScalaRepetitionType.value, ratsUseScalaPositions.value,
+                   ratsUseScalaOptions.value, ratsUseDefaultComments.value,
                    ratsUseDefaultSpacing.value, ratsUseDefaultLayout.value,
                    ratsUseDefaultWords.value, ratsDefineASTClasses.value,
                    ratsDefinePrettyPrinter.value, ratsIncludeKeywordTable.value,
