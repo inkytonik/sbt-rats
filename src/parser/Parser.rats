@@ -272,29 +272,36 @@ Element TreeNonterm =
     };
 
 Element TreeAtMostOneNonterm =
-    i:TreeNonterm ls:TreeLiterals {
+    i:TreeNonterm ls:TreeNoNonterms {
         yyValue = new Seqn (i, ls);
     } /
     l:TreeLiteral es:TreeAtMostOneNonterm {
         yyValue = new Seqn (l, es);
     } /
+    f:Formatting es:TreeAtMostOneNonterm {
+        yyValue = new Seqn (f, es);
+    } /
     TreeLiteral /
     TreeNonterm;
 
-Element TreeLiterals =
-    seed:TreeLiteral actions:TreeLiteralsTail+ {
+Element TreeNoNonterms =
+    seed:TreeNoNonterm actions:TreeNoNontermsTail+ {
         yyValue = apply (actions, seed);
     } /
-    TreeLiteral;
+    TreeNoNonterm;
 
-constant Action<Element> TreeLiteralsTail =
-    right:TreeLiteral {
+constant Action<Element> TreeNoNontermsTail =
+    right:TreeNoNonterm {
         yyValue = new Action<Element> () {
             public Element run (Element left) {
                 return new Seqn (left, right);
             }
         };
     };
+
+Element TreeNoNonterm =
+    TreeLiteral /
+    Formatting;
 
 Element TreeLiteral =
     Literal Spacing;

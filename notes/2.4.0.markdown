@@ -12,6 +12,8 @@ This release of the sbt-rats plugin contains the following changes, new features
 
 * A new `&` construct has been added to provide access to the Rats! positive lookahead operator. Use it as `&P` which means succeed if and only if `P` succeeds at the current position, but consume no input and build no semantic value. This operator works in both String and AST rules.
 
+* Formatting directives are now allowed in parenthesized tree rule elements, so constructs such as the following are now possible: `(\n foo) ** ','`.
+
 ### Fixes
 
 * Fixed a bug that caused bad pretty-printing code to be generated for a recursive non-terminal unless parenthesized pretty-printing was enabled.
