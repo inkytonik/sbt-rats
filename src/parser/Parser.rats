@@ -119,7 +119,7 @@ Rule GrammarRule =
     i:IdnDef void:":":Symbol t:StringRuleType void:"=":Symbol alts:StringAlternatives {
         yyValue = new StringRule (i, t, alts);
     } /
-    i:IdnDef t:Type? anns:RuleAnnotations? void:"=":Symbol alts:ASTAlternatives {
+    i:IdnDef t:Type? anns:RuleAnnotations? void:"=":Symbol alts:TreeAlternatives {
         yyValue = new ASTRule (i, t, alts, false, anns);
     };
 
@@ -151,30 +151,30 @@ IdnUse Type =
 // Alternatives
 
 Pair<Element> StringAlternatives =
-    h:Element tl:(void:"|":Symbol Element)* {
+    h:StringElement tl:(void:"|":Symbol StringElement)* {
         yyValue = SList.create (h, tl);
     };
 
-Pair<Alternative> ASTAlternatives =
-    h:ASTAlternative tl:(void:"|":Symbol ASTAlternative)* {
+Pair<Alternative> TreeAlternatives =
+    h:TreeAlternative tl:(void:"|":Symbol TreeAlternative)* {
         yyValue = SList.create (h, tl);
     };
 
-Alternative ASTAlternative =
-    es:ASTElement* as:AltAnnotations? {
+Alternative TreeAlternative =
+    es:TreeElement* as:AltAnnotations? {
         yyValue = new Alternative (es, as, new DefaultAction ());
     };
 
-// Elements
+// String Elements
 
-Element Element =
-    seed:Element1 actions:AltTail+ {
+Element StringElement =
+    seed:StringElement1 actions:StringElementAltTail+ {
         yyValue = apply (actions, seed);
     } /
-    Element1;
+    StringElement1;
 
-constant Action<Element> AltTail =
-    void:"/":Symbol right:Element {
+constant Action<Element> StringElementAltTail =
+    void:"/":Symbol right:StringElement {
         yyValue = new Action<Element> () {
             public Element run (Element left) {
                 return new Alt (left, right);
@@ -182,14 +182,14 @@ constant Action<Element> AltTail =
         };
     };
 
-Element Element1 =
-    seed:Element2 actions:SeqnTail+ {
+Element StringElement1 =
+    seed:StringElement2 actions:StringElementSeqnTail+ {
         yyValue = apply (actions, seed);
     } /
-    Element2;
+    StringElement2;
 
-constant Action<Element> SeqnTail =
-    right:Element2 {
+constant Action<Element> StringElementSeqnTail =
+    right:StringElement2 {
         yyValue = new Action<Element> () {
             public Element run (Element left) {
                 return new Seqn (left, right);
@@ -197,7 +197,7 @@ constant Action<Element> SeqnTail =
         };
     };
 
-Element Element2 =
+Element StringElement2 =
     e1:Primary void:"**":Symbol e2:Primary {
         yyValue = new Rep (true, e1, e2);
     } /
@@ -216,7 +216,7 @@ Element Element2 =
     Primary;
 
 Element Primary =
-    void:"(":Symbol Element void:")":Symbol /
+    void:"(":Symbol StringElement void:")":Symbol /
     void:"!":Symbol p:Primary {
         yyValue = new Not (p);
     } /
@@ -228,42 +228,42 @@ Element Primary =
         yyValue = new NonTerminal (new NTName (i));
     };
 
-// AST elements
+// Abstract Syntax Tree elements
 
-Element ASTElement =
+Element TreeElement =
     Formatting /
-    ASTFactor;
+    TreeFactor;
 
-Element ASTFactor =
-    e1:ASTPrimary void:"**":Symbol e2:ASTPrimary {
+Element TreeFactor =
+    e1:TreePrimary void:"**":Symbol e2:TreePrimary {
         yyValue = new Rep (true, e1, e2);
     } /
-    e1:ASTPrimary void:"++":Symbol e2:ASTPrimary {
+    e1:TreePrimary void:"++":Symbol e2:TreePrimary {
         yyValue = new Rep (false, e1, e2);
     } /
-    e:ASTPrimary void:"*":Symbol {
+    e:TreePrimary void:"*":Symbol {
         yyValue = new Rep (true, e, new Epsilon ());
     } /
-    e:ASTPrimary void:"+":Symbol {
+    e:TreePrimary void:"+":Symbol {
         yyValue = new Rep (false, e, new Epsilon ());
     } /
-    e:ASTPrimary void:"?":Symbol {
+    e:TreePrimary void:"?":Symbol {
         yyValue = new Opt (e);
     } /
-    ASTPrimary;
+    TreePrimary;
 
-Element ASTPrimary =
-    void:"(":Symbol ASTAtMostOneNonterm void:")":Symbol /
-    void:"!":Symbol p:ASTPrimary {
+Element TreePrimary =
+    void:"(":Symbol TreeAtMostOneNonterm void:")":Symbol /
+    void:"!":Symbol p:TreePrimary {
         yyValue = new Not (p);
     } /
-    void:"&":Symbol p:ASTPrimary {
+    void:"&":Symbol p:TreePrimary {
         yyValue = new And (p);
     } /
-    ASTLiteral /
-    ASTNonterm;
+    TreeLiteral /
+    TreeNonterm;
 
-Element ASTNonterm =
+Element TreeNonterm =
     i:Identifier void:"[":Symbol d:DecDigits void:"]":Symbol {
         yyValue = new Block (i, Integer.parseInt (d));
     } /
@@ -271,24 +271,24 @@ Element ASTNonterm =
         yyValue = new NonTerminal (new NTName (i));
     };
 
-Element ASTAtMostOneNonterm =
-    i:ASTNonterm ls:ASTLiterals {
+Element TreeAtMostOneNonterm =
+    i:TreeNonterm ls:TreeLiterals {
         yyValue = new Seqn (i, ls);
     } /
-    l:ASTLiteral es:ASTAtMostOneNonterm {
+    l:TreeLiteral es:TreeAtMostOneNonterm {
         yyValue = new Seqn (l, es);
     } /
-    ASTLiteral /
-    ASTNonterm;
+    TreeLiteral /
+    TreeNonterm;
 
-Element ASTLiterals =
-    seed:ASTLiteral actions:ASTLiteralsTail+ {
+Element TreeLiterals =
+    seed:TreeLiteral actions:TreeLiteralsTail+ {
         yyValue = apply (actions, seed);
     } /
-    ASTLiteral;
+    TreeLiteral;
 
-constant Action<Element> ASTLiteralsTail =
-    right:ASTLiteral {
+constant Action<Element> TreeLiteralsTail =
+    right:TreeLiteral {
         yyValue = new Action<Element> () {
             public Element run (Element left) {
                 return new Seqn (left, right);
@@ -296,7 +296,7 @@ constant Action<Element> ASTLiteralsTail =
         };
     };
 
-Element ASTLiteral =
+Element TreeLiteral =
     Literal Spacing;
 
 // Formatting
@@ -305,10 +305,10 @@ Element Formatting =
     void:"\\n":Symbol {
         yyValue = new Newline ();
       }
-    / void:"nest":Word void:"(":Symbol e:ASTFactor void:")":Symbol {
+    / void:"nest":Word void:"(":Symbol e:TreeFactor void:")":Symbol {
         yyValue = new Nest (e, false);
     }
-    / void:"nestnl":Word void:"(":Symbol e:ASTFactor void:")":Symbol {
+    / void:"nestnl":Word void:"(":Symbol e:TreeFactor void:")":Symbol {
         yyValue = new Nest (e, true);
     }
     / void:"sp":Word {
