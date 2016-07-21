@@ -311,14 +311,14 @@ Element TreeLiteral =
 Element Formatting =
     void:"\\n":Symbol {
         yyValue = new Newline ();
-      }
-    / void:"nest":Word void:"(":Symbol e:TreeFactor void:")":Symbol {
+    } /
+    void:"nest":Word void:"(":Symbol e:TreeFactor void:")":Symbol {
         yyValue = new Nest (e, false);
-    }
-    / void:"nestnl":Word void:"(":Symbol e:TreeFactor void:")":Symbol {
+    } /
+    void:"nestnl":Word void:"(":Symbol e:TreeFactor void:")":Symbol {
         yyValue = new Nest (e, true);
-    }
-    / void:"sp":Word {
+    } /
+    void:"sp":Word {
         yyValue = new Space ();
     };
 
@@ -382,8 +382,8 @@ String Number =
 // Rats! sections
 
 Rule RatsSection =
-      RatsRule void:".":Symbol
-    / RatsBlock;
+    RatsRule void:".":Symbol /
+    RatsBlock;
 
 // Rats! rule
 
