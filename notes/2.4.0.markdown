@@ -1,4 +1,4 @@
-This release of the sbt-rats plugin contains the following changes, new features and fixes which all relate to the syntax specification support:
+This release of the sbt-rats plugin contains the following changes, new features and fixes which all relate to the syntax specification support.
 
 ### Changes
 
@@ -16,9 +16,9 @@ This release of the sbt-rats plugin contains the following changes, new features
 
 ### Fixes
 
-* Fixed a bug that caused bad pretty-printing code to be generated for a recursive non-terminal unless parenthesized pretty-printing was enabled.
+* Fix a bug that caused bad pretty-printing code to be generated for a recursive non-terminal unless parenthesized pretty-printing was enabled.
 
-* Fixed a bug that caused the generated parser not to compile when the verbose option was used.
+* Fix a bug that caused the generated parser not to compile when the verbose option was used.
 
 * Fix bugs in generated code if the syntax spec only contains String-valued non-terminals.
 
