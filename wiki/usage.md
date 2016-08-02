@@ -65,7 +65,7 @@ your build. They can be found here:
 
 The plugin uses a single starting point in each of its two modes. In the Rats! mode, the starting point is a single `.rats` file. In the syntax mode it is a `.syntax` file. In Rats! modes, the `ratsMainModule` setting should be set to the relevant file for your project. For example,
 
-    ratsMainModule ::= Some (scalaSource.value / "some" / "dir" / "Parser.rats")
+    ratsMainModule := Some (scalaSource.value / "some" / "dir" / "Parser.rats")
 
 If the main module is a `.rats` file it should contain a normal Rats! main module. It can use other Rats! modules in the usual way. They do not have to be named in the build configuration.
 
