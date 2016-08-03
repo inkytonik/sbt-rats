@@ -12,6 +12,7 @@ There is also a [giter8](http://github.com/n8han/giter8#readme) template showing
 
 ## News
 
+* August 3, 2016: [version 2.4.0](https://bitbucket.org/inkytonik/sbt-rats/src/default/notes/2.4.0.markdown) released on [bintray](https://bintray.com/inkytonik/sbt-plugins/sbt-rats/view)
 * April 7, 2016: [version 2.3.0](https://bitbucket.org/inkytonik/sbt-rats/src/default/notes/2.3.0.markdown) released on [bintray](https://bintray.com/inkytonik/sbt-plugins/sbt-rats/view)
 * April 21, 2015: [version 2.2.0](https://bitbucket.org/inkytonik/sbt-rats/src/default/notes/2.2.0.markdown) released on [bintray](https://bintray.com/inkytonik/sbt-plugins/sbt-rats/view)
 * April 21, 2015: project moved to [BitBucket](https://bitbucket.org/inkytonik/sbt-rats)
