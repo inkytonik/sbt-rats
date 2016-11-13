@@ -1,0 +1,5 @@
+This release of the sbt-rats plugin contains the following fixes.
+
+### Fixes
+
+* Fixed bug in handling of literals whereby a literal that was a prefix of a longer literal could not be parsed in some circumstances. E.g., if both "]" and "]]" are literals then the input "]]" would only ever be parsed as a "]]" not two "]" literals.
