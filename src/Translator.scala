@@ -196,21 +196,23 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
             if (symbols.isEmpty)
                 empty
             else {
-                // Sort in reverse order of length so that earlier ones take priority
-                val sortedSymbols = symbols.toVector.sortBy (- _.length)
-
-                line <>
-                "String Symbol =" <>
-                nest (
-                    line <>
-                    "SymbolCharacters Spacing;"
-                ) <@>
-                line <>
-                "transient String SymbolCharacters =" <>
-                nest (
-                    line <>
-                    fillsep (sortedSymbols map (escapedDquotes (_)), " /")
-                ) <> semi
+                // Define SymbolN for each length N of symbol literals
+                symbols.groupBy (_.length).foldLeft (empty) {
+                    case (d, (l, ss)) =>
+                        d <@>
+                        line <>
+                        s"String Symbol$l =" <>
+                        nest (
+                            line <>
+                            s"Symbol${l}Characters Spacing;"
+                        ) <@>
+                        line <>
+                        s"transient String Symbol${l}Characters =" <>
+                        nest (
+                            line <>
+                            fillsep (ss.toVector.map (escapedDquotes (_)), " /")
+                        ) <> semi
+                }
             }
 
         def toRules (rules : List[Rule]) : Doc =
@@ -233,7 +235,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
 
             def toLiteral (s : String) : Doc = {
                 val prefix : Doc = if (isASTRule) "void" <> colon else ""
-                val form = if (isWord (s)) "Word" else "Symbol"
+                val form = if (isWord (s)) "Word" else s"Symbol${s.length}"
                 val suffix = if (useSpacing) colon <> form else empty
                 prefix <> escapedDquotes (s) <> suffix
             }
