@@ -8,6 +8,8 @@ sbt-rats is a project of the [Programming Languages Research Group](https://wiki
 
 For information on usage, see the [documentation](https://bitbucket.org/inkytonik/sbt-rats/src/default/wiki/usage.md).
 
+For an overview of sbt-rats, see our [overview paper on sbt-rats from the 2016 Scala Symposium](https://dl.acm.org/authorize?N27522) and the [slides from the associated presentation](https://speakerdeck.com/inkytonik/the-sbt-rats-parser-generator-plugin-for-scala).
+
 There is also a [giter8](http://github.com/n8han/giter8#readme) template showing a [simple usage of the plugin with Kiama](https://github.com/inkytonik/kiama-rats.g8).
 
 ## News
