@@ -342,7 +342,7 @@ The form of parsing used by Rats! does not work if left recursion is present in 
 Suppose that you have a rule where the left-hand side non-terminal occurs as the first element of the right-hand side, like these typical ones for expressions.
 
     Exp =
-      | Exp "+" Exp                         {Add, left, 2}
+        Exp "+" Exp                         {Add, left, 2}
       | Exp "*" Exp                         {Mul, left, 1}
       | '-' Exp                             {Neg}
       | Number                              {Num}
