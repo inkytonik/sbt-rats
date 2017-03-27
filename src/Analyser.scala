@@ -548,18 +548,38 @@ class Analyser (flags : Flags) extends Environments {
         }
 
     /**
+     * Return the ith RHS symbol ignoring nesting of PP.
+     */
+    def rhsSymbolAt (alt : Alternative, i : Int) : Element =
+        alt.rhs (i) match {
+           case Nest (last, _) =>
+               last
+           case last =>
+               last
+       }
+
+    /**
      * Whether an alternative is left-recursive: a sequence of more
      * than one element on the RHS and the first one is the LHS.
      */
     lazy val isLeftRecursive : Alternative => Boolean =
         attr {
             case alt =>
-                alt.rhs match {
-                    case head :: _ =>
-                        head == alt->altlhssymb
-                    case _ =>
+                alt.rhs.indexWhere (isNotBasicPP) match {
+                    case -1 =>
                         false
+                    case i =>
+                        alt->altlhssymb == rhsSymbolAt (alt, i)
                 }
+        }
+
+    /**
+     * Is an element not a basic pretty-printing directive?
+     */
+    lazy val isNotBasicPP : Element => Boolean =
+        attr {
+            case elem =>
+                elem != Newline () && elem != Space()
         }
 
     /**
@@ -569,11 +589,11 @@ class Analyser (flags : Flags) extends Environments {
     lazy val isRightRecursive : Alternative => Boolean =
         attr {
             case alt =>
-                alt.rhs.lastOption match {
-                    case Some (last) =>
-                        last == alt->altlhssymb
-                    case None =>
+                alt.rhs.lastIndexWhere (isNotBasicPP) match {
+                    case -1 =>
                         false
+                    case i =>
+                        alt->altlhssymb == rhsSymbolAt (alt, i)
                 }
         }
 
@@ -584,7 +604,7 @@ class Analyser (flags : Flags) extends Environments {
     lazy val isRecursive : Alternative => Boolean =
         attr {
             case alt =>
-                alt.rhs contains NonTerminal (NTName (IdnUse (alt->astrule->lhs)))
+                (0 until alt.rhs.length).exists(alt->altlhssymb == rhsSymbolAt (alt, _))
         }
 
     /**
