@@ -199,6 +199,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                 // Define SymbolN for each length N of symbol literals
                 symbols.groupBy (_.ss.length).foldLeft (empty) {
                     case (d, (l, ss)) =>
+                        val uniqLits = ss.map (_.escaped).toVector
                         d <@>
                         line <>
                         s"String Symbol$l =" <>
@@ -210,7 +211,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                         s"transient String Symbol${l}Alts =" <>
                         nest (
                             line <>
-                            fillsep (ss.toVector.map (escapedDquotes (_)), " /")
+                            fillsep (uniqLits.map (s => dquotes (text (s))), " /")
                         ) <> semi
                 }
             }
