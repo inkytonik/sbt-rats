@@ -434,20 +434,32 @@ Element Literal =
         yyValue = new Wildcard ();
     } /
     ["] s:StringLiteral ["] {
-        yyValue = new StringLit (s);
+        yyValue = new StringLit (new Literal (s));
     } /
     ['] s:CharLiteral ['] {
-        yyValue = new CharLit (s);
+        yyValue = new CharLit (new Literal (s));
     } /
     '[' s:CharClassContents ']' {
         yyValue = new CharClass (s);
     };
 
-String StringLiteral =
-    (Escape / !["] _)*;
+Pair<String> StringLiteral =
+    StringLiteralChar*;
 
-String CharLiteral =
-    (Escape / !['] _)*;
+String StringLiteralChar =
+    Escape /
+    !["] c:_ {
+        yyValue = String.valueOf (c);
+    };
+
+Pair<String> CharLiteral =
+    CharLiteralChar*;
+
+String CharLiteralChar =
+    Escape /
+    !['] c:_ {
+        yyValue = String.valueOf (c);
+    };
 
 String CharClassContents =
     CharClassElement*;

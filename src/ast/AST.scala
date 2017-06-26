@@ -61,15 +61,62 @@ case class And (e : Element) extends Element
 case class Alt (l : Element, r : Element) extends Element
 case class Block (name : String, n : Int) extends Element
 case class CharClass (s : String) extends Element
-case class CharLit (s : String) extends Element
+case class CharLit (lit : Literal) extends Element
 case class Epsilon () extends Element
 case class NonTerminal (ntuse : NTUse) extends Element
 case class Not (e : Element) extends Element
 case class Opt (e : Element) extends Element
 case class Rep (zero : Boolean, e : Element, sep : Element) extends Element
 case class Seqn (left : Element, right : Element) extends Element
-case class StringLit (s : String) extends Element
+case class StringLit (lit : Literal) extends Element
 case class Wildcard () extends Element
+
+/**
+* A literal from the specification, parsed into its constituent character
+* specifications.
+*/
+case class Literal (ss : List[String]) {
+
+     /**
+      * The string made up of the literal's character specifications.
+      */
+     val s = ss.mkString
+
+     /**
+      * A string made up of the literal's pieces translated so that Scala can handle
+      * them as the content of a double-quoted string literal.
+      *
+      * Translations applied:
+      *   - \-, \[, \] not supported by Scala (translated to -, [, ])
+      *   - \' not needed in double quoted string (translated to ')
+      *   - octal literals \o \oo \ooo are deprecated (translate to unicode escape)
+      */
+     val escaped : String = {
+         val output = new StringBuilder
+         val OctalEscape = """\\([0-3][0-7][0-7]|[0-7][0-7]|[0-7])""".r
+         for (s <- ss) {
+             s match {
+                 case "\"" =>
+                     output.append ("\\\"")
+                 case "\\-" =>
+                     output.append ("-")
+                 case "\\[" =>
+                     output.append ("[")
+                 case "\\]" =>
+                     output.append ("]")
+                 case "\\'" =>
+                     output.append ("'")
+                 case OctalEscape (digits) =>
+                     val n = Integer.parseInt (digits, 8)
+                     output.append (s"\\u${"%04x".format(n)}")
+                 case _ =>
+                     output.append (s)
+             }
+         }
+         output.result ()
+     }
+
+}
 
 sealed abstract class NTUse extends ASTNode
 case class NTName (idnuse : IdnUse) extends NTUse

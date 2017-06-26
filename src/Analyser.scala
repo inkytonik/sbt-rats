@@ -64,16 +64,16 @@ class Analyser (flags : Flags) extends Environments {
     /**
      * Return a pair consisting of the set of keywords used in the grammar
      * and the set of non-keywords used. Keywords are defined to be literals
-     * that containing only letters andu nderscores.
+     * that containing only letters and underscores.
      */
-    def partitionLiterals (g : Grammar) : (Set[String],Set[String]) =
-        (g->literals).partition (_.forall (isKeywordChar))
+    def partitionLiterals (g : Grammar) : (Set[Literal],Set[Literal]) =
+        (g->literals).partition (_.ss.forall (isKeywordChar))
 
     /**
-     * Can the given character be part of a keyword?
+     * Can the given string literal segment be part of a keyword?
      */
-    def isKeywordChar (c : Char) : Boolean =
-        c.isLetter || c == '_'
+    def isKeywordChar (s : String) : Boolean =
+        s.length == 1 && (s (0).isLetter || s(0) == '_')
 
     // Entities
 
@@ -135,66 +135,19 @@ class Analyser (flags : Flags) extends Environments {
             possibleBindings.filter (_._1).map (_._2)
         rootenv (bindings : _*)
     }
-
-    lazy val literals : Chain[ASTNode,Set[String]] =
+    
+    lazy val literals : Chain[ASTNode,Set[Literal]] =
         chain (literalsin, literalsout)
 
-    def literalsin (in : ASTNode => Set[String]) : ASTNode ==> Set[String] = {
+    def literalsin (in : ASTNode => Set[Literal]) : ASTNode ==> Set[Literal] = {
         case _ : Grammar => Set ()
     }
 
-    /**
-     * Split a literal string into its constituent character components.
-     * Only legal literals need to be dealt with since the input has
-     * already been parsed.
-     */
-    def parseLiteral (s : String) : List[Char] =
-        if (s == "")
-            Nil
-        else {
-            val (first, len) =
-                s (0) match {
-                    case '\\' =>
-                        s (1) match {
-                            case 'b'  => ('\b', 2)
-                            case 't'  => ('\t', 2)
-                            case 'n'  => ('\n', 2)
-                            case 'f'  => ('\f', 2)
-                            case 'r'  => ('\r', 2)
-                            case '['  => ('[',  2)
-                            case ']'  => (']',  2)
-                            case '\\' => ('\\', 2)
-                            case '\'' => ('\'', 2)
-                            case '\"' => ('\"', 2)
-                            case '-'  => ('-',  2)
-                            case 'u' =>
-                                val codePoint = Integer.parseInt (s.drop (2).take (4), 16)
-                                (Character.toChars (codePoint) (0), 6)
-                            case c if (c >= '0') && (c <= '9') =>
-                                val len =
-                                    if ((c >= '0') && (c <= '3'))
-                                        4
-                                    else if ((s (2) >= '0') && (s (2) <= '7'))
-                                        3
-                                    else
-                                        2
-                                val codePoint = Integer.parseInt (s.drop (2).take (4), 8)
-                                (Character.toChars (codePoint) (0), len)
-                        }
-                    case c =>
-                        (c, 1)
-                }
-            first :: parseLiteral (s.drop (len))
-        }
-
-    def isNotWhitespace (s : String) : Boolean =
-        !(parseLiteral (s).forall (_.isWhitespace))
-
-    def literalsout (out : ASTNode => Set[String]) : ASTNode ==> Set[String] = {
-        case n @ CharLit (s) if isNotWhitespace (s) =>
-            (n->out) + s
-        case n @ StringLit (s) if isNotWhitespace (s) =>
-            (n->out) + s
+    def literalsout (out : ASTNode => Set[Literal]) : ASTNode ==> Set[Literal] = {
+        case n @ CharLit (lit) =>
+            (n->out) + lit
+        case n @ StringLit (lit) =>
+            (n->out) + lit
     }
 
     // Name analysis
@@ -349,9 +302,9 @@ class Analyser (flags : Flags) extends Environments {
     object Literal {
         def unapply (e : Element) : Option[String] =
             e match {
-                case CharLit (s)   => Some (s)
-                case StringLit (s) => Some (s)
-                case _             => None
+                case CharLit (lit)   => Some (lit.s)
+                case StringLit (lit) => Some (lit.s)
+                case _               => None
             }
     }
 

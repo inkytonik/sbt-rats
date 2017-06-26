@@ -194,7 +194,11 @@ The alternatives are specified using the following expression forms. Note that t
 
     (e)     bracketing           match e
 
-Literals can contain escape characters as defined by Rats!.
+Literals can contain escape characters as defined by Rats!:
+* `\b` (backspace), `\t` (tab), `\n` (newline), `\f` (formfeed), '\r' (return)
+* `'\"` (double quote), `\'` (single quote), `\[` and `\]` (square brackets), `\-` (minus)
+* `\uhhhh` (hexadecimal quads where each `h` is a hex digit from 0-9, a-f, A-F
+* `\noo`, `\oo` or `\o` (octal escapes where `n` is from 0-3 and each `o` is an octal digit from 0-7).
 
 The two versions of alternation (vertical bar and slash) are equivalent in string rules.
 

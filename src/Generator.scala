@@ -458,11 +458,8 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                     def traverseElem (elem : Element, wrap : Boolean = true) : Doc =
                         elem match {
 
-                            case CharLit (s) =>
-                                if (s.length == 1)
-                                    "char" <+> parens (squotes (s))
-                                else
-                                    "text" <+> parens (dquotes (s))
+                            case CharLit (lit) =>
+                                "text" <+> parens (dquotes (lit.escaped))
 
                             case Epsilon () =>
                                 emptyDocText
@@ -503,8 +500,8 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                             case Seqn (l, r) =>
                                 traverseElem (l) <+> "<>" <+> traverseElem (r)
 
-                            case StringLit (s) =>
-                                "text" <+> parens (dquotes (s)) <+> "<> space"
+                            case StringLit (lit) =>
+                                "text" <+> parens (dquotes (lit.escaped)) <+> "<> space"
 
                             // Formatting elements
                             case Nest (e, newline) =>

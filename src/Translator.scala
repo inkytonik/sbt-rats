@@ -20,8 +20,8 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
 
     def translate (flags : Flags, genFile : File, grammar : Grammar) = {
 
-        import analyser.{constr, elemtype, hasSpacing, ntname, nttype,
-            partitionLiterals, requiresNoAction, syntaxElements,
+        import analyser.{constr, elemtype, hasSpacing, Literal, ntname,
+            nttype, partitionLiterals, requiresNoAction, syntaxElements,
             transformer, typeName}
         import org.kiama.attribution.Attribution.{initTree, resetMemo}
 
@@ -48,7 +48,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                 if (header == null) empty else string (header)
             )
 
-        def toBody (userBody : String, keywords : Set[String]) : Doc = {
+        def toBody (userBody : String, keywords : Set[Literal]) : Doc = {
 
             lazy val filenameValue =
                 if ((grammar.options != null) && (grammar.options.contains (RelativeFilenames ())))
@@ -162,10 +162,10 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
         def toBraceSection (keyword : String, contents : Doc, prefix : Doc = empty) : Doc =
             keyword <+> braces (prefix <> nest (line <> contents) <> line)
 
-        def toKeywords (keywords : Set[String]) : Doc =
+        def toKeywords (keywords : Set[Literal]) : Doc =
             "add" <+> parens (
                 toBraceSection ("KEYWORDS, new String[]",
-                    fillsep (keywords.toVector.sorted map (s => dquotes (text (s))), comma)
+                    fillsep (keywords.map(_.s).toVector.sorted map (s => dquotes (text (s))), comma)
                 )
             ) <> semi
 
@@ -189,25 +189,25 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
             "option" <+> hsep (optionStrings map text, comma) <> semi
         }
 
-        def escapedDquotes (s : String) : Doc =
-            dquotes (s.replaceAllLiterally ("\"", "\\\""))
+        def escapedDquotes (lit : Literal) : Doc =
+            dquotes (lit.escaped)
 
-        def toSymbols (symbols : Set[String]) : Doc =
+        def toSymbols (symbols : Set[Literal]) : Doc =
             if (symbols.isEmpty)
                 empty
             else {
                 // Define SymbolN for each length N of symbol literals
-                symbols.groupBy (_.length).foldLeft (empty) {
+                symbols.groupBy (_.ss.length).foldLeft (empty) {
                     case (d, (l, ss)) =>
                         d <@>
                         line <>
                         s"String Symbol$l =" <>
                         nest (
                             line <>
-                            s"Symbol${l}Characters Spacing;"
+                            s"Symbol${l}Alts Spacing;"
                         ) <@>
                         line <>
-                        s"transient String Symbol${l}Characters =" <>
+                        s"transient String Symbol${l}Alts =" <>
                         nest (
                             line <>
                             fillsep (ss.toVector.map (escapedDquotes (_)), " /")
@@ -233,11 +233,11 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                   (Character.isJavaIdentifierStart (s.head) &&
                    s.tail.forall (Character.isJavaIdentifierPart))
 
-            def toLiteral (s : String) : Doc = {
+            def toLiteral (lit : Literal) : Doc = {
                 val prefix : Doc = if (isASTRule) "void" <> colon else ""
-                val form = if (isWord (s)) "Word" else s"Symbol${s.length}"
+                val form = if (isWord (lit.s)) "Word" else s"Symbol${lit.ss.length}"
                 val suffix = if (useSpacing) colon <> form else empty
-                prefix <> escapedDquotes (s) <> suffix
+                prefix <> escapedDquotes (lit) <> suffix
             }
 
             def toElem (elem : Element, doBindings : Boolean = false) : Doc = {
@@ -316,10 +316,10 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                         else
                             bind (inner)
 
-                    case CharLit (str) =>
-                        toLiteral (str)
-                    case StringLit (str) =>
-                        toLiteral (str)
+                    case CharLit (lit) =>
+                        toLiteral (lit)
+                    case StringLit (lit) =>
+                        toLiteral (lit)
 
                     case CharClass (str) =>
                         brackets (str)
