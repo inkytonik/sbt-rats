@@ -929,25 +929,38 @@ class Analyser (flags : Flags) extends Environments {
         }
 
     /**
+     * Convert a fixity to a qualified string form for output.
+     */
+    def qualFixity (fixity : Fixity) : String = {
+        val pkg = s"${flags.kiamaPkg}.output"
+        fixity match {
+            case Infix (side) =>
+                s"$pkg.Infix ($pkg.$side)"
+            case _ =>
+                s"$pkg.$fixity"
+        }
+    }
+
+    /**
      * Collected information about an alternative: its order (unary=1,
      * binary=2), operator, precedence, fixity and non-terminals. If we can't
      * tell or it's a case we don't support, return None.
      */
-    lazy val orderOpPrecFixityNonterm : Alternative => Option[(Int, String, Int, Fixity, String, String)] =
+    lazy val orderOpPrecFixityNonterm : Alternative => Option[(Int, String, Int, String, String, String)] =
         attr {
             case alt =>
                 val lhsnt = alt->astrule->lhs
                 alt.rhs match {
 
                     case List (elem @ NonTermIdn (nt), Literal (op)) if nt == lhsnt =>
-                        Some ((1, op, alt->precedence, Postfix, elem->fieldName, ""))
+                        Some ((1, op, alt->precedence, qualFixity (Postfix), elem->fieldName, ""))
 
                     case List (Literal (op), elem @ NonTermIdn (nt)) if nt == lhsnt =>
-                        Some ((1, op, alt->precedence, Prefix, elem->fieldName, ""))
+                        Some ((1, op, alt->precedence, qualFixity (Prefix), elem->fieldName, ""))
 
                     case List (elem1 @ NonTermIdn (nt1), Literal (op), elem2 @ NonTermIdn (nt2))
                             if (nt1 == lhsnt) && (nt2 == lhsnt) =>
-                        val fixity = Infix (alt->associativity)
+                        val fixity = qualFixity (Infix (alt->associativity))
                         Some ((2, op, alt->precedence, fixity, elem1->fieldName, elem2->fieldName))
 
                     case elems =>
@@ -960,7 +973,7 @@ class Analyser (flags : Flags) extends Environments {
      * Collected information about an alternative: currently its precedence
      * and fixity.
      */
-    lazy val precFixity : Alternative => (Int, Fixity) =
+    lazy val precFixity : Alternative => (Int, String) =
         attr {
             case alt =>
                 val lhsnt = alt->astrule->lhs
@@ -968,17 +981,17 @@ class Analyser (flags : Flags) extends Environments {
 
                     // Postfix
                     case List (elem @ NonTermIdn (nt), Literal (op)) if nt == lhsnt =>
-                        (alt->precedence, Postfix)
+                        (alt->precedence, qualFixity (Postfix))
 
                     // Prefix
                     case List (Literal (op), elem @ NonTermIdn (nt)) if nt == lhsnt =>
-                        (alt->precedence, Prefix)
+                        (alt->precedence, qualFixity (Prefix))
 
                     // Infix
                     case elems =>
-                        (alt->precedence, Infix (alt->associativity))
+                        (alt->precedence, qualFixity (Infix (alt->associativity)))
 
                 }
         }
-
+        
 }

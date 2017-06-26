@@ -59,12 +59,6 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
             line <>
             includeImportWhen ("org.kiama.attribution.Attributable",
                                flags.useKiama == 1) <>
-            includeImportWhen (s"${flags.kiamaPkg}.kiama.output.{Infix, LeftAssoc, NonAssoc, Prefix, RightAssoc}",
-                               flags.definePrettyPrinter) <>
-            includeImportWhen ("org.kiama.output.{PrettyBinaryExpression, PrettyExpression, PrettyUnaryExpression}",
-                               flags.definePrettyPrinter && flags.useKiama == 1) <>
-            includeImportWhen ("org.bitbucket.inkytonik.kiama.output.{PrettyExpression, PrettyNaryExpression}",
-                               flags.definePrettyPrinter && flags.useKiama == 2) <>
             includeImportWhen ("scala.util.parsing.input.Positional",
                                flags.useScalaPositions && (flags.useKiama == 0))
 
@@ -123,9 +117,9 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                                  List (
                                      order match {
                                          case 1 =>
-                                             text ("with PrettyUnaryExpression ")
+                                             text (s"with ${flags.kiamaPkg}.output.PrettyUnaryExpression ")
                                          case 2 =>
-                                             text ("with PrettyBinaryExpression ")
+                                             text (s"with ${flags.kiamaPkg}.output.PrettyBinaryExpression ")
                                          case _ =>
                                              sys.error (s"toParenPPInfo: unexpected order $order")
                                      }
@@ -155,7 +149,7 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                         (alt->precFixity) match {
                             case (prec, fixity) =>
                                 (
-                                 List (text ("with PrettyNaryExpression")),
+                                 List (text (s"with ${flags.kiamaPkg}.output.PrettyNaryExpression")),
                                  List (
                                      "val priority =" <+> value (prec),
                                      "val fixity =" <+> value (fixity)
@@ -200,7 +194,7 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
             val superClass =
                 "extends" <+> "ASTNode" <>
                 (if (flags.definePrettyPrinter && (astRule->isParenPP))
-                     " with PrettyExpression"
+                     s" with ${flags.kiamaPkg}.output.PrettyExpression"
                  else
                      empty)
 
@@ -275,7 +269,7 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
             "package" <+> pkg <@>
             line <>
             "import" <+> pkg <> "." <> module <> "Syntax._" <@>
-            s"import ${flags.kiamaPkg}.kiama.output.{LeftAssoc, NonAssoc, PrettyExpression, PrettyPrinter => PP, ParenPrettyPrinter => PPP, RightAssoc}" <@>
+            s"import ${flags.kiamaPkg}.output.{PrettyPrinter => PP, ParenPrettyPrinter => PPP}" <@>
             (if (flags.useKiama == 2)
                 "import org.bitbucket.inkytonik.kiama.output.PrettyPrinterTypes.{Document, Width}"
              else
@@ -374,7 +368,7 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                 empty
             else
                 line <>
-                "override def toParenDoc (astNode : PrettyExpression) : Doc =" <>
+                s"override def toParenDoc (astNode : ${flags.kiamaPkg}.output.PrettyExpression) : Doc =" <>
                 nest (
                     line <>
                     "astNode match {" <>
@@ -447,8 +441,10 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
 
                     def traverseChild (elem : Element, varr : Doc) : Doc = {
 
-                        def recursiveCall (side : Side) : Doc =
-                            "recursiveToDoc" <+> parens ("v," <+> varr <> "," <+> value (side))
+                        def recursiveCall (side : Side) : Doc = {
+                            val qualSide = s"${flags.kiamaPkg}.output.$side"
+                            "recursiveToDoc" <+> parens ("v," <+> varr <> "," <+> value (qualSide))
+                        }
 
                         if (elem.index == 0)
                             recursiveCall (LeftAssoc)
