@@ -648,8 +648,6 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
             |
             |object ParserSupport {
             |
-            |    import scala.language.higherKinds
-            |
             |    def apply[T] (actions : Seq[Action[T]], seed : T) : T =
             |        actions.foldLeft (seed) {
             |            case (result, action) =>
