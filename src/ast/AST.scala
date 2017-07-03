@@ -24,13 +24,13 @@ case class Verbose () extends SyntaxOption
 case class Width (n : Int) extends SyntaxOption
 
 sealed abstract class Rule extends ASTNode
-case class ASTRule (idndef : IdnDef, tipe : IdnUse, alts : List[Alternative],
+case class ASTRule (idndef : IdnDef, typeIdn : IdnUse, alts : List[Alternative],
                     isConst : Boolean = false, anns: List[RuleAnnotation] = Nil) extends Rule
-case class StringRule (idndef : IdnDef, tipe : IdnUse, alts : List[Element]) extends Rule
+case class StringRule (idndef : IdnDef, typeIdn : IdnUse, alts : List[Element]) extends Rule
 
 sealed abstract class RatsSection extends Rule
 case class RatsBlock (code : String) extends RatsSection
-case class RatsRule (idndef : IdnDef, tipe : IdnUse, code : String) extends RatsSection
+case class RatsRule (idndef : IdnDef, typeIdn : IdnUse, code : String) extends RatsSection
 
 case class Alternative (rhs : List[Element], anns: List[AltAnnotation],
                         action : Action) extends ASTNode
@@ -45,20 +45,29 @@ sealed abstract class AltAnnotation extends ASTNode
 case class Associativity (side : Side) extends AltAnnotation
 case class Constructor (idndef : IdnDef) extends AltAnnotation
 case class Precedence (level : Int) extends AltAnnotation
-case class Transformation (num : Int, method : List[String], tipe : List[String]) extends AltAnnotation
+case class Transformation (num : Int, method : List[String], typeNames : List[String]) extends AltAnnotation
+
+sealed abstract class Type extends ASTNode
+case class AltType (lt : Type, rt : Type) extends Type
+case class ConsType () extends Type
+case class NamedType (s : String) extends Type
+case class OptionType (t : Type) extends Type
+case class RepType (t : Type) extends Type
+case class SeqnType (lt : Type, rt : Type) extends Type
+case class TypeType () extends Type
 
 sealed abstract class Action extends ASTNode
 case class ApplyAction () extends Action
-case class ConsAction (tipe : String) extends Action
+case class ConsAction (tipe : Type) extends Action
 case class DefaultAction () extends Action
 case class NilAction () extends Action
 case class NoAction () extends Action
-case class SingletonAction (tipe : String) extends Action
-case class TailAction (tipe : String, constr : String) extends Action
+case class SingletonAction (typeName : String) extends Action
+case class TailAction (typeName : String, constr : String) extends Action
 
 sealed abstract class Element extends ASTNode
-case class And (e : Element) extends Element
 case class Alt (l : Element, r : Element) extends Element
+case class And (e : Element) extends Element
 case class Block (name : String, n : Int) extends Element
 case class CharClass (s : String) extends Element
 case class CharLit (lit : Literal) extends Element
@@ -120,7 +129,7 @@ case class Literal (ss : List[String]) {
 
 sealed abstract class NTUse extends ASTNode
 case class NTName (idnuse : IdnUse) extends NTUse
-case class NTGen (name : String, tipe : String) extends NTUse
+case class NTGen (name : String, tipe : Type) extends NTUse
 
 sealed abstract class Formatting extends Element
 case class Nest (e : Element, newline : Boolean) extends Formatting

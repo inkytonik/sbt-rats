@@ -68,7 +68,7 @@ class Desugarer (analyser : Analyser) {
             val nt1 = s"${nt}Aux"
 
             // The element type of the list
-            val eltype = elem->elemtype
+            def eltype = deepclone (elem->elemtype)
 
             // The type of the list
             val listtype = elem->pairTypeName
@@ -77,7 +77,7 @@ class Desugarer (analyser : Analyser) {
             if (zero) {
 
                 // alt: nt1
-                val alt1 = Alternative (List (NonTerminal (NTGen (nt1, listtype))),
+                val alt1 = Alternative (List (NonTerminal (NTGen (nt1, RepType (eltype)))),
                                         Nil,
                                         NoAction ())
 
@@ -105,7 +105,7 @@ class Desugarer (analyser : Analyser) {
             newRules.append (newRule)
 
             // Return a reference to the new entry point nonterminal
-            NonTerminal (NTGen (nt, listtype))
+            NonTerminal (NTGen (nt, RepType (eltype)))
 
         }
 
@@ -227,17 +227,17 @@ class Desugarer (analyser : Analyser) {
     def removeLeftRecursiveAlternatives (astRule : ASTRule) : (ASTRule, Iterable[ASTRule]) = {
 
         // The type of the LHS non-terminal, is shared with new non-terminals
-        val lhsnttype = (astRule.idndef)->idntype
+        def lhsnttype = deepclone ((astRule.idndef)->idntype)
 
         /**
          * Return a strategy that replaces identifier uses of one name by
          * which is generated and of the given type.
          */
-        def replaceIdns (name1 : String, name2 : String, tipe : String) =
+        def replaceIdns (name1 : String, name2 : String, tipe : Type) =
             alltd (
                 rule[NTUse] {
                     case NTName (IdnUse (`name1`)) =>
-                        NTGen (name2, tipe)
+                        NTGen (name2, deepclone (tipe))
                 }
             )
         /**

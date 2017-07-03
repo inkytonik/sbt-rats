@@ -22,7 +22,7 @@ class Analyser (flags : Flags) extends Environments {
         RightAssoc, Side}
     import org.kiama.rewriting.Rewriter.collectall
     import org.kiama.util.{Entity, MultipleEntity, UnknownEntity}
-    import org.kiama.util.Messaging.{check, message, Messages}
+    import org.kiama.util.Messaging.{check, message, Messages, noMessages}
     import org.kiama.util.Patterns.HasParent
     import scala.collection.mutable.ListBuffer
 
@@ -45,6 +45,14 @@ class Analyser (flags : Flags) extends Environments {
                 val levelStr = mixedAssociativities (r).mkString (" ")
                 message (r, s"mixed associativities at levels: $levelStr")
 
+            case r @ StringRule (_, _, elems) =>
+                elems.flatMap {
+                    case elem if elem->elemtype != stringType && elem->elemtype != tokenType && elem->elemtype != voidType=>
+                        message (r, s"elements of string rule must have String, Token or Void type, currently ${typeName (elem->elemtype)}")
+                    case _ =>
+                        noMessages
+                }
+
             case b @ Block (_, n) if (b.index + 1 == n) =>
                 check (b.parent) {
                     case alt : Alternative =>
@@ -57,8 +65,11 @@ class Analyser (flags : Flags) extends Environments {
                         message (b, s"block non-terminal reference $n out of range 1..${alt.rhs.length}")
                 }
 
-            case Rep (_, _, sep) if (sep->elemtype != "Void") && (sep->elemtype != "String") =>
-                message (sep, "list separator must be Void or String")
+            case e @ Alt (l, r) if l->elemtype != r->elemtype =>
+                message (e, s"alternatives must have same type, ${typeName (l->elemtype)} != ${typeName (r->elemtype)}")
+            
+            case Rep (_, _, sep) if (sep->elemtype != voidType) && (sep->elemtype != stringType) =>
+                message (sep, s"list separator must be Void or String, currently ${typeName (sep->elemtype)}")
         })
 
     /**
@@ -75,31 +86,69 @@ class Analyser (flags : Flags) extends Environments {
     def isKeywordChar (s : String) : Boolean =
         s.length == 1 && (s (0).isLetter || s(0) == '_')
 
+    // Types
+
+    def stringType () = NamedType ("String")
+    def tokenType () = NamedType ("Token")
+    def voidType () = NamedType ("Void")
+    
+    def typeName (tipe : Type) : String =
+        tipe match {
+            case AltType (lt, rt) =>
+                s"Alternative<${typeName (lt)}, ${typeName (rt)}>"
+            case ConsType () =>
+                "Constructor"
+            case NamedType (s) =>
+                s
+            case OptionType (t) =>
+                if (t == voidType)
+                    "Void"
+                else
+                    s"Option[${typeName (t)}]"
+            case RepType (t) =>
+                if (t == voidType)
+                    "Void"
+                else {
+                    val seqType =
+                        flags.scalaRepetitionType match {
+                            case Some (ListType) =>
+                                "List"
+                            case _ =>
+                                "Vector"
+                        }
+                    s"$seqType[${typeName (t)}]"
+                }
+            case SeqnType (lt, rt) =>
+                s"Sequence<${typeName (lt)}, ${typeName (rt)}>"
+            case TypeType () =>
+                "Type"
+        }
+
     // Entities
 
     /**
      * Non-terminals with a particular type
      */
     abstract class NonTerm extends Entity {
-        def tipe : String
+        def tipe : Type
     }
 
     /**
      * A user-defined non-terminal with the given type and defined by the given
      * AST rule.
      */
-    case class UserNonTerm (tipe : String, astRule : ASTRule) extends NonTerm
+    case class UserNonTerm (tipe : Type, astRule : ASTRule) extends NonTerm
 
     /**
      * A user-defined non-terminal with the given type and defined by the given
      * Rats rule.
      */
-    case class RatsNonTerm (tipe : String, ratsRule : RatsRule) extends NonTerm
+    case class RatsNonTerm (tipe : Type, ratsRule : RatsRule) extends NonTerm
 
     /**
      * A pre-defined non-terminal with the given type.
      */
-    case class PreNonTerm (tipe : String) extends NonTerm
+    case class PreNonTerm (tipe : Type) extends NonTerm
 
     /**
      * A user-defined constructor.
@@ -109,7 +158,7 @@ class Analyser (flags : Flags) extends Environments {
     /**
      * A type.
      */
-    case class Type () extends Entity
+    case class PreType () extends Entity
 
     /**
      * The default environment, containing the grammar symbols that are
@@ -118,19 +167,19 @@ class Analyser (flags : Flags) extends Environments {
      */
     def defenv : Environment = {
         val possibleBindings =
-            List (flags.useDefaultComments -> ("Comment" -> PreNonTerm ("Void")),
-                  true                     -> ("EOF" -> PreNonTerm ("Void")),
-                  flags.useDefaultLayout   -> ("EOL" -> PreNonTerm ("Void")),
-                  flags.useDefaultWords    -> ("Identifier" -> PreNonTerm ("String")),
-                  flags.useDefaultComments -> ("SLComment" -> PreNonTerm ("Void")),
-                  flags.useDefaultComments -> ("MLComment" -> PreNonTerm ("Void")),
-                  flags.useDefaultLayout   -> ("Space" -> PreNonTerm ("Void")),
-                  flags.useDefaultSpacing  -> ("Spacing" -> PreNonTerm ("Void")),
-                  true                     -> ("String" -> Type ()),
-                  true                     -> ("Token" -> Type ()),
-                  true                     -> ("Void" -> Type ()),
-                  flags.useDefaultWords    -> ("Word" -> PreNonTerm ("String")),
-                  flags.useDefaultWords    -> ("WordCharacters" -> PreNonTerm ("String")))
+            List (flags.useDefaultComments -> ("Comment" -> PreNonTerm (voidType)),
+                  true                     -> ("EOF" -> PreNonTerm (voidType)),
+                  flags.useDefaultLayout   -> ("EOL" -> PreNonTerm (voidType)),
+                  flags.useDefaultWords    -> ("Identifier" -> PreNonTerm (stringType)),
+                  flags.useDefaultComments -> ("SLComment" -> PreNonTerm (voidType)),
+                  flags.useDefaultComments -> ("MLComment" -> PreNonTerm (voidType)),
+                  flags.useDefaultLayout   -> ("Space" -> PreNonTerm (voidType)),
+                  flags.useDefaultSpacing  -> ("Spacing" -> PreNonTerm (voidType)),
+                  true                     -> ("String" -> PreType ()),
+                  true                     -> ("Token" -> PreType ()),
+                  true                     -> ("Void" -> PreType ()),
+                  flags.useDefaultWords    -> ("Word" -> PreNonTerm (stringType)),
+                  flags.useDefaultWords    -> ("WordCharacters" -> PreNonTerm (stringType)))
         val bindings =
             possibleBindings.filter (_._1).map (_._2)
         rootenv (bindings : _*)
@@ -165,19 +214,19 @@ class Analyser (flags : Flags) extends Environments {
                     if (isDefinedInScope (n->(preenv.in), i))
                         MultipleEntity ()
                     else
-                        entityFromDecl (n, i))
+                        entityFromDecl (n, NamedType (i)))
     }
 
-    def entityFromDecl (n : IdnDef, i : String) : Entity =
+    def entityFromDecl (n : IdnDef, t : Type) : Entity =
         n.parent match {
-            case astRule @ ASTRule (_, tipe, _, _, _) =>
-                UserNonTerm (if (tipe == null) i else tipe.name, astRule)
+            case astRule @ ASTRule (_, typeIdn, _, _, _) =>
+                UserNonTerm (if (typeIdn == null) t else NamedType (typeIdn.name), astRule)
             case Constructor (_) =>
                 Cons ()
-            case ratsRule @ RatsRule (_, tipe, _) =>
-                RatsNonTerm (if (tipe == null) i else tipe.name, ratsRule)
-            case StringRule (_, IdnUse (tipeStr), _) =>
-                PreNonTerm (tipeStr)
+            case ratsRule @ RatsRule (_, typeIdn, _) =>
+                RatsNonTerm (if (typeIdn == null) t else NamedType (typeIdn.name), ratsRule)
+            case StringRule (_, IdnUse (typeName), _) =>
+                PreNonTerm (NamedType (typeName))
         }
 
     lazy val env =
@@ -198,32 +247,20 @@ class Analyser (flags : Flags) extends Environments {
         }
 
     // Type analysis
-
-    lazy val idntype : Identifier => String =
+    
+    lazy val idntype : Identifier => Type =
         attr {
             case idn =>
                 (idn->entity) match {
                     case _ : Cons =>
-                        "Constructor"
+                        ConsType ()
                     case nt : NonTerm =>
-                        if (nt.tipe == "Token")
-                            "String"
+                        if (nt.tipe == tokenType)
+                            stringType
                         else
                             nt.tipe
-                    case _ : Type =>
-                        "Type"
-                }
-
-        }
-
-    lazy val idntypedesc : Identifier => String =
-        attr {
-            case idn =>
-                (idn->entity) match {
-                    case _ : NonTerm =>
-                        "NonTerminal"
-                    case _ =>
-                        idn->idntype
+                    case _ : PreType =>
+                        TypeType ()
                 }
 
         }
@@ -242,16 +279,16 @@ class Analyser (flags : Flags) extends Environments {
                 (idn->entity) match {
                     case _ : Cons =>
                         Some ("constructors cannot be used")
-                    case _ : Type if !(idn->idnastype) =>
+                    case _ : PreType if !(idn->idnastype) =>
                         Some ("types can only be used in rule headings")
-                    case _ : NonTerm if (idn->idnastype) && (idn.name != idn->idntype) =>
+                    case _ : NonTerm if (idn->idnastype) && (NamedType (idn.name) != idn->idntype) =>
                         Some ("this non-terminal is not a type")
                     case _ =>
                         None
                 }
         }
 
-    lazy val nttype : NonTerminal => String =
+    lazy val nttype : NonTerminal => Type =
         attr {
             case NonTerminal (NTName (idnuse)) =>
                 idnuse->idntype
@@ -259,39 +296,53 @@ class Analyser (flags : Flags) extends Environments {
                 tipe
         }
 
-    lazy val elemtype : Element => String =
+    lazy val elemtype : Element => Type =
         attr {
-            case _ : Block =>
-                "String"
+            case Alt (l, r) =>
+                if (l->elemtype == r->elemtype)
+                    l->elemtype
+                else
+                    AltType (l->elemtype, r->elemtype)
+            case _ : And =>
+                voidType
             case nt : NonTerminal =>
                 nt->nttype
+            case _ : Not =>
+                voidType
             case Opt (elem) =>
-                if (elem->elemtype == "Void")
-                    "Void"
+                if (elem->elemtype == voidType)
+                    voidType
+                else if (elem->elemtype == stringType)
+                    stringType
                 else
-                    s"Option[${elem->elemtype}]"
+                    OptionType (elem->elemtype)
             case Rep (_, elem, _) =>
-                if (elem->elemtype == "Void")
-                    "Void"
-                else {
-                    val seqType =
-                        flags.scalaRepetitionType match {
-                            case Some (ListType) =>
-                                "List"
-                            case _ =>
-                                "Vector"
-                        }
-                    s"$seqType[${elem->elemtype}]"
-                }
+                if (elem->elemtype == voidType)
+                    voidType
+                else if (elem->elemtype == stringType)
+                    stringType
+                else
+                    RepType (elem->elemtype)
             case Seqn (l, r) =>
-                (l->elemtype) match {
-                    case "Void" => r->elemtype
-                    case ltype  => ltype
-                }
+                if (l->elemtype == voidType)
+                    r->elemtype
+                else if (l->elemtype == stringType)
+                    if ((r->elemtype == voidType) || (r->elemtype == stringType))
+                        stringType
+                    else
+                        r->elemtype
+                else if ((r->elemtype == voidType) || (r->elemtype == stringType))
+                    l->elemtype
+                else
+                    SeqnType (l->elemtype, r->elemtype)
             case Nest (elem, _) =>
                 elem->elemtype
+            case Newline () =>
+                voidType
+            case Space () =>
+                voidType
             case _ =>
-                "Void"
+                stringType
         }
 
     // Patterns
@@ -330,10 +381,10 @@ class Analyser (flags : Flags) extends Environments {
      */
     lazy val typeName : ASTRule => String =
         attr {
-            case astRule if astRule.tipe == null =>
+            case astRule if astRule.typeIdn == null =>
                 astRule.idndef.name
             case astRule =>
-                astRule.tipe.name
+                astRule.typeIdn.name
         }
 
     /**
@@ -351,7 +402,7 @@ class Analyser (flags : Flags) extends Environments {
     lazy val pairTypeName : Element => String =
         attr {
             case elem =>
-                s"Pair<${elem->elemtype}>"
+                s"Pair<${typeName (elem->elemtype)}>"
         }
 
     /**
@@ -360,10 +411,10 @@ class Analyser (flags : Flags) extends Environments {
      */
     def hasRuleAnnotation (astRule : ASTRule, ann : RuleAnnotation) : Boolean = {
         val res = (astRule.anns != null) && (astRule.anns contains (ann))
-        if (astRule.tipe == null)
+        if (astRule.typeIdn == null)
             res
         else
-            res || ((astRule.tipe)->entity match {
+            res || ((astRule.typeIdn)->entity match {
                 case UserNonTerm (_, otherRule) if astRule != otherRule =>
                     hasRuleAnnotation (otherRule, ann)
                 case _ =>
@@ -666,12 +717,29 @@ class Analyser (flags : Flags) extends Environments {
             case alt if alt.anns == null =>
                 alt->syntaxElements match {
                     case List (nt : NonTerminal) =>
-                        nt->nttype == alt->astrule->typeName
+                        nt->nttype == NamedType (alt->astrule->typeName)
                     case _ =>
                         false
                 }
             case _ =>
                 false
+        }
+
+    /**
+     * Whether or not an element has a value.
+     */
+    lazy val hasValue : Element => Boolean =
+        attr {
+            case _ : CharClass | _ : CharLit | _ : StringLit | _ : Wildcard =>
+                false
+            case Opt (elem) =>
+                elem->hasValue
+            case Rep (_, elem, _) =>
+                elem->hasValue
+            case Seqn (l, r) =>
+                l->hasValue || r->hasValue
+            case elem =>
+                elem->elemtype != voidType
         }
 
     /**
@@ -681,10 +749,7 @@ class Analyser (flags : Flags) extends Environments {
     lazy val syntaxElements : Alternative => List[Element] =
         attr {
             case alt =>
-                alt.rhs.filterNot {
-                    case elem =>
-                        elem->elemtype == "Void"
-                }
+                alt.rhs.filter (hasValue)
         }
 
     /**
@@ -716,7 +781,7 @@ class Analyser (flags : Flags) extends Environments {
      * Map of field number to type as given by the alternative's
      * annotations.
      */
-    lazy val fieldTypes : Alternative => Map[Int,String] =
+    lazy val fieldTypes : Alternative => Map[Int,Type] =
         attr {
             case alt =>
                 if (alt.anns == null)
@@ -724,7 +789,7 @@ class Analyser (flags : Flags) extends Environments {
                 else
                     alt.anns.collect {
                         case Transformation (n, _, t) =>
-                            (n, t.mkString ("."))
+                            (n, NamedType (t.mkString (".")))
                     }.reverse.toMap
         }
 
@@ -744,10 +809,10 @@ class Analyser (flags : Flags) extends Environments {
             case Rep (true, elem, _) =>
                 s"opt${elem->baseFieldName}s"
             case Seqn (l, r) =>
-                if (l->elemtype == "Void")
-                    r->baseFieldName
-                else
+                if (l->hasValue)
                     l->baseFieldName
+                else
+                    r->baseFieldName
             case elem =>
                 sys.error (s"baseFieldName: unexpected element kind $elem")
         }
@@ -788,7 +853,7 @@ class Analyser (flags : Flags) extends Environments {
      * Representation of a field by its name and its type. For list
      * fields, `zero` is true if the list can be empty.
      */
-    case class Field (name : String, tipe : String, zero : Boolean = true)
+    case class Field (name : String, tipe : Type, zero : Boolean = true)
 
     /**
      * Traverse the elements on the RHS of a rule to collect fields.
@@ -802,10 +867,10 @@ class Analyser (flags : Flags) extends Environments {
         val fields = ListBuffer[Field] ()
 
         /**
-         * Add a field for the given element if it's not Void.
+         * Add a field for the given element if it has a value.
          */
         def addField (elem : Element, zero : Boolean = true) {
-            if (elem->elemtype != "Void") {
+            if (elem->hasValue) {
                 val fieldNum = fields.length + 1
                 val fieldType = (alt->fieldTypes).getOrElse (fieldNum, elem->elemtype)
                 fields.append (Field (elem->fieldName, fieldType, zero))
@@ -815,7 +880,7 @@ class Analyser (flags : Flags) extends Environments {
         def traverseElem (elem : Element) {
             elem match {
                 case Block (name, _) =>
-                    fields.append (Field (elem->fieldName, "String"))
+                    fields.append (Field (elem->fieldName, stringType))
                 case _ : NonTerminal =>
                     addField (elem)
                 case Opt (innerElem) =>

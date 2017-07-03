@@ -20,9 +20,9 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
 
     def translate (flags : Flags, genFile : File, grammar : Grammar) = {
 
-        import analyser.{constr, elemtype, hasSpacing, Literal, ntname,
+        import analyser.{constr, elemtype, hasSpacing, hasValue, Literal, ntname,
             nttype, partitionLiterals, requiresNoAction, syntaxElements,
-            transformer, typeName}
+            tokenType, transformer, typeName, voidType}
         import org.kiama.attribution.Attribution.{initTree, resetMemo}
 
         // Count of non-terminals on the RHS of an alternative
@@ -280,7 +280,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
 
                 elem match {
                     case nt : NonTerminal =>
-                        if (nt->nttype == "Void")
+                        if (nt->nttype == voidType)
                             text (nt->ntname)
                         else
                             bind (text (nt->ntname))
@@ -293,17 +293,17 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
 
                     case Opt (elem) =>
                         val inner = parens (toElem (elem)) <> "?"
-                        if (elem->elemtype == "Void")
-                            inner
-                        else
+                        if (elem->hasValue)
                             bind (inner)
+                        else
+                            inner
 
                     case Rep (zero, elem, Epsilon ()) =>
                         val inner = parens (toElem (elem)) <> (if (zero) "*" else "+")
-                        if (elem->elemtype == "Void")
-                            inner
-                        else
+                        if (elem->hasValue)
                             bind (inner)
+                        else
+                            inner
                     case _ : Rep =>
                         sys.error ("toElem: separated list left in for translation")
 
@@ -312,10 +312,10 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
 
                     case Seqn (left, right) =>
                         val inner = toElem (left) <+> toElem (right)
-                        if (elem->elemtype == "Void")
-                            inner
-                        else
+                        if (elem->hasValue)
                             bind (inner)
+                        else
+                            inner
 
                     case CharLit (lit) =>
                         toLiteral (lit)
@@ -377,11 +377,12 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                         case n =>
                             val argName = "v" <> value (n)
                             val argExp =
-                                if ((flags.useScalaOptions) &&
-                                       ((elements (n - 1)->elemtype).startsWith ("Option")))
-                                    "Option.apply" <+> parens (argName)
-                                else
-                                    argName
+                                (elements (n - 1)->elemtype) match {
+                                    case _ : OptionType if flags.useScalaOptions =>
+                                        "Option.apply" <+> parens (argName)
+                                    case _ =>
+                                        argName
+                                }
                             (alt->transformer (n) match {
                                 case Some (method) =>
                                     method <+> parens (argExp)
@@ -452,9 +453,9 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
 
         def toStringRule (stringRule : StringRule) : Doc = {
 
-            val StringRule (lhs, IdnUse (tipeStr), alts) = stringRule
+            val StringRule (lhs, IdnUse (typeName), alts) = stringRule
 
-            val tipe = if (tipeStr == "Void") "void" else "String"
+            val tipe = if (typeName == "Void") "void" else "String"
 
             def toAlternative (e : Element) : Doc =
                 toRHS (e, false, false)
@@ -479,7 +480,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                     lsep2 (alts map toAlternative, "/") <> semi
                 )
 
-            if (tipeStr == "Token")
+            if (typeName == "Token")
                 auxdef (lhs.name) <@> maindef (auxname (lhs.name))
             else
                 maindef (lhs.name)

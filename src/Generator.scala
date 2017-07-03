@@ -15,9 +15,10 @@ import org.kiama.output.PrettyPrinter
 class Generator (analyser : Analyser) extends PrettyPrinter {
 
     import analyser.{associativity, constr, elemtype, Field, fieldName,
-        fieldTypes, fields, isLeftRecursive, isLinePP, isNestedPP, isParenPP,
+        fieldTypes, fields, hasValue, isLeftRecursive, isLinePP, isNestedPP, isParenPP,
         isRightRecursive, isTransferAlt, lhs, precFixity, orderOpPrecFixityNonterm,
-        requiresNoPPCase, treeAlternatives, typeName}
+        requiresNoPPCase, stringType, tokenType, treeAlternatives, typeName,
+        voidType}
     import ast._
     import org.kiama.attribution.Attribution.{initTree, resetMemo}
     import org.kiama.output.{LeftAssoc, NonAssoc, RightAssoc, Side}
@@ -98,7 +99,7 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
             def toFields (alt : Alternative) : Doc = {
                 val fieldDocs =
                     (alt->fields).map {
-                        case Field (n, t, _) => n <+> colon <+> t
+                        case Field (n, t, _) => n <+> colon <+> typeName (t)
                     }
                 parens (hsep (fieldDocs, comma))
             }
@@ -211,7 +212,7 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                 if (alt->isTransferAlt)
                     baseClass
                 else
-                    if (astRule.tipe == null)
+                    if (astRule.typeIdn == null)
                         if (lhs.name == alt->constr)
                             "case class" <+> text (alt->constr) <+> toFields (alt) <+> superClass
                         else
@@ -220,7 +221,7 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                     else
                         toConcreteClass (tipe.name) (alt)
              } else
-                if (astRule.tipe == null)
+                if (astRule.typeIdn == null)
                     baseClass <@>
                     vsep (treeAlts map (toConcreteClass (lhs.name)))
                 else
@@ -425,7 +426,7 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                                     varr <> ".map" <+> parens (varr <+> "=>" <+> doOne)
                                 case _ =>
                                     val func =
-                                        if (innerElem->elemtype == "String")
+                                        if (innerElem->elemtype == stringType)
                                             "text"
                                         else
                                             "toDoc"
@@ -465,15 +466,15 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                                 emptyDocText
 
                             case NonTerminal (NTName (IdnUse (nt))) =>
-                                if (elem->elemtype == "Void")
+                                if (elem->elemtype == voidType)
                                     emptyDocText
                                 else {
                                     varcount = varcount + 1
                                     var varr = varName (varcount)
                                     if (wrap) {
                                         val args = parens (varr)
-                                        if ((elem->elemtype == "String") ||
-                                            (elem->elemtype == "Token"))
+                                        if ((elem->elemtype == stringType) ||
+                                            (elem->elemtype == tokenType))
                                             "value" <+> args
                                         else if (astRule->isParenPP &&
                                                  (flags.useKiama == 2) &&
@@ -486,16 +487,16 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                                 }
 
                             case Opt (innerElem) =>
-                                if (elem->elemtype == "Void")
-                                    emptyDocText
-                                else
+                                if (innerElem->hasValue)
                                     traverseMap (innerElem)
+                                else
+                                    emptyDocText
 
                             case Rep (_, innerElem, sep) =>
-                                if (elem->elemtype == "Void")
-                                    emptyDocText
-                                else
+                                if (innerElem->hasValue)
                                     traverseMap (innerElem, Some (sep))
+                                else
+                                    emptyDocText
 
                             case Seqn (l, r) =>
                                 traverseElem (l) <+> "<>" <+> traverseElem (r)
