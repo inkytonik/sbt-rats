@@ -296,6 +296,19 @@ class Analyser (flags : Flags) extends Environments {
                 tipe
         }
 
+    lazy val isinstringcontext : Element => Boolean =
+        attr {
+            case elem =>
+                elem.parent match {
+                    case _ : Alternative =>
+                        false
+                    case _ : StringRule =>
+                        true
+                    case p : Element =>
+                        isinstringcontext (p)
+                }
+        }
+
     lazy val elemtype : Element => Type =
         attr {
             case Alt (l, r) =>
@@ -309,17 +322,19 @@ class Analyser (flags : Flags) extends Environments {
                 nt->nttype
             case _ : Not =>
                 voidType
+            case Opt (_ : CharClass | _ : CharLit | _ : StringLit) =>
+                stringType
             case Opt (elem) =>
                 if (elem->elemtype == voidType)
                     voidType
-                else if (elem->elemtype == stringType)
+                else if (elem->isinstringcontext && elem->elemtype == stringType)
                     stringType
                 else
                     OptionType (elem->elemtype)
             case Rep (_, elem, _) =>
                 if (elem->elemtype == voidType)
                     voidType
-                else if (elem->elemtype == stringType)
+                else if (elem->isinstringcontext && elem->elemtype == stringType)
                     stringType
                 else
                     RepType (elem->elemtype)
