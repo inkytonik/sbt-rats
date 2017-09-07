@@ -47,7 +47,7 @@ class Analyser (flags : Flags) extends Environments {
 
             case r @ StringRule (_, _, elems) =>
                 elems.flatMap {
-                    case elem if elem->elemtype != stringType && elem->elemtype != tokenType && elem->elemtype != voidType=>
+                    case elem if elem->elemtype != stringType && elem->elemtype != tokenType && elem->elemtype != voidType =>
                         message (r, s"elements of string rule must have String, Token or Void type, currently ${typeName (elem->elemtype)}")
                     case _ =>
                         noMessages
@@ -67,7 +67,7 @@ class Analyser (flags : Flags) extends Environments {
 
             case e @ Alt (l, r) if l->elemtype != r->elemtype =>
                 message (e, s"alternatives must have same type, ${typeName (l->elemtype)} != ${typeName (r->elemtype)}")
-            
+
             case Rep (_, _, sep) if (sep->elemtype != voidType) && (sep->elemtype != stringType) =>
                 message (sep, s"list separator must be Void or String, currently ${typeName (sep->elemtype)}")
         })
@@ -91,7 +91,7 @@ class Analyser (flags : Flags) extends Environments {
     def stringType () = NamedType ("String")
     def tokenType () = NamedType ("Token")
     def voidType () = NamedType ("Void")
-    
+
     def typeName (tipe : Type) : String =
         tipe match {
             case AltType (lt, rt) =>
@@ -184,7 +184,7 @@ class Analyser (flags : Flags) extends Environments {
             possibleBindings.filter (_._1).map (_._2)
         rootenv (bindings : _*)
     }
-    
+
     lazy val literals : Chain[ASTNode,Set[Literal]] =
         chain (literalsin, literalsout)
 
@@ -247,7 +247,7 @@ class Analyser (flags : Flags) extends Environments {
         }
 
     // Type analysis
-    
+
     lazy val idntype : Identifier => Type =
         attr {
             case idn =>
@@ -1011,5 +1011,5 @@ class Analyser (flags : Flags) extends Environments {
 
                 }
         }
-        
+
 }
