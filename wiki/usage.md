@@ -149,6 +149,9 @@ After the body section some Rats! options can be optionally specified. At the mo
 
     option setOfString (MyStrings), verbose;
 
+Only one `option` directive can be provided.
+You can include multiple option settings by separating them with commas, as shown in the example above.
+
 The following `sbt-rats` options are supported:
 
 * `defaultIndent` and `defaultWidth`: control the default indentation and width for pretty-printing. See below for more detail.
