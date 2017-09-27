@@ -370,6 +370,12 @@ The precedence annotations should define a sequence of levels from the highest p
 
 Note that the lowest level in the example includes a recursive alternative for the parenthesisation of expressions. In this case no constructor has been specified, so parenthesised expressions will not be represented explicitly in the abstract syntax tree. This outcome is usually what you want for programming languages since the parenthesisation doesn't contribute any additional semantics, it just controls grouping at the parsing stage. If you have an alternative with a similar form for which a semantic contribution is needed, you can ensure that such constructs are represented in the tree by specifying a constructor, as is done for the `Neg` case above.
 
+Things can go wrong during pretty-printing if there is no constructor for the parenthesised expression.
+There is no opportunity for the default pretty-printer to insert the parentheses because there is no node representing a parenthesised expression.
+If those parentheses are necessary to express the correct form of expression (e.g., by overriding the precedence of an operator), the wrong precedence will be expressed in the printed expression.
+sbt-rats provides a solution for this problem in the form of the `paren` annotation that is documented at the end of the "Generation of a pretty printer" section below.
+This annotation causes the pretty-printer to take the operator precedence into account when it is printing, so that parentheses will be inserted when they are needed, even if the tree has no nodes for parenthesised expressions.
+
 ## Value conversion
 
 Value conversion is often needed when crossing from string rules to abstract syntax tree rules. For example, suppose that we have used a string rule to define `IntegerLiteral` to be a non-empty sequence of digits. The value in this case will be a string of the digits.
