@@ -52,7 +52,7 @@ import bintray.Keys._
 
 bintrayPublishSettings
 
-licenses += ("BSD New", url (s"https://bitbucket.org/inkytonik/${name.value}/src/default/LICENSE"))
+licenses += ("BSD New", url (s"https://bitbucket.org/inkytonik/${name.value}/src/master/LICENSE"))
 
 publishMavenStyle := false
 
