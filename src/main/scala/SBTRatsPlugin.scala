@@ -191,25 +191,27 @@ object SBTRatsPlugin extends Plugin {
      * Run the generators if any of the .rats or .syntax files in the source
      * have changed or the output doesn't exist.
      */
-    def runGenerators =
-        (ratsFlags, ratsMainModule, scalaSource in Compile, target, sourceManaged in Compile,
-         streams) map {
-            (flags, main, srcDir, tgtDir, smDir, str) => {
+    val runGenerators =
+        Def.task {
+            val flags = ratsFlags.value
+            val main = ratsMainModule.value
+            val srcDir = (scalaSource in Compile).value
+            val tgtDir = target.value
+            val smDir = (sourceManaged in Compile).value
+            val str = streams.value
 
-                val cache = str.cacheDirectory
+            val cache = str.cacheDirectory
 
-                val cachedFun =
-                    FileFunction.cached (cache / "sbt-rats", FilesInfo.lastModified,
-                                         FilesInfo.exists) {
-                        (inFiles: Set[File]) =>
-                            runGeneratorsImpl (flags, main, inFiles, srcDir, tgtDir,
-                                               smDir, str)
-                    }
+            val cachedFun =
+                FileFunction.cached (cache / "sbt-rats", FilesInfo.lastModified,
+                                        FilesInfo.exists) {
+                    (inFiles: Set[File]) =>
+                        runGeneratorsImpl (flags, main, inFiles, srcDir, tgtDir,
+                                        smDir, str)
+                }
 
-                val inputFiles = (srcDir ** ("*.rats" | "*.syntax")).get.toSet
-                cachedFun (inputFiles).toSeq
-
-            }
+            val inputFiles = (srcDir ** ("*.rats" | "*.syntax")).get.toSet
+            cachedFun (inputFiles).toSeq
         }
 
     /**
@@ -807,7 +809,7 @@ object SBTRatsPlugin extends Plugin {
      */
     val sbtRatsSettings = Seq (
 
-        sourceGenerators in Compile <+= runGenerators,
+        sourceGenerators in Compile += runGenerators,
 
         libraryDependencies ++= Seq (
             "xtc" % "rats" % "2.3.1"

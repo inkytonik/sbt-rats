@@ -47,7 +47,7 @@ class Analyser (flags : Flags) extends Environments {
 
             case r @ StringRule (_, _, elems) =>
                 elems.flatMap {
-                    case elem if elem->elemtype != stringType && elem->elemtype != tokenType && elem->elemtype != voidType =>
+                    case elem if otherType (elem->elemtype, List(stringType, tokenType, voidType)) =>
                         message (r, s"elements of string rule must have String, Token or Void type, currently ${typeName (elem->elemtype)}")
                     case _ =>
                         noMessages
@@ -68,9 +68,16 @@ class Analyser (flags : Flags) extends Environments {
             case e @ Alt (l, r) if l->elemtype != r->elemtype =>
                 message (e, s"alternatives must have same type, ${typeName (l->elemtype)} != ${typeName (r->elemtype)}")
 
-            case Rep (_, _, sep) if (sep->elemtype != voidType) && (sep->elemtype != stringType) =>
+            case Rep (_, _, sep) if otherType(sep->elemtype, List(voidType, stringType)) =>
                 message (sep, s"list separator must be Void or String, currently ${typeName (sep->elemtype)}")
         })
+
+    /**
+     * Return true if a type is not unknown and doesn't belong to a given collection of types.
+     * Otherwise return false.
+     */
+    def otherType (tipe : Type, okTypes : Seq[Type]) : Boolean =
+        (tipe != UnknownType()) && (!okTypes.contains (tipe))
 
     /**
      * Return a pair consisting of the set of keywords used in the grammar
@@ -122,6 +129,8 @@ class Analyser (flags : Flags) extends Environments {
                 s"Sequence<${typeName (lt)}, ${typeName (rt)}>"
             case TypeType () =>
                 "Type"
+            case UnknownType () =>
+                "Unknown"
         }
 
     // Entities
@@ -261,6 +270,8 @@ class Analyser (flags : Flags) extends Environments {
                             nt.tipe
                     case _ : PreType =>
                         TypeType ()
+                    case UnknownEntity () =>
+                        UnknownType ()
                 }
 
         }

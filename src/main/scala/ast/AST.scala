@@ -55,6 +55,7 @@ case class OptionType (t : Type) extends Type
 case class RepType (t : Type) extends Type
 case class SeqnType (lt : Type, rt : Type) extends Type
 case class TypeType () extends Type
+case class UnknownType () extends Type
 
 sealed abstract class Action extends ASTNode
 case class ApplyAction () extends Action
