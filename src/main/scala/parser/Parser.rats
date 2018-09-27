@@ -15,6 +15,7 @@ header {
     import org.kiama.output.NonAssoc$;
     import org.kiama.output.RightAssoc$;
     import org.kiama.util.Positions;
+    import scala.collection.immutable.List$;
     import scala.collection.immutable.List;
     import scala.collection.immutable.Nil$;
     import scala.collection.immutable.$colon$colon;
