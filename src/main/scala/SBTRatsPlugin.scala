@@ -47,7 +47,7 @@ case class Flags (
     kiamaPkg : String
 )
 
-object SBTRatsPlugin extends Plugin {
+object SBTRatsPlugin extends AutoPlugin {
 
     import ast.Grammar
     import parser.{LineColPosition, Parser}
@@ -60,132 +60,141 @@ object SBTRatsPlugin extends Plugin {
     import scala.util.matching.Regex
     import xtc.parser.ParseError
 
-    /**
-     * The file that contains the main Rats! module or main syntax
-     * definition.
-     */
-    val ratsMainModule = SettingKey[Option[File]] (
-        "rats-main-module",
-            "The main Rats! module. If not set, use all syntax definitions."
-    )
+    override def requires = plugins.JvmPlugin
+    override def trigger = allRequirements
 
-    /**
-     * If set, assume that the Rats!-generated parser is to be used with
-     * Scala and use the specified type for repeated constructs. Otherwise,
-     * use the default Rats! pair-based lists.
-     */
-    val ratsScalaRepetitionType = SettingKey[Option[ScalaSequenceType]] (
-        "rats-scala-repetition-type",
-            "Form of Scala data to use for repetitions. If not set, use Rats! pair-based lists."
-    )
+    object autoImport {
 
-    /**
-     * If true, assume that the Rats!-generated parser is to be used with
-     * Scala and use Scala lists for repeated constructs. Otherwise, use
-     * the default Rats! pair-based lists.
-     */
-    val ratsUseScalaOptions = SettingKey[Boolean] (
-        "rats-use-scala-options",
-            "Use Scala options instead of Rats!-style possibly-nullable fields for options"
-    )
+        /**
+        * The file that contains the main Rats! module or main syntax
+        * definition.
+        */
+        val ratsMainModule = SettingKey[Option[File]] (
+            "rats-main-module",
+                "The main Rats! module. If not set, use all syntax definitions."
+        )
 
-    /**
-     * Set the locations of Scala Positional semantic values instead of
-     * Rats! locations. Requires the Rats! option `withLocation` to have
-     * any effect.
-     */
-    val ratsUseScalaPositions = SettingKey[Boolean] (
-        "rats-use-scala-positions",
-            "Set the position of any Positional semantic values (requires Rats! withLocation option)"
-    )
+        /**
+        * If set, assume that the Rats!-generated parser is to be used with
+        * Scala and use the specified type for repeated constructs. Otherwise,
+        * use the default Rats! pair-based lists.
+        */
+        val ratsScalaRepetitionType = SettingKey[Option[ScalaSequenceType]] (
+            "rats-scala-repetition-type",
+                "Form of Scala data to use for repetitions. If not set, use Rats! pair-based lists."
+        )
 
-    /**
-     * If a syntax definition is being used, generate a default specification
-     * for comments.
-     */
-    val ratsUseDefaultComments = SettingKey[Boolean] (
-        "rats-use-default-comments",
-            "Use a default definition for comments (syntax mode only)"
-    )
+        /**
+        * If true, assume that the Rats!-generated parser is to be used with
+        * Scala and use Scala lists for repeated constructs. Otherwise, use
+        * the default Rats! pair-based lists.
+        */
+        val ratsUseScalaOptions = SettingKey[Boolean] (
+            "rats-use-scala-options",
+                "Use Scala options instead of Rats!-style possibly-nullable fields for options"
+        )
 
-    /**
-     * If a syntax definition is being used, generate a default specification
-     * for spacing (i.e., whitespace and comment handling).
-     */
-    val ratsUseDefaultSpacing = SettingKey[Boolean] (
-        "rats-use-default-spacing",
-            "Use a default definition for spacing (syntax mode only)"
-    )
+        /**
+        * Set the locations of Scala Positional semantic values instead of
+        * Rats! locations. Requires the Rats! option `withLocation` to have
+        * any effect.
+        */
+        val ratsUseScalaPositions = SettingKey[Boolean] (
+            "rats-use-scala-positions",
+                "Set the position of any Positional semantic values (requires Rats! withLocation option)"
+        )
 
-    /**
-     * If a syntax definition is being used, generate a default specification
-     * for layout (i.e., Space and EOL).
-     */
-    val ratsUseDefaultLayout = SettingKey[Boolean] (
-        "rats-use-default-layout",
-            "Use a default definition for layout (syntax mode only)"
-    )
+        /**
+        * If a syntax definition is being used, generate a default specification
+        * for comments.
+        */
+        val ratsUseDefaultComments = SettingKey[Boolean] (
+            "rats-use-default-comments",
+                "Use a default definition for comments (syntax mode only)"
+        )
 
-    /**
-     * If a syntax definition is being used, generate a default specification
-     * for words (i.e., letter sequences, commonly used to match identifiers
-     * and the like).
-     */
-    val ratsUseDefaultWords = SettingKey[Boolean] (
-        "rats-use-default-words",
-            "Use a default definition for words (syntax mode only)"
-    )
+        /**
+        * If a syntax definition is being used, generate a default specification
+        * for spacing (i.e., whitespace and comment handling).
+        */
+        val ratsUseDefaultSpacing = SettingKey[Boolean] (
+            "rats-use-default-spacing",
+                "Use a default definition for spacing (syntax mode only)"
+        )
 
-    /**
-     * If a syntax definition is being used, generate definitions for
-     * compatible abstract syntax trees as Scala case classes.
-     */
-    val ratsDefineASTClasses = SettingKey[Boolean] (
-        "rats-define-ast-classes",
-            "Define Scala classes to represent abstract syntax trees (syntax mode only)"
-    )
+        /**
+        * If a syntax definition is being used, generate a default specification
+        * for layout (i.e., Space and EOL).
+        */
+        val ratsUseDefaultLayout = SettingKey[Boolean] (
+            "rats-use-default-layout",
+                "Use a default definition for layout (syntax mode only)"
+        )
 
-    /**
-     * If a syntax definition is being used and AST classes are being generated,
-     * also generate definitions for a Kiama-based pretty printer for the AST.
-     */
-    val ratsDefinePrettyPrinter = SettingKey[Boolean] (
-        "rats-define-pretty-printer",
-            "Define Kiama-based pretty-printer for abstract syntax trees (syntax mode only, requires ratsDefineASTClasses)"
-    )
+        /**
+        * If a syntax definition is being used, generate a default specification
+        * for words (i.e., letter sequences, commonly used to match identifiers
+        * and the like).
+        */
+        val ratsUseDefaultWords = SettingKey[Boolean] (
+            "rats-use-default-words",
+                "Use a default definition for words (syntax mode only)"
+        )
 
-    /**
-     * If non-zero, include support in generated components to make it easy to use
-     * them with Kiama. Value is the major Kiama version that is being used.
-     */
-    val ratsUseKiama = SettingKey[Int] (
-        "rats-use-kiama",
-            "Major version of Kiama that should be used (default 0 means don't use Kiama)"
-    )
+        /**
+        * If a syntax definition is being used, generate definitions for
+        * compatible abstract syntax trees as Scala case classes.
+        */
+        val ratsDefineASTClasses = SettingKey[Boolean] (
+            "rats-define-ast-classes",
+                "Define Scala classes to represent abstract syntax trees (syntax mode only)"
+        )
 
-    /**
-     * Include support for keyword handling by building a table of all of the
-     * keywords from the specification.
-     */
-    val ratsIncludeKeywordTable = SettingKey[Boolean] (
-        "rats-include-keyword-table",
-            "Add a table containing all keywords in the specification (syntax mode only)"
-    )
+        /**
+        * If a syntax definition is being used and AST classes are being generated,
+        * also generate definitions for a Kiama-based pretty printer for the AST.
+        */
+        val ratsDefinePrettyPrinter = SettingKey[Boolean] (
+            "rats-define-pretty-printer",
+                "Define Kiama-based pretty-printer for abstract syntax trees (syntax mode only, requires ratsDefineASTClasses)"
+        )
 
-    /**
-     * Include support for parsing binary formats.
-     */
-    val ratsIncludeBinarySupport = SettingKey[Boolean] (
-        "rats-include-binary-support",
-            "Add extra support for using parsing binary data (syntax mode only)"
-    )
+        /**
+        * If non-zero, include support in generated components to make it easy to use
+        * them with Kiama. Value is the major Kiama version that is being used.
+        */
+        val ratsUseKiama = SettingKey[Int] (
+            "rats-use-kiama",
+                "Major version of Kiama that should be used (default 0 means don't use Kiama)"
+        )
 
-    /**
-     * Aggregation of all flag settings.
-     */
-    val ratsFlags = SettingKey[Flags] (
-        "rats-flags", "All sbt-rats flags"
-    )
+        /**
+        * Include support for keyword handling by building a table of all of the
+        * keywords from the specification.
+        */
+        val ratsIncludeKeywordTable = SettingKey[Boolean] (
+            "rats-include-keyword-table",
+                "Add a table containing all keywords in the specification (syntax mode only)"
+        )
+
+        /**
+        * Include support for parsing binary formats.
+        */
+        val ratsIncludeBinarySupport = SettingKey[Boolean] (
+            "rats-include-binary-support",
+                "Add extra support for using parsing binary data (syntax mode only)"
+        )
+
+        /**
+        * Aggregation of all flag settings.
+        */
+        val ratsFlags = SettingKey[Flags] (
+            "rats-flags", "All sbt-rats flags"
+        )
+
+    }
+
+    import autoImport._
 
     /**
      * Run the generators if any of the .rats or .syntax files in the source
@@ -204,7 +213,7 @@ object SBTRatsPlugin extends Plugin {
 
             val cachedFun =
                 FileFunction.cached (cache / "sbt-rats", FilesInfo.lastModified,
-                                        FilesInfo.exists) {
+                                     FilesInfo.exists) {
                     (inFiles: Set[File]) =>
                         runGeneratorsImpl (flags, main, inFiles, srcDir, tgtDir,
                                         smDir, str)
@@ -807,7 +816,7 @@ object SBTRatsPlugin extends Plugin {
      *  - default values for settings
      *  - group settings together to pass around
      */
-    val sbtRatsSettings = Seq (
+    override lazy val projectSettings = Seq (
 
         sourceGenerators in Compile += runGenerators,
 
