@@ -8,9 +8,20 @@ organization in ThisBuild := "org.bitbucket.inkytonik.sbt-rats"
 
 // Scala compiler settings
 
-scalaVersion := "2.10.7"
+scalaVersion := "2.12.6"
 
 scalacOptions ++= Seq ("-deprecation", "-feature", "-unchecked")
+
+scalaCompilerBridgeSource := {
+  val sv = appConfiguration.value.provider.id.version
+  ("org.scala-sbt" % "compiler-interface" % sv % "component").sources
+}
+
+// sbt settings
+
+sbtVersion in Global := "1.2.3"
+
+crossSbtVersions := Vector ("1.2.3", "0.13.17")
 
 // Interactive settings
 
@@ -19,13 +30,14 @@ logLevel := Level.Info
 shellPrompt := {
     state =>
         Project.extract(state).currentRef.project + " " + version.value +
-            " " + scalaVersion.value + "> "
+            " " + (sbtVersion in pluginCrossBuild).value + " " +
+            scalaVersion.value + "> "
 }
 
 // Dependencies
 
 libraryDependencies ++= Seq (
-    "com.googlecode.kiama" % "kiama_2.10" % "1.8.0",
+    "com.googlecode.kiama" %% "kiama" % "1.8.0",
     "xtc" % "rats" % "2.4.0"
 )
 
