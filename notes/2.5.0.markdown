@@ -1,17 +1,21 @@
-This release of the sbt-rats plugin contains the following changes.
+This release of the sbt-rats plugin is primarily a bug fix release with some improvements and cross-publishing support.
+
+The plugin is now published as an auto-plugin for both sbt 0.13 and sbt 1.x. As a result, adding `sbtRatsSettings` to your build is no longer required. Users of previous versions should remove this manual setting inclusion.
+
+### Improvements
+
+* Stronger type-checking of rules to avoid more compilation errors in generated code.
 
 ### Fixes
 
-* Fixed bug in handling of literals whereby a literal that was a prefix of a longer literal could not be parsed in some circumstances. E.g., if both "]" and "]]" are literals then the input "]]" would only ever be parsed as a "]]" not two "]" literals.
+* Fixed a bug in handling of literals whereby a literal that was a prefix of a longer literal could not be parsed in some circumstances. E.g., if both "]" and "]]" are literals then the input "]]" would only ever be parsed as a "]]" not two "]" literals.
 
-* Fixed bug where pretty-printing directives were confusing detection of recursive productions.
+* Fixed a bug where pretty-printing directives were confusing detection of recursive productions.
 
 * Make processing of literals and escape sequences in literals more robust.
 
 * Don't include a literal symbol more than once in a symbol production.
 
-### Improvements
+* Properly disregard pretty-printing directives when detecting recursive productions.
 
-* Don't always import things from Kiama since if they are unused and unused import warnings/errors are on we can get spurious warnings/errors in generated code.
-
-* Stronger type-checking of rules to avoid compilation errors in generated code.
+* Don't always import things from Kiama since if they are unused and unused import warnings/errors are on we get spurious warnings/errors in generated code.

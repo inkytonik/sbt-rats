@@ -14,13 +14,13 @@ The rest of this page describes how to install, configure and use the `sbt-rats`
 
 We do not describe full details of using sbt, Rats! or Kiama. Please consult their respective documentation. In particular, a description of the Rats! specification notation can be found in the [Rats! introduction](http://cs.nyu.edu/rgrimm/xtc/rats-intro.html).
 
-The plugin has most recently been tested with Scala 2.10.6, sbt 0.13.11, Rats! from xtc 2.4.0 and Kiama 1.8.0/2.0.0, but may work with other versions.
+The plugin has most recently been tested with Scala 2.10.7/2.11.12/2.12.6 sbt 0.13.17/1.2.3, Rats! from xtc 2.4.0 and Kiama 1.8.0/2.2.0, but may work with other versions.
 
 ## Instantiating the plugin
 
 To use the plugin in a project, add a line like the following to your `project/plugins.sbt` file, selecting the version of the plugin you want to use.
 
-    addSbtPlugin ("org.bitbucket.inkytonik.sbt-rats" % "sbt-rats" % "2.3.0")
+    addSbtPlugin ("org.bitbucket.inkytonik.sbt-rats" % "sbt-rats" % "2.5.0")
 
 In versions of sbt before 0.12.0, you will also have to add the resolver for the sbt community ivy repository. Add these lines or equivalent to the start of your `project/plugins.sbt` file.
 
@@ -39,12 +39,14 @@ for version 1 of Kiama, or
 
     libraryDependencies ++=
         Seq (
-            "org.bitbucket.inkytonik.kiama" %% "kiama" % "2.0.0"
+            "org.bitbucket.inkytonik.kiama" %% "kiama" % "2.2.0"
         )
 
-for version 2.
+for version 2. If you are using any Kiama extras that aren't in the main Kiama library, also add a dependency on:
 
-Finally, add the plugin settings to your `build.sbt`:
+    "org.bitbucket.inkytonik.kiama" %% "kiama-extras" % "2.2.0"
+
+When using versions of sbt-rats older than 2.5.0, add the plugin settings to your `build.sbt`:
 
     sbtRatsSettings
 
