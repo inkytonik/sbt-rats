@@ -8,7 +8,7 @@ organization in ThisBuild := "org.bitbucket.inkytonik.sbt-rats"
 
 // Scala compiler settings
 
-scalaVersion := "2.12.6"
+scalaVersion := "2.12.8"
 
 scalacOptions ++= Seq ("-deprecation", "-feature", "-unchecked")
 
@@ -19,9 +19,9 @@ scalaCompilerBridgeSource := {
 
 // sbt settings
 
-sbtVersion in Global := "1.2.3"
+sbtVersion in Global := "1.2.7"
 
-crossSbtVersions := Vector ("1.2.3", "0.13.17")
+crossSbtVersions := Vector ("1.2.7", "0.13.17")
 
 // Interactive settings
 
