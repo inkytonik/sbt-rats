@@ -1,0 +1,5 @@
+This release of the sbt-rats plugin is a bug fix release.
+
+## Fixes
+
+* [Issue 11](https://bitbucket.org/inkytonik/sbt-rats/issues/11): Transforming a tree-valued field no longer causes a compilation error in the generated pretty-printer.

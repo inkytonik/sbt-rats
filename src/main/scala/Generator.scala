@@ -17,7 +17,7 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
     import analyser.{associativity, constr, elemtype, Field, fieldName,
         fieldTypes, fields, hasValue, isLeftRecursive, isLinePP, isNestedPP, isParenPP,
         isRightRecursive, isTransferAlt, lhs, precFixity, orderOpPrecFixityNonterm,
-        requiresNoPPCase, stringType, tokenType, treeAlternatives, typeName,
+        requiresNoPPCase, stringType, tokenType, transformer, treeAlternatives, typeName,
         voidType}
     import ast._
     import org.kiama.attribution.Attribution.{initTree, resetMemo}
@@ -474,7 +474,8 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                                     if (wrap) {
                                         val args = parens (varr)
                                         if ((elem->elemtype == stringType) ||
-                                            (elem->elemtype == tokenType))
+                                            (elem->elemtype == tokenType) ||
+                                            (transformer(varcount)(alt).isDefined))
                                             "value" <+> args
                                         else if (astRule->isParenPP &&
                                                  (flags.useKiama == 2) &&
