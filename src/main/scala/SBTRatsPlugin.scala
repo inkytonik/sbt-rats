@@ -712,7 +712,7 @@ object SBTRatsPlugin extends AutoPlugin {
                         |   * @throws IllegalArgumentException Signals a negative file size.
                         |   */
                         |  public $1(final Source src, final int size, final Positions posns) {
-                        |      this(src.reader(), src.optName().isEmpty() ? "" : src.optName().get(), size);
+                        |      this(src.reader(), src.name(), size);
                         |      source = src;
                         |      positions = posns;
                         |  }
