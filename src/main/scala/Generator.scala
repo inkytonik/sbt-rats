@@ -8,6 +8,8 @@
 
 import org.kiama.output.PrettyPrinter
 
+import scala.language.implicitConversions
+
 /**
  * Generator of auxiliary files from a syntax specification, parameterised
  * by the analyser to use.
@@ -70,7 +72,11 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                     Nil)
 
             line <>
-            "sealed abstract class ASTNode extends" <+> hsep (superTraits map text, " with")
+            "sealed abstract class ASTNode extends" <+> hsep (superTraits map text, " with") <+>
+            typeBody(
+                when(flags.definePrettyPrinter) {
+                    text(s"override def toString: String = ${grammar.module.last}PrettyPrinter.show(this)") },
+            )
         }
 
         def toRuleClasses (rule : Rule) : Doc =
@@ -661,4 +667,31 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
 
     }
 
+    // [[Option.when]] is only available in Scala 2.13+
+    private def when (cond: Boolean) (x: => Doc) : Option[Doc] =
+        if (cond)
+            Some(x)
+        else
+            None
+
+    private def typeBody (parts: List[Doc]) : Doc =
+        typeBody(parts map { Some(_) } : _*)
+
+    private def typeBody (parts: Option[Doc]*) : Doc =
+        parts.flatten match {
+            case Seq() =>
+                empty
+            case parts =>
+                braces (
+                    nest (
+                        line <>
+                          vsep(parts.toList)
+                    ) <>
+                      line
+                )
+        }
+
+    // Allows [[typeBody]]'s callers to use a mix of conditional and non-conditional arguments.
+    // Required b/c you can't have overloaded variadic methods in Scala (type erasure + variadic desugaring issue).
+    private implicit def docToOptionalDoc (d: Doc): Some[Doc] = Some(d)
 }
