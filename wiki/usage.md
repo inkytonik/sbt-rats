@@ -8,7 +8,7 @@ The plugin can be used in one of two main modes:
 
  * You can specify a `.syntax` file which will be translated into a Rats! specification to produce a parser, and optionally also into a Scala implementation of abstract syntax trees and a pretty printer for those trees.
 
-The pretty-printers produced by the plugin and a few other convenience features are designed to work with the [Kiama language processing library](http://kiama.googlecode.com).
+The pretty-printers produced by the plugin and a few other convenience features are designed to work with the [Kiama language processing library](https://bitbucket.org/inkytonik/kiama).
 
 The rest of this page describes how to install, configure and use the `sbt-rats` plugin.
 
