@@ -1,0 +1,5 @@
+This release of the sbt-rats plugin is a bug fix release.
+
+## Fixes
+
+* FIXME
