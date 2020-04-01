@@ -2,4 +2,4 @@ This release of the sbt-rats plugin is a bug fix release.
 
 ## Fixes
 
-* FIXME
+* [Issue 7](https://bitbucket.org/inkytonik/sbt-rats/issues/7/quotation-marks-are-not-interchangeable-in): Add `nestnl` to the keyword list
