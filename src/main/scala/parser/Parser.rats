@@ -392,6 +392,9 @@ RatsRule RatsRule =
     i:IdnDef void:":":Symbol StringType void:"=":Symbol void:"rats":Word s:CodeBlock {
         yyValue = new RatsRule (i, new IdnUse ("String"), s);
     } /
+    i:IdnDef void:":":Symbol TokenType void:"=":Symbol void:"rats":Word s:CodeBlock {
+        yyValue = new RatsRule (i, new IdnUse ("Token"), s);
+    } /
     i:IdnDef t:Type void:"=":Symbol void:"rats":Word s:CodeBlock {
         yyValue = new RatsRule (i, t, s);
     } /

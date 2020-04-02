@@ -487,13 +487,25 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
 
         }
 
+        def implTypeName(tipe : IdnUse) : String =
+            if (tipe.name == "Token")
+                "String"
+            else
+                tipe.name
+
         def toRatsRule (ratsRule : RatsRule) : Doc = {
 
             val RatsRule (lhs, tipe, code) = ratsRule
 
+            val spacing =
+                if (tipe.name == "Token")
+                    space <> text("Spacing")
+                else
+                    empty
+
             line <>
-            "public" <+> tipe.name <+> lhs.name <+> equal <>
-            code <> semi
+            "public" <+> implTypeName(tipe) <+> lhs.name <+> equal <>
+            code <> spacing <> semi
 
         }
 
