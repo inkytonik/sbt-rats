@@ -44,7 +44,7 @@ class Desugarer (analyser : Analyser) {
     }
 
     /**
-     * Look for seperator constructs `x ** y` and `x ++ y` (represented by
+     * Look for separator constructs `x ** y` and `x ++ y` (represented by
      * `RepSep` nodes) and replace with auxiliary rules which build the
      * list value. The following translations are made:
      *   `x ++ y` turns into a use of nt where `nt = x (y x)*`
