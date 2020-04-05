@@ -18,8 +18,8 @@ class Analyser (flags : Flags) extends Environments {
     import org.kiama.==>
     import org.kiama.attribution.Attribution.{attr, paramAttr}
     import org.kiama.attribution.Decorators.{atRoot, chain, Chain}
-    import org.kiama.output.{Fixity, Infix, LeftAssoc, NonAssoc, Postfix, Prefix,
-        RightAssoc, Side}
+    import org.kiama.output.{Fixity, Infix, NonAssoc, Postfix, Prefix,
+        Side}
     import org.kiama.rewriting.Rewriter.collectall
     import org.kiama.util.{Entity, MultipleEntity, UnknownEntity}
     import org.kiama.util.Messaging.{check, message, Messages, noMessages}

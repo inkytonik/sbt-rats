@@ -240,6 +240,7 @@ class Desugarer (analyser : Analyser) {
                         NTGen (name2, deepclone (tipe))
                 }
             )
+
         /**
          * Make a name for a non-terminal to represent a particular precedence
          * level for this rule.
@@ -302,12 +303,18 @@ class Desugarer (analyser : Analyser) {
             val renamer = replaceIdns (astRule.idndef.name, prevntname, lhsnttype)
 
             // Each right associative alternative turns into a single rule that defines
-            // the recursive case to the next level
+            // a left recursive symbol to the next level
             val rightAlts =
                 rightAssocAlts.map {
                     case Alternative (rhs, anns, _) =>
-                        val newInitRHS = rewrite (renamer) (rhs.init)
-                        Alternative (newInitRHS :+ nt, anns, DefaultAction ())
+                        val init =
+                            rhs.init match {
+                                case NonTerminal(NTName(IdnUse(astRule.idndef.name))) :: rest =>
+                                    prevnt :: rest
+                                case _ =>
+                                    rhs.init
+                            }
+                        Alternative (init :+ nt, anns, DefaultAction ())
                 }
             baseAlts.appendAll (rightAlts)
 
@@ -338,8 +345,7 @@ class Desugarer (analyser : Analyser) {
                 val tailAlts =
                     leftAssocAlts.map {
                         case alt @ Alternative (rhs, _, _) =>
-                            val newRHS = rewrite (renamer) (rhs.tail)
-                            Alternative (newRHS, Nil, TailAction (astRule->typeName, alt->constr))
+                            Alternative (rhs.tail, Nil, TailAction (astRule->typeName, alt->constr))
                     }
 
                 // Define the tail rule

@@ -4,4 +4,6 @@ This release of the sbt-rats plugin is a bug fix release.
 
 * [Issue 7](https://bitbucket.org/inkytonik/sbt-rats/issues/7/quotation-marks-are-not-interchangeable-in): Add `nestnl` to the keyword list
 
+* [issue 15](https://bitbucket.org/inkytonik/sbt-rats/issues/15/fix-handling-of-direct-inner-recursion) Fixes to handling of recursive rules
+
 * [Issue 23](https://bitbucket.org/inkytonik/sbt-rats/issues/23/token-symbols-cant-be-defined-using-a-rats) Token symbols can now be defined using a Rats! section
