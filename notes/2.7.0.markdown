@@ -6,6 +6,8 @@ This release of the sbt-rats plugin is a bug fix release.
 
 * [issue 15](https://bitbucket.org/inkytonik/sbt-rats/issues/15/fix-handling-of-direct-inner-recursion) Fix handling of recursive rules
 
+* [issue 16](https://bitbucket.org/inkytonik/sbt-rats/issues/16/fix-build-errors-if-idents-clash-with) Fix clash of user and lib names in pretty-printer
+
 * [issue 18](https://bitbucket.org/inkytonik/sbt-rats/issues/18/recursion-with-one-recursive-symbol-doesnt) Fix translation bug for single symbol recursion
 
 * [Issue 23](https://bitbucket.org/inkytonik/sbt-rats/issues/23/token-symbols-cant-be-defined-using-a-rats) Token symbols can now be defined using a Rats! section
