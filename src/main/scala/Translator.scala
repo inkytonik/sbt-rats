@@ -415,7 +415,11 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                                     s"new Pair<$tipe>(v1)"
                                 case TailAction (tipe, constr) =>
                                     val num = elements.length
-                                    val args = (1 to num).map ("v" + _).mkString (", ", ", ", "")
+                                    val args = 
+                                        if (num == 0)
+                                            ""
+                                        else
+                                            (1 to num).map ("v" + _).mkString (", ", ", ", "")
                                     toBraceSection (s"new Action<$tipe>()",
                                         toBraceSection (s"public $tipe run ($tipe left)",
                                             constr <+> "node" <+> "=" <+> "new" <+> constr <+> parens ("left" <> args) <> semi <@>
