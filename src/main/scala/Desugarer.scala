@@ -302,18 +302,27 @@ class Desugarer (analyser : Analyser) {
             // with the new generated one
             val renamer = replaceIdns (astRule.idndef.name, prevntname, lhsnttype)
 
+            // Match the recursive symbol, possibly nested in formatting directive
+            def isThisNT(element : Element) : Boolean =
+                element match {
+                    case NonTerminal(NTName(IdnUse(astRule.idndef.name))) =>
+                        true
+                    case Nest(e, _) =>
+                        isThisNT(e)
+                    case _ =>
+                        false
+                }
+
             // Each right associative alternative turns into a single rule that defines
             // a left recursive symbol to the next level
             val rightAlts =
                 rightAssocAlts.map {
                     case Alternative (rhs, anns, _) =>
                         val init =
-                            rhs.init match {
-                                case NonTerminal(NTName(IdnUse(astRule.idndef.name))) :: rest =>
-                                    prevnt :: rest
-                                case _ =>
-                                    rhs.init
-                            }
+                            if (isThisNT(rhs.head))
+                                prevnt :: rhs.init.tail
+                            else
+                                rhs.init
                         Alternative (init :+ nt, anns, DefaultAction ())
                 }
             baseAlts.appendAll (rightAlts)
@@ -345,7 +354,12 @@ class Desugarer (analyser : Analyser) {
                 val tailAlts =
                     leftAssocAlts.map {
                         case alt @ Alternative (rhs, _, _) =>
-                            Alternative (rhs.tail, Nil, TailAction (astRule->typeName, alt->constr))
+                            val tail =
+                                if (isThisNT(rhs.tail.last))
+                                    rhs.tail.init ++ List(prevnt)
+                                else
+                                    rhs.tail
+                            Alternative (tail, Nil, TailAction (astRule->typeName, alt->constr))
                     }
 
                 // Define the tail rule
