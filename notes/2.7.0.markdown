@@ -13,3 +13,5 @@ This release of the sbt-rats plugin is a bug fix release.
 * [issue 19](https://bitbucket.org/inkytonik/sbt-rats/issues/19/add-error-if-have-trivial-chain-rule) Add error for trivia chain rule
 
 * [Issue 23](https://bitbucket.org/inkytonik/sbt-rats/issues/23/token-symbols-cant-be-defined-using-a-rats) Token symbols can now be defined using a Rats! section
+
+* [issue 24](https://bitbucket.org/inkytonik/sbt-rats/issues/24/scala-parser-support-gets-used-when-no) Properly use Rats! lists if a Scala repetition type is not set

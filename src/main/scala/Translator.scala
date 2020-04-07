@@ -40,13 +40,21 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
             toDefaults
         }
 
-        def toHeader (header : String) : Doc =
+
+        def toHeader (header : String) : Doc = {
+            val actionType : String =
+                if (flags.scalaRepetitionType.isDefined)
+                    "sbtrats.Action"
+                else 
+                    "xtc.util.Action"
+
             line <>
             toBraceSection ("header",
-                "import sbtrats.Action;" <@>
+                s"import $actionType;" <@>
                 "import xtc.tree.Location;",
                 if (header == null) empty else string (header)
             )
+        }
 
         def toBody (userBody : String, keywords : Set[Literal]) : Doc = {
 
@@ -401,7 +409,10 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                         "yyValue" <+> equal <+>
                             (alt.action match {
                                 case ApplyAction () =>
-                                    "ParserSupport.apply(v2, v1)"
+                                    if (flags.scalaRepetitionType.isDefined)
+                                        "ParserSupport.apply(v2, v1)"
+                                    else
+                                        "apply(v2, v1)"
                                 case ConsAction (tipe) =>
                                     s"new Pair<$tipe>(v1, v2)"
                                 case DefaultAction () =>
