@@ -117,11 +117,11 @@ The plugin can post-process the generated parser to make it more usable from Sca
 
  * `ratsScalaRepetitionType`: specify the sequence type to use to represent values that arise from repeated constructs (EBNF star and plus operators). Possible values are `Some (ListType)` and `Some (VectorType)`. The latter is recommended if you are using recent versions of Kiama since it ensures that all sequences will be unique. Default: `None` which means that the default sequence representation of Rats! will be used.
 
- * `ratsUseScalaOptions`: use Scala `Option` values instead of normal values and `null` to represent optional constructs (EBNF question mark operator).
+ * `ratsUseScalaOptions`: use Scala `Option` values instead of normal values and `null` to represent optional constructs (EBNF question mark operator). Default: false.
 
- * `ratsUseScalaPositions`: use Scala library positions to represent input positions of semantic values instead of Rats!' locations. Specifically, if this option is set and the Rats! specification contains the `withLocation` option, any semantic value that is an instance of the Scala library type `scala.util.parsing.input.Positional` will have its position set. If the `ratsUseKiama` option is also set, Kiama's `util.Positions` module is used instead. The main difference is that `Positions` supports both start and finish positions.
+ * `ratsUseScalaPositions`: use Scala library positions to represent input positions of semantic values instead of Rats!' locations. Specifically, if this option is set and the Rats! specification contains the `withLocation` option, any semantic value that is an instance of the Scala library type `scala.util.parsing.input.Positional` will have its position set. If the `ratsUseKiama` option is also set, Kiama's `util.Positions` module is used instead. The main difference is that `Positions` supports both start and finish positions. Default: false.
 
-All of these settings are false by default. To override the default, add to your `build.sbt`.  For example, to turn on Scala lists:
+To override the defaults, add to your `build.sbt`.  For example, to turn on Scala lists:
 
     ratsScalaRepetitionType := Some (ListType)
 
