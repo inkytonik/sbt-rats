@@ -254,7 +254,7 @@ Element TreeFactor =
     TreePrimary;
 
 Element TreePrimary =
-    void:"(":Symbol TreeAtMostOneNonterm void:")":Symbol /
+    void:"(":Symbol TreeSingleFactor void:")":Symbol /
     void:"!":Symbol p:TreePrimary {
         yyValue = new Not (p);
     } /
@@ -272,27 +272,26 @@ Element TreeNonterm =
         yyValue = new NonTerminal (new NTName (i));
     };
 
-Element TreeAtMostOneNonterm =
-    i:TreeNonterm ls:TreeNoNonterms {
+Element TreeSingleFactor =
+    i:TreeElement ls:TreeNoFactors {
         yyValue = new Seqn (i, ls);
     } /
-    l:TreeLiteral es:TreeAtMostOneNonterm {
+    l:TreeLiteral es:TreeSingleFactor {
         yyValue = new Seqn (l, es);
     } /
-    f:Formatting es:TreeAtMostOneNonterm {
+    f:Formatting es:TreeSingleFactor {
         yyValue = new Seqn (f, es);
     } /
-    TreeLiteral /
-    TreeNonterm;
+    TreeFactor;
 
-Element TreeNoNonterms =
-    seed:TreeNoNonterm actions:TreeNoNontermsTail+ {
+Element TreeNoFactors =
+    seed:TreeNoFactor actions:TreeNoFactorsTail+ {
         yyValue = apply (actions, seed);
     } /
-    TreeNoNonterm;
+    TreeNoFactor;
 
-constant Action<Element> TreeNoNontermsTail =
-    right:TreeNoNonterm {
+constant Action<Element> TreeNoFactorsTail =
+    right:TreeNoFactor {
         yyValue = new Action<Element> () {
             public Element run (Element left) {
                 return new Seqn (left, right);
@@ -300,7 +299,7 @@ constant Action<Element> TreeNoNontermsTail =
         };
     };
 
-Element TreeNoNonterm =
+Element TreeNoFactor =
     TreeLiteral /
     Formatting;
 
