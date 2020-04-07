@@ -37,21 +37,14 @@ class Analyser (flags : Flags) extends Environments {
             case u @ IdnUse (i) if u->idnkindok != None =>
                 message (u, s"$i can't be used here since ${(u->idnkindok).get}")
 
-            case r : ASTRule if !missingPrecedences (r).isEmpty =>
-                val levelStr = missingPrecedences (r).mkString (" ")
-                message (r, s"missing precedence levels: $levelStr")
+            case r : ASTRule =>
+                checkPrecedences(r) ++
+                checkAssociativities(r) ++
+                checkTrivialChains(r)
 
-            case r : ASTRule if !mixedAssociativities (r).isEmpty =>
-                val levelStr = mixedAssociativities (r).mkString (" ")
-                message (r, s"mixed associativities at levels: $levelStr")
-
-            case r @ StringRule (_, _, elems) =>
-                elems.flatMap {
-                    case elem if otherType (elem->elemtype, List(stringType, tokenType, voidType)) =>
-                        message (r, s"elements of string rule must have String, Token or Void type, currently ${typeName (elem->elemtype)}")
-                    case _ =>
-                        noMessages
-                }
+            case r : StringRule =>
+                checkStringRuleTypes(r) ++
+                checkTrivialChains(r)
 
             case b @ Block (_, n) if (b.index + 1 == n) =>
                 check (b.parent) {
@@ -71,6 +64,52 @@ class Analyser (flags : Flags) extends Environments {
             case Rep (_, _, sep) if otherType(sep->elemtype, List(voidType, stringType)) =>
                 message (sep, s"list separator must be Void or String, currently ${typeName (sep->elemtype)}")
         })
+
+    def checkPrecedences(r : ASTRule) : Messages =
+        if (missingPrecedences (r).isEmpty)
+            noMessages
+        else {
+            val levelStr = missingPrecedences (r).mkString (" ")
+            message (r, s"missing precedence levels: $levelStr")
+        }    
+
+    def checkAssociativities(r : ASTRule) : Messages =
+        if (mixedAssociativities (r).isEmpty)
+            noMessages
+        else {
+            val levelStr = mixedAssociativities (r).mkString (" ")
+            message (r, s"mixed associativities at levels: $levelStr")
+        }    
+
+    def checkTrivialChains(r : Rule) : Messages =
+        r match {
+            case r : ASTRule =>
+                val ntname = r.idndef.name
+                r.alts match {
+                    case List(Alternative(List(NonTerminal(NTName(IdnUse(`ntname`)))), _, _)) =>
+                        message(r, s"recursive symbol $ntname with no termination alternative")
+                    case _ =>
+                        noMessages
+                }   
+            case r : StringRule =>
+                val ntname = r.idndef.name
+                r.alts match {
+                    case List(NonTerminal(NTName(IdnUse(`ntname`)))) =>
+                        message(r, s"recursive symbol $ntname with no termination alternative")
+                    case _ =>
+                        noMessages
+                }   
+            case _ =>
+                noMessages
+        }
+
+    def checkStringRuleTypes(r : StringRule) : Messages =
+        r.alts.flatMap {
+            case elem if otherType (elem->elemtype, List(stringType, tokenType, voidType)) =>
+                message (r, s"elements of string rule must have String, Token or Void type, currently ${typeName (elem->elemtype)}")
+            case _ =>
+                noMessages
+        }
 
     /**
      * Return true if a type is not unknown and doesn't belong to a given collection of types.
