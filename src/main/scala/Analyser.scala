@@ -58,7 +58,7 @@ class Analyser (flags : Flags) extends Environments {
                         message (b, s"block non-terminal reference $n out of range 1..${alt.rhs.length}")
                 }
 
-            case e @ Alt (l, r) if l->elemtype != r->elemtype =>
+            case e @ Alt (l, r) if !compatibleTypes(l->elemtype, r->elemtype) =>
                 message (e, s"alternatives must have same type, ${typeName (l->elemtype)} != ${typeName (r->elemtype)}")
 
             case Rep (_, _, sep) if otherType(sep->elemtype, List(voidType, stringType)) =>
@@ -110,6 +110,12 @@ class Analyser (flags : Flags) extends Environments {
             case _ =>
                 noMessages
         }
+
+    /**
+     * Two types are compatible if they are the same or if one is void or unknown.
+     */
+    def compatibleTypes(t : Type, u : Type) : Boolean =
+        (t == u) || (t == voidType()) || (u == voidType())
 
     /**
      * Return true if a type is not unknown and doesn't belong to a given collection of types.
@@ -362,8 +368,10 @@ class Analyser (flags : Flags) extends Environments {
     lazy val elemtype : Element => Type =
         attr {
             case Alt (l, r) =>
-                if (l->elemtype == r->elemtype)
+                if ((l->elemtype == r->elemtype) || (r->elemtype == voidType))
                     l->elemtype
+                else if (l->elemtype == voidType)
+                    r->elemtype
                 else
                     AltType (l->elemtype, r->elemtype)
             case _ : And =>
