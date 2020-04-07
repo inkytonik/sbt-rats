@@ -10,4 +10,6 @@ This release of the sbt-rats plugin is a bug fix release.
 
 * [issue 18](https://bitbucket.org/inkytonik/sbt-rats/issues/18/recursion-with-one-recursive-symbol-doesnt) Fix translation bug for single symbol recursion
 
+* [issue 19](https://bitbucket.org/inkytonik/sbt-rats/issues/19/add-error-if-have-trivial-chain-rule) Add error for trivia chain rule
+
 * [Issue 23](https://bitbucket.org/inkytonik/sbt-rats/issues/23/token-symbols-cant-be-defined-using-a-rats) Token symbols can now be defined using a Rats! section
