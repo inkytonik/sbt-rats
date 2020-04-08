@@ -229,7 +229,7 @@ class Desugarer (analyser : Analyser) {
         // The type of the LHS non-terminal, is shared with new non-terminals
         def lhsnttype = deepclone ((astRule.idndef)->idntype)
 
-        /**
+        /*
          * Return a strategy that replaces identifier uses of one name by
          * which is generated and of the given type.
          */
@@ -241,7 +241,7 @@ class Desugarer (analyser : Analyser) {
                 }
             )
 
-        /**
+        /*
          * Make a name for a non-terminal to represent a particular precedence
          * level for this rule.
          * FIXME: still possibility of clashes with user names
@@ -249,7 +249,7 @@ class Desugarer (analyser : Analyser) {
         def makePrecName (level : Int) : String =
             s"${astRule->lhs}Level$level"
 
-        /**
+        /*
          * Make iterative rules from a set of alternatives at the same precedence
          * level.
          */
@@ -372,13 +372,12 @@ class Desugarer (analyser : Analyser) {
 
         }
 
-        /**
+        /*
          * Fix a right recursive zero-level alternative to recurse at the next level
          * or the same level, depending on whether it's right recursive or not.
          */
         def flattenRightRecursion (alt : Alternative) : Alternative =
             if (alt->isRightRecursive) {
-                val rhslen = alt.rhs.length
                 val recursiveLevel =
                     if ((alt->associativity == RightAssoc) || (alt->precedence == 0))
                         alt->precedence
@@ -390,7 +389,7 @@ class Desugarer (analyser : Analyser) {
             } else
                 alt
 
-        /**
+        /*
          * Handle non-left recursive alternatives.
          */
         def makeNonIterativeRule (prec : Int, alts : List[Alternative]) : ASTRule = {
@@ -407,7 +406,7 @@ class Desugarer (analyser : Analyser) {
             ASTRule (ntidn, IdnUse (astRule->typeName), newAlts)
         }
 
-        /**
+        /*
          * Handle all of the alternatives at a particular precedence level. Return a
          * list of new rules for that level.
          */

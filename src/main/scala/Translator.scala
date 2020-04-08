@@ -20,9 +20,9 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
 
     def translate (flags : Flags, genFile : File, grammar : Grammar) = {
 
-        import analyser.{constr, elemtype, hasSpacing, hasValue, Literal, ntname,
+        import analyser.{constr, elemtype, hasSpacing, hasValue, ntname,
             nttype, partitionLiterals, requiresNoAction, syntaxElements,
-            tokenType, transformer, typeName, voidType}
+            transformer, typeName, voidType}
         import org.kiama.attribution.Attribution.{initTree, resetMemo}
 
         // Count of non-terminals on the RHS of an alternative
@@ -524,7 +524,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
 
         }
 
-        /**
+        /*
          * Generate default implementations of various aspects, depending on the
          * flag settings.
          */

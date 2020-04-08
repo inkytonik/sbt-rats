@@ -14,18 +14,16 @@ import org.kiama.output.PrettyPrinter
  */
 class Generator (analyser : Analyser) extends PrettyPrinter {
 
-    import analyser.{associativity, constr, elemtype, Field, fieldName,
-        fieldTypes, fields, hasValue, isLeftRecursive, isLinePP, isNestedPP, isParenPP,
-        isRightRecursive, isTransferAlt, lhs, precFixity, orderOpPrecFixityNonterm,
-        requiresNoPPCase, stringType, tokenType, transformer, treeAlternatives, typeName,
-        voidType}
+    import analyser.{constr, elemtype, Field, fields, hasValue,  isLinePP,
+        isNestedPP, isParenPP, isTransferAlt, lhs, precFixity,
+        orderOpPrecFixityNonterm, requiresNoPPCase, stringType, tokenType,
+        transformer, treeAlternatives, typeName, voidType}
     import ast._
     import org.kiama.attribution.Attribution.{initTree, resetMemo}
     import org.kiama.output.{LeftAssoc, NonAssoc, RightAssoc, Side}
-    import org.kiama.rewriting.Rewriter.{alltd, rewrite, query}
     import sbt.File
     import sbt.IO.write
-    import scala.collection.mutable.{HashMap, ListBuffer}
+    import scala.collection.mutable.ListBuffer
 
     /**
      * Generate a Scala case class implmentation of the abstract syntax
@@ -48,12 +46,6 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
             "package" <+> pkg <@>
             toSyntax <>
             line
-
-        def includeImportWhen (importEntity : String, cond : Boolean) : Doc =
-            if (cond)
-                "import" <+> importEntity <> line
-            else
-                empty
 
         def toSyntax : Doc =
             line <>
@@ -396,19 +388,19 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                 // Count of variables in the pattern
                 var varcount = 0
 
-                /**
+                /*
                  * Make a variable name from a variable count.
                  */
                 def varName (count : Int) =
                     text (s"v$count")
 
-                /**
+                /*
                  * Traverse the elements on the RHS of the rule to collect pattern
                  * variables and the Doc expression.
                  */
                 def traverseRHS (elems : List[Element]) : List[Doc] = {
 
-                    /**
+                    /*
                      * Create pretty-printing code for an element that needs to
                      * be mapped.
                      */
@@ -465,7 +457,7 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                                     emptyDocText
                                 else {
                                     varcount = varcount + 1
-                                    var varr = varName (varcount)
+                                    val varr = varName (varcount)
                                     if (wrap) {
                                         val args = parens (varr)
                                         if ((elem->elemtype == stringType) ||
@@ -597,7 +589,7 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
     def generateSupportFile (flags : Flags, supportFile : File) {
 
         val lineColPositionContents =
-            """
+            s"""
             |import scala.util.parsing.input.Position
             |import xtc.parser.ParserBase
             |
@@ -611,7 +603,7 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
             |        p.lineAt (index)
             |
             |    override def toString () : String =
-            |        s"${line}.${column}"
+            |        s"$${line}.$${column}"
             |
             |}
             |""".stripMargin

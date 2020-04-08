@@ -8,7 +8,7 @@
 
 package parser
 
-import scala.util.parsing.input.{Position, Positional}
+import scala.util.parsing.input.Position
 import xtc.parser.ParserBase
 
 class LineColPosition (val p : ParserBase, val index : Int, val line : Int, val column : Int) extends Position {

@@ -10,7 +10,15 @@ organization in ThisBuild := "org.bitbucket.inkytonik.sbt-rats"
 
 scalaVersion := "2.12.10"
 
-scalacOptions ++= Seq ("-deprecation", "-feature", "-unchecked")
+scalacOptions ++=
+    Seq (
+        "-deprecation",
+        "-feature",
+        "-unchecked",
+        "-Xfatal-warnings",
+        "-Xcheckinit",
+        "-Xlint:-stars-align,_"
+    )
 
 scalaCompilerBridgeSource := {
   val sv = appConfiguration.value.provider.id.version

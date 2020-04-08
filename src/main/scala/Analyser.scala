@@ -23,7 +23,6 @@ class Analyser (flags : Flags) extends Environments {
     import org.kiama.rewriting.Rewriter.collectall
     import org.kiama.util.{Entity, MultipleEntity, UnknownEntity}
     import org.kiama.util.Messaging.{check, message, Messages, noMessages}
-    import org.kiama.util.Patterns.HasParent
     import scala.collection.mutable.ListBuffer
 
     val errors =
@@ -934,12 +933,12 @@ class Analyser (flags : Flags) extends Environments {
      */
     def fieldsOfAlternative (alt : Alternative) : List[Field] = {
 
-        /**
+        /*
          * List of fields in the process of being built.
          */
         val fields = ListBuffer[Field] ()
 
-        /**
+        /*
          * Add a field for the given element if it has a value.
          */
         def addField (elem : Element, zero : Boolean = true) {
@@ -985,18 +984,18 @@ class Analyser (flags : Flags) extends Environments {
                     n
             }.toSet
 
-        /**
+        /*
          * Is the field name not unique in this field list?
          */
         def isNotUnique (fieldName : String) : Boolean =
             nonUniqueFieldNames contains fieldName
 
-        /**
+        /*
          * Make the field names unique by numbering fields whose names are
          * not unique.
          */
         val uniqueFields =
-            fields.result.foldLeft (Map[String,Int] (), List[Field] ()) {
+            fields.result.foldLeft ((Map[String,Int] (), List[Field] ())) {
                 case ((m, l), f @ Field (n, t, z)) =>
                     if (isNotUnique (n)) {
                         val i = m.getOrElse (n, 0) + 1

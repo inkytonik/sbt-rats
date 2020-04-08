@@ -435,7 +435,7 @@ object SBTRatsPlugin extends AutoPlugin {
                 if (ratsGenDir.exists () || ratsGenDir.mkdirs ())
                     ratsGenDir
                 else
-                    sys.error ("Can't create Rats! output dir $ratsGenDir")
+                    sys.error (s"Can't create Rats! output dir $ratsGenDir")
             } else
                 main.getParentFile
 
@@ -473,7 +473,7 @@ object SBTRatsPlugin extends AutoPlugin {
 
         }
 
-        /**
+        /*
          * The runtime field of Rats! tool can't be overridden because it's
          * protectted final. So hack in there using reflection so we can
          * customise it.
@@ -486,7 +486,7 @@ object SBTRatsPlugin extends AutoPlugin {
             rats
         }
 
-        /**
+        /*
          * Helper class to enable access to the protected runtime field.
          */
         class RatsRunner extends Rats {
