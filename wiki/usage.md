@@ -4,9 +4,9 @@ The `sbt-rats` plugin enables you to use the [Rats!](http://cs.nyu.edu/rgrimm/xt
 
 The plugin can be used in one of two main modes:
 
- * You can specify a `.rats` file which will be translated using Rats!  into a parser implementation written in Java.
+* You can specify a `.rats` file which will be translated using Rats!  into a parser implementation written in Java.
 
- * You can specify a `.syntax` file which will be translated into a Rats! specification to produce a parser, and optionally also into a Scala implementation of abstract syntax trees and a pretty printer for those trees.
+* You can specify a `.syntax` file which will be translated into a Rats! specification to produce a parser, and optionally also into a Scala implementation of abstract syntax trees and a pretty printer for those trees.
 
 The pretty-printers produced by the plugin and a few other convenience features are designed to work with the [Kiama language processing library](https://bitbucket.org/inkytonik/kiama).
 
@@ -115,11 +115,11 @@ By default, Rats! will use its own data structures to represent constructs such 
 
 The plugin can post-process the generated parser to make it more usable from Scala. Three plugin settings control this behaviour.
 
- * `ratsScalaRepetitionType`: specify the sequence type to use to represent values that arise from repeated constructs (EBNF star and plus operators). Possible values are `Some (ListType)` and `Some (VectorType)`. The latter is recommended if you are using recent versions of Kiama since it ensures that all sequences will be unique. Default: `None` which means that the default sequence representation of Rats! will be used.
+* `ratsScalaRepetitionType`: specify the sequence type to use to represent values that arise from repeated constructs (EBNF star and plus operators). Possible values are `Some (ListType)` and `Some (VectorType)`. The latter is recommended if you are using recent versions of Kiama since it ensures that all sequences will be unique. Default: `None` which means that the default sequence representation of Rats! will be used.
 
- * `ratsUseScalaOptions`: use Scala `Option` values instead of normal values and `null` to represent optional constructs (EBNF question mark operator). Default: false.
+* `ratsUseScalaOptions`: use Scala `Option` values instead of normal values and `null` to represent optional constructs (EBNF question mark operator). Default: false.
 
- * `ratsUseScalaPositions`: use Scala library positions to represent input positions of semantic values instead of Rats!' locations. Specifically, if this option is set and the Rats! specification contains the `withLocation` option, any semantic value that is an instance of the Scala library type `scala.util.parsing.input.Positional` will have its position set. If the `ratsUseKiama` option is also set, Kiama's `util.Positions` module is used instead. The main difference is that `Positions` supports both start and finish positions. Default: false.
+* `ratsUseScalaPositions`: use Scala library positions to represent input positions of semantic values instead of Rats!' locations. Specifically, if this option is set and the Rats! specification contains the `withLocation` option, any semantic value that is an instance of the Scala library type `scala.util.parsing.input.Positional` will have its position set. If the `ratsUseKiama` option is also set, Kiama's `util.Positions` module is used instead. The main difference is that `Positions` supports both start and finish positions. Default: false.
 
 To override the defaults, add to your `build.sbt`.  For example, to turn on Scala lists:
 
@@ -200,6 +200,7 @@ The alternatives are specified using the following expression forms. Note that t
     (e)     bracketing           match e
 
 Literals can contain escape characters as defined by Rats!:
+
 * `\b` (backspace), `\t` (tab), `\n` (newline), `\f` (formfeed), '\r' (return)
 * `'\"` (double quote), `\'` (single quote), `\[` and `\]` (square brackets), `\-` (minus)
 * `\uhhhh` (hexadecimal quads where each `h` is a hex digit from 0-9, a-f, A-F
@@ -407,13 +408,13 @@ The lexical structure of a language, including layout (spacing and comments), ca
 
 For this reason, by default the plugin uses default definitions for some lexical aspects. The use of the defaults is controlled by the following settings, which are all true by default.
 
- * `ratsUseDefaultSpacing`: use the definition of `Spacing` shown earlier to define the space between lexical symbols. Note that you will still need to use `Spacing` in various places to get the desired effect.  For example, if you define a new lexical symbol form, you should follow it with `Spacing` so that layout is allowed after an instance of that form. Turn this setting off if you want to define your own `Spacing`.
+* `ratsUseDefaultSpacing`: use the definition of `Spacing` shown earlier to define the space between lexical symbols. Note that you will still need to use `Spacing` in various places to get the desired effect.  For example, if you define a new lexical symbol form, you should follow it with `Spacing` so that layout is allowed after an instance of that form. Turn this setting off if you want to define your own `Spacing`.
 
- * `ratsUseDefaultLayout`: use the definition of `Space` and `EOL` shown earlier to define useful patterns for matching whitespace.
+* `ratsUseDefaultLayout`: use the definition of `Space` and `EOL` shown earlier to define useful patterns for matching whitespace.
 
- * `ratsUseDefaultComments`: use the definition of `Comment` shown earlier to define the form of comments which are part of the `Spacing`. In essence, these are the C language family comments in both single line and multiple line versions, with arbitrary nesting of multiple line comments. Note that if you turn this setting off, you will need to define `Comment` yourself if you use the default layout.
+* `ratsUseDefaultComments`: use the definition of `Comment` shown earlier to define the form of comments which are part of the `Spacing`. In essence, these are the C language family comments in both single line and multiple line versions, with arbitrary nesting of multiple line comments. Note that if you turn this setting off, you will need to define `Comment` yourself if you use the default layout.
 
- * `ratsUseDefaultWords`: use a default definition for the form of word-like lexical symbols (i.e., identifiers and keywords).
+* `ratsUseDefaultWords`: use a default definition for the form of word-like lexical symbols (i.e., identifiers and keywords).
 
 More explanation is needed for the last case because we have not seen an example earlier. We follow a standard Rats! technique for defining lexical symbols that consist of letters.  The default word definition consists of two main non-terminals: `Identifier` and `Word`. The idea is that `Word` captures a sequence of letters followed by layout. An identifier is then a word that is not a keyword. The current definition of a keyword is any literal that includes only letters and underscores.
 
@@ -527,13 +528,13 @@ A literal that is specified using single quotes is printed as-is, whereas one th
 
 The following formatting directives can be added to control the printing in more detail:
 
- * `\n`: indicates a place where it is advantageous to place a newline break,
+* `\n`: indicates a place where it is advantageous to place a newline break,
 
- * `sp`: indicates a place where an extra space should be added,
+* `sp`: indicates a place where an extra space should be added,
 
- * `nest (e)`: indicates a place where the grammar element `e` should be printed indented one level from its surroundings, and
+* `nest (e)`: indicates a place where the grammar element `e` should be printed indented one level from its surroundings, and
 
- * `nestnl (e)`: as for `nest` and also indicate a newline break at the  beginning of the nested output.
+* `nestnl (e)`: as for `nest` and also indicate a newline break at the  beginning of the nested output.
 
 The indentation for `nest` and `nestnl` is four spaces by default but it can be changed using the `defaultIndent` option. For example, to change the default indentation to two spaces, specify the following option:
 
