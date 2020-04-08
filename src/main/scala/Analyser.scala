@@ -15,12 +15,11 @@ import org.kiama.util.Environments
 class Analyser (flags : Flags) extends Environments {
 
     import ast._
-    import org.kiama.==>
     import org.kiama.attribution.Attribution.{attr, paramAttr}
-    import org.kiama.attribution.Decorators.{atRoot, chain, Chain}
     import org.kiama.output.{Fixity, Infix, NonAssoc, Postfix, Prefix,
         Side}
-    import org.kiama.rewriting.Rewriter.collectall
+    import org.kiama.attribution.Decorators.atRoot
+    import org.kiama.rewriting.Rewriter.{collectall, collect, collects}
     import org.kiama.util.{Entity, MultipleEntity, UnknownEntity}
     import org.kiama.util.Messaging.{check, message, Messages, noMessages}
     import scala.collection.mutable.ListBuffer
@@ -238,22 +237,27 @@ class Analyser (flags : Flags) extends Environments {
         rootenv (bindings : _*)
     }
 
-    lazy val literals : Chain[ASTNode,Set[Literal]] =
-        chain (literalsin, literalsout)
-
-    def literalsin (in : ASTNode => Set[Literal]) : ASTNode ==> Set[Literal] = {
-        case _ : Grammar => Set ()
-    }
-
-    def literalsout (out : ASTNode => Set[Literal]) : ASTNode ==> Set[Literal] = {
-        case n @ CharLit (lit) =>
-            (n->out) + lit
-        case n @ StringLit (lit) =>
-            (n->out) + lit
-    }
+    lazy val literals =
+        attr(collects({
+            case CharLit(lit)   => lit
+            case StringLit(lit) => lit
+        }))
 
     // Name analysis
 
+    lazy val env : ASTNode => Environment =
+        atRoot {
+            r : ASTNode =>
+                val decls =
+                    for {
+                        (i, ns) <-  collect[Vector, IdnDef]({ case n: IdnDef => n }).apply(r).groupBy(_.name)
+                        multi   =   ns.size > 1 || isDefinedInEnv(defenv, i)
+                        e       =   if (multi) MultipleEntity() else entityFromDecl(ns.head, NamedType(i))
+                    } yield (i, e)
+                decls.toMap +: defenv
+         }    
+
+/*
     lazy val preenv : Chain[ASTNode,Environment] =
         chain (envin, envout)
 
@@ -269,6 +273,7 @@ class Analyser (flags : Flags) extends Environments {
                     else
                         entityFromDecl (n, NamedType (i)))
     }
+*/
 
     def entityFromDecl (n : IdnDef, t : Type) : Entity =
         n.parent match {
@@ -282,8 +287,10 @@ class Analyser (flags : Flags) extends Environments {
                 PreNonTerm (NamedType (typeName))
         }
 
+/*
     lazy val env =
         atRoot[ASTNode, Environment] (preenv)
+*/
 
     lazy val entity : Identifier => Entity =
         attr {
