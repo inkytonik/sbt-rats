@@ -2,22 +2,35 @@ sbtPlugin := true
 
 name := "sbt-rats"
 
-version in ThisBuild := "2.7.0-SNAPSHOT"
+version := "2.7.0-SNAPSHOT"
 
-organization in ThisBuild := "org.bitbucket.inkytonik.sbt-rats"
+organization := "org.bitbucket.inkytonik.sbt-rats"
 
 // Scala compiler settings
 
 scalaVersion := "2.12.10"
 
-scalacOptions ++=
+scalacOptions := {
+    val lintOption =
+        if (scalaVersion.value.startsWith ("2.10"))
+            "-Xlint"
+        else
+            "-Xlint:-stars-align,_"
     Seq (
         "-deprecation",
         "-feature",
         "-unchecked",
         "-Xfatal-warnings",
         "-Xcheckinit",
-        "-Xlint:-stars-align,_"
+        lintOption
+    )
+}
+
+scalacOptions in (Compile, doc) := 
+    Seq(
+        "-deprecation",
+        "-feature",
+        "-unchecked"
     )
 
 scalaCompilerBridgeSource := {
