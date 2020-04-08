@@ -27,9 +27,9 @@ scalaCompilerBridgeSource := {
 
 // sbt settings
 
-sbtVersion in Global := "1.2.7"
+sbtVersion in Global := "1.3.9"
 
-crossSbtVersions := Vector ("1.2.7", "0.13.17")
+crossSbtVersions := Vector ("1.3.9", "0.13.18")
 
 // Interactive settings
 
