@@ -13,8 +13,9 @@ import org.kiama.output.Side
 
 abstract class ASTNode extends Attributable
 
-case class Grammar (module : List[String], header : String, body : String,
-                    options : List[SyntaxOption], rules : List[Rule]) extends ASTNode
+case class Grammar (module : List[String], header : String, astHeader : String,
+                    body : String, options : List[SyntaxOption],
+                    rules : List[Rule]) extends ASTNode
 
 sealed abstract class SyntaxOption extends ASTNode
 case class Indentation (n : Int) extends SyntaxOption

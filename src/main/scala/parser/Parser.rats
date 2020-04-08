@@ -57,8 +57,8 @@ body {
 option setOfString (KEYWORDS), withLocation;
 
 public Grammar Grammar =
-    Spacing m:ModuleDecl h:HeaderSection? b:BodySection? o:Options? rs:Rule* EOF {
-        yyValue = new Grammar (m, h, b, o, rs);
+    Spacing m:ModuleDecl h:HeaderSection? a:ASTHeaderSection? b:BodySection? o:Options? rs:Rule* EOF {
+        yyValue = new Grammar (m, h, a, b, o, rs);
     };
 
 // Module declarations
@@ -66,10 +66,13 @@ public Grammar Grammar =
 Pair<String> ModuleDecl =
     void:"module":Word QualIdentifier void:";":Symbol;
 
-// Header section
+// Header sections
 
 String HeaderSection =
     void:"header":Word CodeBlock;
+
+String ASTHeaderSection =
+    void:"astHeader":Word CodeBlock;
 
 // Body section
 

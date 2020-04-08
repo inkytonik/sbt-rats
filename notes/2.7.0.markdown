@@ -1,4 +1,8 @@
-This release of the sbt-rats plugin is a bug fix release.
+This release of the sbt-rats plugin is a minor enhancement and major bug fix release.
+
+## Enhancements
+
+* A syntax specification can now include an `astHeader` section that contains arbitrary code. If your build requests that AST classes are to be generated, this code will be inserted at the end of the object that defines the AST classes. One use of this facility is to add smart constructors or other functions that use the generated AST classes.
 
 ## Fixes
 

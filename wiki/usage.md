@@ -135,10 +135,17 @@ A syntax specification starts with a module declaration which is used to determi
 
     module foo.bar.Parser;
 
-After the module declaration an optional header section can appear. This section has the same syntax and meaning as the header construct in a Rats! specification. Its contents will be inserted into the generated parser at the top-level. For example, it is typically used to import classes that are needed to construct semantic  values.
+After the module declaration an optional header section can appear. This section has the same syntax and meaning as the header construct in a Rats! specification. Its contents will be inserted into the generated parser at the top-level. For example, it is typically used to import classes that are needed to construct semantic values.
 
     header {
         import foo.bar.Syntax.*;
+    }
+
+Similarly, an optional AST header section can apepar next. Its contents will be inserted at the end of the generated object that contains the AST nodes (`foo.bar.Syntax` in the above example). One use of this facility is to add smart constructors or other functions that use the generated AST classes. E.g., the following declaration adds a silly function on AST nodes.
+
+    astHeader {
+        def reverseToString(a : ASTNode) : String =
+          a.toString.reverse
     }
 
 After the header section is an optional body section. This section has the same syntax and meaning as the body construct in a Rats! specification. Its contents will be inserted into the generated parser inside the parser class.

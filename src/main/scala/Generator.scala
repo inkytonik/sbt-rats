@@ -52,7 +52,8 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
             "object" <+> name <+> "{" <@>
             nest (
                 toSuperClass <@>
-                hsep (grammar.rules map toRuleClasses)
+                hsep (grammar.rules map toRuleClasses) <@>
+                (if (grammar.astHeader == null) empty else string (grammar.astHeader))
             ) <@>
             "}"
 
