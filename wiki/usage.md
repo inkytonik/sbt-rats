@@ -129,7 +129,7 @@ To override the defaults, add to your `build.sbt`.  For example, to turn on Scal
 
 Writing a Rats! specification is certainly possible and it can be used with Scala code very easily. However, the Rats! notations are somewhat verbose so more has to be written than we might like. Also, Rats! has some limitations which we might like to improve on. For these reasons, the plugin also supports a custom syntax specification language from which Rats! specifications can be automatically generated.
 
-The syntax specification you want to use should be placed in a `.syntax` file and the `ratsMainModule` setting set as described above. The current version of the plugin does not support splitting syntax specifications over multiple files.
+The syntax specification you want to use should be placed in a `.syntax` file and the `ratsMainModule` setting set as described above. The current version of the plugin does not support splitting single syntax specifications over multiple files. Each syntax specification is processed separately, so you *can* have parsers for multiple languages in one project.
 
 A syntax specification starts with a module declaration which is used to determine the module for the Rats! specification and, ultimately, the Java parser. For example,
 

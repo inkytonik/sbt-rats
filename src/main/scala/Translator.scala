@@ -114,6 +114,12 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                 |
                 |    return buf.toString ();
                 |}
+                |
+                |/** Skip forward n characters in the input. */
+                |public void skip(int n) throws IOException {
+                |  for (int i = 0; i < n; i++)
+                |    character(i);
+                |}
                 """.stripMargin
 
             lazy val binarySupport =
