@@ -19,3 +19,5 @@ This release of the sbt-rats plugin is a minor enhancement and major bug fix rel
 * [Issue 23](https://bitbucket.org/inkytonik/sbt-rats/issues/23/token-symbols-cant-be-defined-using-a-rats) Token symbols can now be defined using a Rats! section
 
 * [issue 24](https://bitbucket.org/inkytonik/sbt-rats/issues/24/scala-parser-support-gets-used-when-no) Properly use Rats! lists if a Scala repetition type is not set
+
+* [issue 25](https://bitbucket.org/inkytonik/sbt-rats/issues/25/predicates-cause-crash-in-pretty-printer) Avoid crashes when generating pretty-printer

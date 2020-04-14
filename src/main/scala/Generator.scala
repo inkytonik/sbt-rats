@@ -447,11 +447,14 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                     def traverseElem (elem : Element, wrap : Boolean = true) : Doc =
                         elem match {
 
+                            case _ : Block =>
+                                varcount = varcount + 1
+                                val varr = varName (varcount)
+                                val args = parens (varr)
+                                "value" <+> args
+
                             case CharLit (lit) =>
                                 "text" <+> parens (dquotes (lit.escaped))
-
-                            case Epsilon () =>
-                                emptyDocText
 
                             case NonTerminal (NTName (IdnUse (nt))) =>
                                 if (elem->elemtype == voidType)
@@ -494,6 +497,7 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                                 "text" <+> parens (dquotes (lit.escaped)) <+> "<> space"
 
                             // Formatting elements
+
                             case Nest (e, newline) =>
                                 val body =
                                     (if (newline)
@@ -506,6 +510,11 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                                 text ("line")
                             case Space () =>
                                 text ("space")
+
+                            // No pretty-printed form
+
+                            case _ : And | _ : CharClass | _ : Epsilon | _ : Not | _ : Wildcard =>
+                                emptyDocText
 
                             case _ =>
                                 sys.error (s"traverseElem: saw unexpected elem $elem")
