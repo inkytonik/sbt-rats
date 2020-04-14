@@ -257,24 +257,6 @@ class Analyser (flags : Flags) extends Environments {
                 decls.toMap +: defenv
          }    
 
-/*
-    lazy val preenv : Chain[ASTNode,Environment] =
-        chain (envin, envout)
-
-    def envin (in : ASTNode => Environment) : ASTNode ==> Environment = {
-        case _ : Grammar => defenv
-    }
-
-    def envout (out : ASTNode => Environment) : ASTNode ==> Environment = {
-        case n @ IdnDef (i) =>
-            define (n->out, i,
-                    if (isDefinedInScope (n->(preenv.in), i))
-                        MultipleEntity ()
-                    else
-                        entityFromDecl (n, NamedType (i)))
-    }
-*/
-
     def entityFromDecl (n : IdnDef, t : Type) : Entity =
         n.parent match {
             case astRule @ ASTRule (_, typeIdn, _, _, _) =>
@@ -286,11 +268,6 @@ class Analyser (flags : Flags) extends Environments {
             case StringRule (_, IdnUse (typeName), _) =>
                 PreNonTerm (NamedType (typeName))
         }
-
-/*
-    lazy val env =
-        atRoot[ASTNode, Environment] (preenv)
-*/
 
     lazy val entity : Identifier => Entity =
         attr {
