@@ -64,16 +64,9 @@ libraryDependencies ++= Seq (
 
 // Publishing
 
-import bintray.Keys._
-
-bintrayPublishSettings
-
+description := "sbt-rats provides a plugin that enables the Rats! parser generator to be used in Scala projects."
 licenses += ("BSD New", url (s"https://bitbucket.org/inkytonik/${name.value}/src/master/LICENSE"))
-
 publishMavenStyle := false
-
-repository in bintray := "sbt-plugins"
-
+bintrayRepository := "sbt-plugins"
 bintrayOrganization in bintray := None
-
-vcsUrl in bintray := Some (s"https://bitbucket.org/inkytonik/${name.value}")
+bintrayVcsUrl := Some (s"https://bitbucket.org/inkytonik/${name.value}")
