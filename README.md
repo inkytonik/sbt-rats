@@ -1,6 +1,6 @@
 sbt-rats provides a plugin that enables the [Rats! parser generator](https://cs.nyu.edu/rgrimm/xtc/rats.html) to be used in Scala projects.
 
-The plugin enables you to use the [Rats! parser generator](https://cs.nyu.edu/rgrimm/xtc/rats.html) with Scala projects that are built using the [Scala build tool sbt](https://www.scala-sbt.org). The parser can be specified directly using a Rats! specification or using a simplified syntactic notation. The syntactic notation can also be translated into a Scala implementation of abstract syntax trees and a pretty printer for those trees. Pretty-printing support is provided by the [Kiama language processing library](https:/github.com/inkytonik/kiama).
+The plugin enables you to use the [Rats! parser generator](https://cs.nyu.edu/rgrimm/xtc/rats.html) with Scala projects that are built using the [Scala build tool sbt](https://www.scala-sbt.org). The parser can be specified directly using a Rats! specification or using a simplified syntactic notation. The syntactic notation can also be translated into a Scala implementation of abstract syntax trees and a pretty printer for those trees. Pretty-printing support is provided by the [Kiama language processing library](https://github.com/inkytonik/kiama).
 
 sbt-rats is a project of the [Programming Languages Research Group](https://wiki.mq.edu.au/display/plrg/Welcome) in the [Department of Computing](http://www.comp.mq.edu.au/) at [Macquarie University](http://www.mq.edu.au) and is led by [Tony Sloane](https://github.com/inkytonik) (inkytonik).
 
