@@ -26,7 +26,7 @@ scalacOptions := {
     )
 }
 
-scalacOptions in (Compile, doc) := 
+scalacOptions in (Compile, doc) :=
     Seq(
         "-deprecation",
         "-feature",
@@ -65,8 +65,8 @@ libraryDependencies ++= Seq (
 // Publishing
 
 description := "sbt-rats provides a plugin that enables the Rats! parser generator to be used in Scala projects."
-licenses += ("BSD New", url (s"https://bitbucket.org/inkytonik/${name.value}/src/master/LICENSE"))
+licenses += ("BSD New", url (s"https://github.com/inkytonik/${name.value}/src/master/LICENSE"))
 publishMavenStyle := false
 bintrayRepository := "sbt-plugins"
 bintrayOrganization in bintray := None
-bintrayVcsUrl := Some (s"https://bitbucket.org/inkytonik/${name.value}")
+bintrayVcsUrl := Some (s"https://github.com/inkytonik/${name.value}")
