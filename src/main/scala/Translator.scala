@@ -45,7 +45,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
             val actionType : String =
                 if (flags.scalaRepetitionType.isDefined)
                     "sbtrats.Action"
-                else 
+                else
                     "xtc.util.Action"
 
             line <>
