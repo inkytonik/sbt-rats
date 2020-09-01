@@ -191,6 +191,10 @@ class Desugarer (analyser : Analyser) {
      *         };
      *     };
      *
+     * If one of the values (v1, v2, etc) is an optional value and
+     * we are using Scala options, code is inserted to convert the
+     * nullable value to the Scala option.
+     *
      * If locations are being tracked, then code is also emitted to
      * set the location of the "node" value.
      *
