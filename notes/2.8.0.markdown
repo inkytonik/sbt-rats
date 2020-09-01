@@ -1,0 +1,5 @@
+This release of the sbt-rats plugin is a minor bug fix release.
+
+## Fixes
+
+* [Issue 9](https://github.com/inkytonik/sbt-rats/issues/9): Fixes bug in code generation for optional tree elements in left recursive alternatives.
