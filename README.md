@@ -10,10 +10,11 @@ For information on usage, see the [documentation](https://github.com/inkytonik/s
 
 For an overview of sbt-rats, see our [overview paper on sbt-rats from the 2016 Scala Symposium](https://dl.acm.org/authorize?N27522) and the [slides from the associated presentation](https://speakerdeck.com/inkytonik/the-sbt-rats-parser-generator-plugin-for-scala).
 
-There is also a [giter8](http://github.com/n8han/giter8#readme) template showing a [simple usage of the plugin with Kiama](https://github.com/inkytonik/kiama-rats.g8).
+There is also a sbt template showing a [simple usage of the plugin with Kiama](https://github.com/inkytonik/kiama-rats.g8).
 
 ## News
 
+* September 21, 2020: [version 2.8.0](https://github.com/inkytonik/sbt-rats/blob/master/notes/2.8.0.markdown) released on [bintray](https://bintray.com/inkytonik/sbt-plugins/sbt-rats/view)
 * April 20, 2020: [version 2.7.0](https://github.com/inkytonik/sbt-rats/blob/master/notes/2.7.0.markdown) released on [bintray](https://bintray.com/inkytonik/sbt-plugins/sbt-rats/view)
 * March 22, 2019: [version 2.6.0](https://github.com/inkytonik/sbt-rats/blob/master/notes/2.6.0.markdown) released on [bintray](https://bintray.com/inkytonik/sbt-plugins/sbt-rats/view)
 * September 28, 2018: [version 2.5.0](https://github.com/inkytonik/sbt-rats/blob/master/notes/2.5.0.markdown) released on [bintray](https://bintray.com/inkytonik/sbt-plugins/sbt-rats/view)
