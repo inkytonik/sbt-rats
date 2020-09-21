@@ -1,4 +1,4 @@
-This release of the sbt-rats plugin is a minor bug fix release.
+This release of the sbt-rats plugin is a bug fix release.
 
 ## Fixes
 
