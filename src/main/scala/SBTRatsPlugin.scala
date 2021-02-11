@@ -642,15 +642,32 @@ object SBTRatsPlugin extends AutoPlugin {
                         """
                         |public final class $1 extends ParserBase {
                         |
+                        |  /** Last result before a location is set. */
+                        |  protected Result yyLastResult;
+                        |
+                        |  public Boolean isSpace(int c) {
+                        |    return (c == ' ') || (c == '\\f') || (c == '\\n') || (c == '\\r') || (c == '\\t');
+                        |  }
+                        |
+                        |  /**
+                        |   * Return the first previous non-whitespace character index before
+                        |   * the given index. If there are no such characters return 0.
+                        |   */
+                        |  int prevNonWS(int index) {
+                        |    while (index > 0 && Character.isWhitespace(yyData[index-1]))
+                        |      index--;
+                        |    return index;
+                        |  }
+                        |
                         |  /** Set start position of an Object to a start index and the finish
                         |   *  position to the current parsing index. */
                         |  void setLocation(final Object object, final int start) {
                         |    if (null != object) {
                         |      Column s = column(start);
                         |      Positions.setStart(object, new LineColPosition(this, start, s.line, s.column));
-                        |      int finish = yyCount == 0 ? 0 : yyCount - 1;
+                        |      int finish = prevNonWS(yyLastResult.index);
                         |      Column f = column(finish);
-                        |      Positions.setFinish(object, new LineColPosition(this, finish, f.line, f.column));
+                        |      Positions.setStart(object, new LineColPosition(this, finish, f.line, f.column));
                         |    }
                         |  }
                         |
@@ -690,6 +707,9 @@ object SBTRatsPlugin extends AutoPlugin {
                         |  /** The Kiama position store being used to track value positions. */
                         |  protected Positions positions;
                         |
+                        |  /** Last result before a location is set. */
+                        |  protected Result yyLastResult;
+                        |
                         |  /**
                         |   * Create a new packrat parser.
                         |   *
@@ -717,23 +737,39 @@ object SBTRatsPlugin extends AutoPlugin {
                         |      positions = posns;
                         |  }
                         |
-                        |  /** Set start position of an Object to one that corresponds to a start
+                        |  /**
+                        |   * Return the first previous non-whitespace character index before
+                        |   * the given index. If there are no such characters return 0.
+                        |   */
+                        |  int prevNonWS(int index) {
+                        |    while (index > 0 && Character.isWhitespace(yyData[index-1]))
+                        |      index--;
+                        |    return index;
+                        |  }
+                        |
+                        |  /** Set start position of an ooject to one that corresponds to a start
                         |   *  index and the finish position to the one that corresponds to the
-                        |   *  current parsing index. */
+                        |   *  first non-whitespace character before the current parsing index.
+                        |   *  Nothing is done if the object already has a start position.
+                        |   */
                         |  void setLocation(final Object object, final int start) {
                         |    if (null != object) {
-                        |      Column s = column(start);
-                        |      positions.setStart(object, new Position(s.line, s.column, source));
-                        |      int finish = yyCount == 0 ? 0 : yyCount - 1;
-                        |      Column f = column(finish);
-                        |      positions.setFinish(object, new Position(f.line, f.column, source));
+                        |      scala.Option<Position> optStart = positions.getStart(object);
+                        |      if (optStart.isEmpty()) {
+                        |        Column s = column(start);
+                        |        positions.setStart(object, new Position(s.line, s.column, source));
+                        |        int finish = prevNonWS(yyLastResult.index);
+                        |        Column f = column(finish);
+                        |        positions.setFinish(object, new Position(f.line, f.column, source));
+                        |      }
                         |    }
                         |  }
                         |
-                        |  /** Set the start position of an Object to the start position of
-                        |   *  another object and the finish position to one that corresponds to
-                        |   *  the current parsing index. If the source object doesn't have a
-                        |   *  start position, do nothing. */
+                        |  /** Set the start of an object to the start of another object. If the
+                        |   *  source object doesn't have a start position, do nothing. Also, set
+                        |   *  the finish position to the one that corresponds to the first
+                        |   *  non-whitespace character before the current parsing index.
+                        |   */
                         |  void copyLocation(final Object object, final Object another) {
                         |    if ((null != object) && (null != another)) {
                         |      scala.Option<Position> optStart = positions.getStart(another);

@@ -412,6 +412,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                     empty
                 else
                     braces (nest (line <>
+                        "yyLastResult = yyResult;" <> line <>
                         "yyValue" <+> equal <+>
                             (alt.action match {
                                 case ApplyAction () =>
