@@ -1,0 +1,5 @@
+This release of the sbt-rats plugin is a bug fix release.
+
+## Fixes
+
+* Improved correctness of finishing coordinates associated with parsed values when using Kiama. Previously we just used the current parse position, which wasn't correct if back-tracking happens. Now we use the most recent result with trailing whitespace ignored.

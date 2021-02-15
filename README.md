@@ -14,6 +14,7 @@ There is also a sbt template showing a [simple usage of the plugin with Kiama](h
 
 ## News
 
+* February 15, 2021: [version 2.9.0](https://github.com/inkytonik/sbt-rats/blob/master/notes/2.9.0.markdown) released on [bintray](https://bintray.com/inkytonik/sbt-plugins/sbt-rats/view)
 * September 21, 2020: [version 2.8.0](https://github.com/inkytonik/sbt-rats/blob/master/notes/2.8.0.markdown) released on [bintray](https://bintray.com/inkytonik/sbt-plugins/sbt-rats/view)
 * April 20, 2020: [version 2.7.0](https://github.com/inkytonik/sbt-rats/blob/master/notes/2.7.0.markdown) released on [bintray](https://bintray.com/inkytonik/sbt-plugins/sbt-rats/view)
 * March 22, 2019: [version 2.6.0](https://github.com/inkytonik/sbt-rats/blob/master/notes/2.6.0.markdown) released on [bintray](https://bintray.com/inkytonik/sbt-plugins/sbt-rats/view)
