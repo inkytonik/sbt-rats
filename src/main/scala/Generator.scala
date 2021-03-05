@@ -76,6 +76,8 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
             typeBody(
                 when(flags.definePrettyPrinter) {
                     text(s"override def toString: String = ${grammar.module.last}PrettyPrinter.show(this)") },
+                when(flags.precomputeHashCodes) {
+                    text(s"override val hashCode: Int = scala.util.hashing.MurmurHash3.productHash(this)") },
             )
         }
 
