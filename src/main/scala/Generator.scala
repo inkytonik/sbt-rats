@@ -8,6 +8,8 @@
 
 import org.kiama.output.PrettyPrinter
 
+import scala.language.implicitConversions
+
 /**
  * Generator of auxiliary files from a syntax specification, parameterised
  * by the analyser to use.
@@ -49,13 +51,11 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
 
         def toSyntax : Doc =
             line <>
-            "object" <+> name <+> "{" <@>
-            nest (
-                toSuperClass <@>
-                hsep (grammar.rules map toRuleClasses) <@>
-                (if (grammar.astHeader == null) empty else string (grammar.astHeader))
-            ) <@>
-            "}"
+            "object" <+> name <+> typeBody(
+                toSuperClass,
+                hsep (grammar.rules map toRuleClasses),
+                if (grammar.astHeader == null) empty else string (grammar.astHeader),
+            )
 
         def toSuperClass : Doc = {
             val superTraits =
@@ -70,7 +70,13 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                     Nil)
 
             line <>
-            "sealed abstract class ASTNode extends" <+> hsep (superTraits map text, " with")
+            "sealed abstract class ASTNode extends" <+> hsep (superTraits map text, " with") <+>
+            typeBody(
+                when(flags.definePrettyPrinter) {
+                    text(s"override def toString: String = ${grammar.module.last}PrettyPrinter.show(this)") },
+                when(flags.precomputeHashCodes) {
+                    text(s"override val hashCode: Int = scala.util.hashing.MurmurHash3.productHash(this)") },
+            )
         }
 
         def toRuleClasses (rule : Rule) : Doc =
@@ -111,20 +117,20 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                                      }
                                  ),
                                  List (
-                                     "val priority =" <+> value (prec),
-                                     "val op =" <+> dquotes (op),
-                                     "val fixity =" <+> value (fixity)
+                                     "def priority =" <+> value (prec),
+                                     "def op =" <+> dquotes (op),
+                                     "def fixity =" <+> value (fixity)
                                  ) ++
                                      (order match {
                                          case 1 =>
                                              if (nt1 == "exp")
                                                  Nil
                                              else
-                                                 List ("val exp =" <+> nt1)
+                                                 List ("def exp =" <+> nt1)
                                          case 2 =>
                                              List (
-                                                 "val left =" <+> nt2 <> "1",
-                                                 "val right =" <+> nt2 <> "2"
+                                                 "def left =" <+> nt2 <> "1",
+                                                 "def right =" <+> nt2 <> "2"
                                              )
                                       })
                                 )
@@ -137,8 +143,8 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                                 (
                                  List (text (s"with ${flags.kiamaPkg}.output.PrettyNaryExpression")),
                                  List (
-                                     "val priority =" <+> value (prec),
-                                     "val fixity =" <+> value (fixity)
+                                     "def priority =" <+> value (prec),
+                                     "def fixity =" <+> value (fixity)
                                  )
                                 )
                         }
@@ -159,21 +165,8 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
             def toConcreteClass (parent : String) (alt : Alternative) : Doc = {
                 val (ppext, pp) = toParenPPInfo (alt)
                 val req = toRequires (alt)
-                val bodylines = if (pp.isEmpty) vsep (req)
-                                else if (req.isEmpty) vsep (pp)
-                                else vsep (pp) <@> vsep (req)
-                val body = if (pp.isEmpty && req.isEmpty)
-                               empty
-                           else
-                               braces (
-                                   nest (
-                                       line <>
-                                       bodylines
-                                   ) <>
-                                   line
-                               )
                 "case class" <+> text (alt->constr) <+> toFields (alt) <+> "extends" <+>
-                    parent <+> hsep (ppext) <+> body
+                    parent <+> hsep (ppext) <+> typeBody(pp ++ req)
             }
 
             // Common super class clause
@@ -661,4 +654,31 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
 
     }
 
+    // [[Option.when]] is only available in Scala 2.13+
+    private def when (cond: Boolean) (x: => Doc) : Option[Doc] =
+        if (cond)
+            Some(x)
+        else
+            None
+
+    private def typeBody (parts: List[Doc]) : Doc =
+        typeBody(parts map { Some(_) } : _*)
+
+    private def typeBody (parts: Option[Doc]*) : Doc =
+        parts.flatten match {
+            case Seq() =>
+                empty
+            case parts =>
+                braces (
+                    nest (
+                        line <>
+                          vsep(parts.toList)
+                    ) <>
+                      line
+                )
+        }
+
+    // Allows [[typeBody]]'s callers to use a mix of conditional and non-conditional arguments.
+    // Required b/c you can't have overloaded variadic methods in Scala (type erasure + variadic desugaring issue).
+    private implicit def docToOptionalDoc (d: Doc): Some[Doc] = Some(d)
 }

@@ -41,6 +41,7 @@ case class Flags (
     useDefaultWords : Boolean,
     defineASTClasses : Boolean,
     definePrettyPrinter : Boolean,
+    precomputeHashCodes : Boolean,
     includeKeywordTable : Boolean,
     includeBinarySupport : Boolean,
     useKiama : Int,
@@ -157,6 +158,16 @@ object SBTRatsPlugin extends AutoPlugin {
         val ratsDefinePrettyPrinter = SettingKey[Boolean] (
             "rats-define-pretty-printer",
                 "Define Kiama-based pretty-printer for abstract syntax trees (syntax mode only, requires ratsDefineASTClasses)"
+        )
+
+        /**
+         * If a syntax definition is being used and AST classes are being generated,
+         * AST nodes will precompute and cache [[java.lang.Object#hashCode()]].
+         * This can improve performance when using attributed grammars.
+         */
+        val ratsPrecomputeHashCodes = SettingKey[Boolean] (
+            "rats-precompute-hash-codes",
+            "Precompute hashes for AST nodes (syntax mode only, requires ratsDefineASTClasses)"
         )
 
         /**
@@ -880,6 +891,8 @@ object SBTRatsPlugin extends AutoPlugin {
 
         ratsDefinePrettyPrinter := false,
 
+        ratsPrecomputeHashCodes := false,
+
         ratsIncludeKeywordTable := true,
 
         ratsIncludeBinarySupport := false,
@@ -892,9 +905,9 @@ object SBTRatsPlugin extends AutoPlugin {
                    ratsUseScalaOptions.value, ratsUseDefaultComments.value,
                    ratsUseDefaultSpacing.value, ratsUseDefaultLayout.value,
                    ratsUseDefaultWords.value, ratsDefineASTClasses.value,
-                   ratsDefinePrettyPrinter.value, ratsIncludeKeywordTable.value,
-                   ratsIncludeBinarySupport.value, ratsUseKiama.value,
-                   kiamaPkg)
+                   ratsDefinePrettyPrinter.value, ratsPrecomputeHashCodes.value,
+                   ratsIncludeKeywordTable.value, ratsIncludeBinarySupport.value,
+                   ratsUseKiama.value, kiamaPkg)
         }
 
     )
