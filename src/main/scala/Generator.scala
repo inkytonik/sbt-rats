@@ -117,20 +117,20 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                                      }
                                  ),
                                  List (
-                                     "val priority =" <+> value (prec),
-                                     "val op =" <+> dquotes (op),
-                                     "val fixity =" <+> value (fixity)
+                                     "def priority =" <+> value (prec),
+                                     "def op =" <+> dquotes (op),
+                                     "def fixity =" <+> value (fixity)
                                  ) ++
                                      (order match {
                                          case 1 =>
                                              if (nt1 == "exp")
                                                  Nil
                                              else
-                                                 List ("val exp =" <+> nt1)
+                                                 List ("def exp =" <+> nt1)
                                          case 2 =>
                                              List (
-                                                 "val left =" <+> nt2 <> "1",
-                                                 "val right =" <+> nt2 <> "2"
+                                                 "def left =" <+> nt2 <> "1",
+                                                 "def right =" <+> nt2 <> "2"
                                              )
                                       })
                                 )
@@ -143,8 +143,8 @@ class Generator (analyser : Analyser) extends PrettyPrinter {
                                 (
                                  List (text (s"with ${flags.kiamaPkg}.output.PrettyNaryExpression")),
                                  List (
-                                     "val priority =" <+> value (prec),
-                                     "val fixity =" <+> value (fixity)
+                                     "def priority =" <+> value (prec),
+                                     "def fixity =" <+> value (fixity)
                                  )
                                 )
                         }
