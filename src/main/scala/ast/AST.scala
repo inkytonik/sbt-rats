@@ -24,23 +24,30 @@ case class SetOfString (name : String) extends SyntaxOption
 case class Verbose () extends SyntaxOption
 case class Width (n : Int) extends SyntaxOption
 
-sealed abstract class Rule extends ASTNode
+sealed abstract class Rule extends ASTNode {
+    def anns: List[RuleAnnotation]
+}
 case class ASTRule (idndef : IdnDef, typeIdn : IdnUse, alts : List[Alternative],
                     isConst : Boolean = false, anns: List[RuleAnnotation] = Nil) extends Rule
-case class StringRule (idndef : IdnDef, typeIdn : IdnUse, alts : List[Element]) extends Rule
+case class StringRule (idndef : IdnDef, typeIdn : IdnUse, alts : List[Element], anns: List[RuleAnnotation] = Nil) extends Rule
 
 sealed abstract class RatsSection extends Rule
-case class RatsBlock (code : String) extends RatsSection
-case class RatsRule (idndef : IdnDef, typeIdn : IdnUse, code : String) extends RatsSection
+case class RatsBlock (code : String) extends RatsSection {
+    def anns: List[RuleAnnotation] = Nil
+}
+case class RatsRule (idndef : IdnDef, typeIdn : IdnUse, code : String, anns: List[RuleAnnotation] = Nil) extends RatsSection
 
 case class Alternative (rhs : List[Element], anns: List[AltAnnotation],
                         action : Action) extends ASTNode
 
 sealed abstract class RuleAnnotation extends ASTNode
-case class Line () extends RuleAnnotation
-case class Nested () extends RuleAnnotation
-case class NoSpacing () extends RuleAnnotation
-case class Parenthesized () extends RuleAnnotation
+case class Transient () extends RuleAnnotation
+
+sealed abstract class AstRuleAnnotation extends RuleAnnotation
+case class Line () extends AstRuleAnnotation
+case class Nested () extends AstRuleAnnotation
+case class NoSpacing () extends AstRuleAnnotation
+case class Parenthesized () extends AstRuleAnnotation
 
 sealed abstract class AltAnnotation extends ASTNode
 case class Associativity (side : Side) extends AltAnnotation

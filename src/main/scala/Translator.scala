@@ -20,7 +20,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
 
     def translate (flags : Flags, genFile : File, grammar : Grammar) = {
 
-        import analyser.{constr, elemtype, hasSpacing, hasValue, ntname,
+        import analyser.{constr, elemtype, hasSpacing, hasValue, isTransient, ntname,
             nttype, partitionLiterals, requiresNoAction, syntaxElements,
             transformer, typeName, voidType}
         import org.kiama.attribution.Attribution.{initTree, resetMemo}
@@ -471,6 +471,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
 
             line <>
             (if (isConst) "constant" else "public") <+>
+            ruleModifier(astRule) <+>
             text (astRule->typeName) <+> lhs.name <+> equal <>
             nest (
                 line <>
@@ -481,9 +482,10 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
 
         def toStringRule (stringRule : StringRule) : Doc = {
 
-            val StringRule (lhs, IdnUse (typeName), alts) = stringRule
+            val StringRule (lhs, IdnUse (typeName), alts, _) = stringRule
 
-            val tipe = if (typeName == "Void") "void" else "String"
+            val modifier = ruleModifier(stringRule)
+            val tipe = implTypeName(typeName)
 
             def toAlternative (e : Element) : Doc =
                 toRHS (e, false, false)
@@ -493,7 +495,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
 
             def auxdef (name : String) =
                 line <>
-                "public" <+> "String" <+> name <+> equal <>
+                "public" <+> modifier <+> "String" <+> name <+> equal <>
                 nest (
                     line <>
                     auxname (name) <+> "Spacing" <@>
@@ -502,7 +504,7 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
 
             def maindef (name : String) : Doc =
                 line <>
-                "public" <+> tipe <+> name <+> equal <>
+                "public" <+> modifier <+> tipe <+> name <+> equal <>
                 nest (
                     line <>
                     lsep2 (alts map toAlternative, "/") <> semi
@@ -515,15 +517,16 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
 
         }
 
-        def implTypeName(tipe : IdnUse) : String =
-            if (tipe.name == "Token")
-                "String"
-            else
-                tipe.name
+        def implTypeName(tipe : String) : String =
+            tipe match {
+                case "Void"     => "void"
+                case "Token"    => "String"
+                case name       => name
+            }
 
         def toRatsRule (ratsRule : RatsRule) : Doc = {
 
-            val RatsRule (lhs, tipe, code) = ratsRule
+            val RatsRule (lhs, tipe, code, _) = ratsRule
 
             val spacing =
                 if (tipe.name == "Token")
@@ -532,10 +535,13 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                     empty
 
             line <>
-            "public" <+> implTypeName(tipe) <+> lhs.name <+> equal <>
+            "public" <+> ruleModifier(ratsRule) <+> implTypeName(tipe.name) <+> lhs.name <+> equal <>
             code <> spacing <> semi
 
         }
+
+        def ruleModifier(rule: Rule): String =
+            if (rule->isTransient) "transient" else ""
 
         /*
          * Generate default implementations of various aspects, depending on the

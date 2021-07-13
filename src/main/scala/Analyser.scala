@@ -69,7 +69,7 @@ class Analyser (flags : Flags) extends Environments {
         else {
             val levelStr = missingPrecedences (r).mkString (" ")
             message (r, s"missing precedence levels: $levelStr")
-        }    
+        }
 
     def checkAssociativities(r : ASTRule) : Messages =
         if (mixedAssociativities (r).isEmpty)
@@ -77,7 +77,7 @@ class Analyser (flags : Flags) extends Environments {
         else {
             val levelStr = mixedAssociativities (r).mkString (" ")
             message (r, s"mixed associativities at levels: $levelStr")
-        }    
+        }
 
     def checkTrivialChains(r : Rule) : Messages =
         r match {
@@ -88,7 +88,7 @@ class Analyser (flags : Flags) extends Environments {
                         message(r, s"recursive symbol $ntname with no termination alternative")
                     case _ =>
                         noMessages
-                }   
+                }
             case r : StringRule =>
                 val ntname = r.idndef.name
                 r.alts match {
@@ -96,7 +96,7 @@ class Analyser (flags : Flags) extends Environments {
                         message(r, s"recursive symbol $ntname with no termination alternative")
                     case _ =>
                         noMessages
-                }   
+                }
             case _ =>
                 noMessages
         }
@@ -255,7 +255,7 @@ class Analyser (flags : Flags) extends Environments {
                         e       =   if (multi) MultipleEntity() else entityFromDecl(ns.head, NamedType(i))
                     } yield (i, e)
                 decls.toMap +: defenv
-         }    
+         }
 
     def entityFromDecl (n : IdnDef, t : Type) : Entity =
         n.parent match {
@@ -263,9 +263,9 @@ class Analyser (flags : Flags) extends Environments {
                 UserNonTerm (if (typeIdn == null) t else NamedType (typeIdn.name), astRule)
             case Constructor (_) =>
                 Cons ()
-            case ratsRule @ RatsRule (_, typeIdn, _) =>
+            case ratsRule @ RatsRule (_, typeIdn, _, _) =>
                 RatsNonTerm (if (typeIdn == null) t else NamedType (typeIdn.name), ratsRule)
-            case StringRule (_, IdnUse (typeName), _) =>
+            case StringRule (_, IdnUse (typeName), _, _) =>
                 PreNonTerm (NamedType (typeName))
         }
 
@@ -465,17 +465,16 @@ class Analyser (flags : Flags) extends Environments {
      * Look for a particular annotation on a rule and, if it's a typed rule,
      * on the rule that defines its type.
      */
-    def hasRuleAnnotation (astRule : ASTRule, ann : RuleAnnotation) : Boolean = {
-        val res = (astRule.anns != null) && (astRule.anns contains (ann))
-        if (astRule.typeIdn == null)
-            res
-        else
-            res || ((astRule.typeIdn)->entity match {
-                case UserNonTerm (_, otherRule) if astRule != otherRule =>
-                    hasRuleAnnotation (otherRule, ann)
-                case _ =>
-                    false
-            })
+    def hasRuleAnnotation (rule : Rule, ann : RuleAnnotation) : Boolean = {
+        if ((rule.anns != null) && (rule.anns contains ann)) return true
+
+        rule match {
+        case rule: ASTRule if rule.typeIdn ne null => rule.typeIdn->entity match {
+            case UserNonTerm (_, otherRule) if rule != otherRule  => hasRuleAnnotation(otherRule, ann)
+            case _                                                => false
+        }
+        case _ => false
+        }
     }
 
     /**
@@ -514,6 +513,12 @@ class Analyser (flags : Flags) extends Environments {
             case astRule =>
                 !hasRuleAnnotation (astRule, NoSpacing ())
         }
+
+    /**
+     * Is this rule specified as being transient?
+     */
+    lazy val isTransient : Rule => Boolean =
+        attr { hasRuleAnnotation (_, Transient ()) }
 
     /**
      * The precedences of the alternatives of a rule.

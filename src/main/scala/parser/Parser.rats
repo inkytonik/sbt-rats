@@ -28,7 +28,7 @@ body {
             "body", "defaultIndent", "defaultWidth", "header", "left", "line",
             "module", "nest", "nested", "nestnl", "none", "nospacing", "option", "paren",
             "rats", "relativeFilenames", "right", "setOfString", "sp", "String",
-            "Token", "verbose", "Void"
+            "transient", "Token", "verbose", "Void"
         });
     }
 
@@ -120,10 +120,10 @@ Rule Rule =
 // Grammar rules
 
 Rule GrammarRule =
-    i:IdnDef void:":":Symbol t:StringRuleType void:"=":Symbol alts:StringAlternatives {
-        yyValue = new StringRule (i, t, alts);
+    i:IdnDef void:":":Symbol t:StringRuleType anns:RuleAnnotations? void:"=":Symbol alts:StringAlternatives {
+        yyValue = new StringRule (i, t, alts, anns);
     } /
-    i:IdnDef t:Type? anns:RuleAnnotations? void:"=":Symbol alts:TreeAlternatives {
+    i:IdnDef t:Type? anns:AstRuleAnnotations? void:"=":Symbol alts:TreeAlternatives {
         yyValue = new ASTRule (i, t, alts, false, anns);
     };
 
@@ -328,14 +328,28 @@ Element Formatting =
 // Rule annotations
 
 Pair<RuleAnnotation> RuleAnnotations =
-    void:"{":Symbol RuleAnnotationList void:"}":Symbol;
+    void:"{":Symbol RuleAnnotationsList void:"}":Symbol;
 
-Pair<RuleAnnotation> RuleAnnotationList =
+Pair<RuleAnnotation> RuleAnnotationsList =
     h:RuleAnnotation tl:(void:",":Symbol RuleAnnotation)* {
         yyValue = SList.create (h, tl);
     };
 
+Pair<RuleAnnotation> AstRuleAnnotations =
+    void:"{":Symbol AstRuleAnnotationsList void:"}":Symbol;
+
+Pair<RuleAnnotation> AstRuleAnnotationsList =
+    h:AstRuleAnnotation tl:(void:",":Symbol AstRuleAnnotation)* {
+        yyValue = SList.create (h, tl);
+    };
+
 RuleAnnotation RuleAnnotation =
+    void:"transient":Word {
+        yyValue = new Transient ();
+    };
+
+RuleAnnotation AstRuleAnnotation =
+    RuleAnnotation /
     void:"line":Word {
         yyValue = new Line ();
     } /
@@ -391,17 +405,14 @@ Rule RatsSection =
 // Rats! rule
 
 RatsRule RatsRule =
-    i:IdnDef void:":":Symbol StringType void:"=":Symbol void:"rats":Word s:CodeBlock {
-        yyValue = new RatsRule (i, new IdnUse ("String"), s);
+    i:IdnDef void:":":Symbol t:StringRuleType anns:RuleAnnotations? void:"=":Symbol void:"rats":Word s:CodeBlock {
+        yyValue = new RatsRule (i, t, s, anns);
     } /
-    i:IdnDef void:":":Symbol TokenType void:"=":Symbol void:"rats":Word s:CodeBlock {
-        yyValue = new RatsRule (i, new IdnUse ("Token"), s);
+    i:IdnDef t:Type                           anns:RuleAnnotations? void:"=":Symbol void:"rats":Word s:CodeBlock {
+        yyValue = new RatsRule (i, t, s, anns);
     } /
-    i:IdnDef t:Type void:"=":Symbol void:"rats":Word s:CodeBlock {
-        yyValue = new RatsRule (i, t, s);
-    } /
-    i:IdnDef void:"=":Symbol void:"rats":Word s:CodeBlock {
-        yyValue = new RatsRule (i, null, s);
+    i:IdnDef                                  anns:RuleAnnotations? void:"=":Symbol void:"rats":Word s:CodeBlock {
+        yyValue = new RatsRule (i, null, s, anns);
     };
 
 // Rats! block
