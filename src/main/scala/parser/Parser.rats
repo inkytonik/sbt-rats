@@ -82,10 +82,21 @@ String BodySection =
 // Code blocks
 
 String CodeBlock =
-    '{' yyValue:CodeBlockText '}' Spacing;
+    '{' yyValue:CodeBlockBody '}' Spacing;
 
-String CodeBlockText =
-    ('{' CodeBlockText '}' / !'}' _)*;
+String CodeBlockBody = CodeBlockText;
+
+// ideally this should delegate to a full rats parser.
+transient String CodeBlockText =
+    ( '{'   CodeBlockText       '}'
+    / "//"  (![\n\r] _)*        ("\r\n" / [\r\n])
+    / "/*"  (!"*/"   _)*        "*/"
+    / ["]   ("\\\"" / !["] _)*  ["]
+    / [']   ("\\'"  / !['] _)*  [']
+    / '['   ("\\]"  / !']' _)*  ']'  // FIXME: not quite right, but good enough for now
+    / ![}] _
+    )*
+    ;
 
 // Options
 
