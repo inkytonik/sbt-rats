@@ -216,7 +216,9 @@ class Translator (analyser : Analyser) extends PrettyPrinter {
                         val uniqLits = ss.map (_.escaped).toVector
                         d <@>
                         line <>
-                        s"String Symbol$l =" <>
+                        // don't bother memoizing short symbol sequences
+                        // (the memory overhead adds up in very larger files)
+                        s"${if (l < 4) "transient" else ""} String Symbol$l =" <>
                         nest (
                             line <>
                             s"Symbol${l}Alts Spacing;"
