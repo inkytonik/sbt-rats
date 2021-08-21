@@ -2,7 +2,7 @@ sbtPlugin := true
 
 name := "sbt-rats"
 
-version := "2.9.0"
+version := "2.10.0-SNAPSHOT"
 
 organization := "org.bitbucket.inkytonik.sbt-rats"
 
